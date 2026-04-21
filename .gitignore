@@ -1,0 +1,30 @@
+# ── Dependencias ──
+back/vendor/
+front/node_modules/
+
+# ── Entornos ──
+back/.env
+front/.env
+
+# ── Storage Laravel ──
+back/storage/app/public/*
+back/storage/logs/*
+back/public/storage
+
+# ── Build ──
+front/dist/
+
+# ── Docker volumes ──
+postgres_data/
+
+# ── OS / Editor ──
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+*.log

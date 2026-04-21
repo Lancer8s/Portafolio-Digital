@@ -1,0 +1,92 @@
+services:
+  # ── Base de datos PostgreSQL ──────────────────────────────
+  postgres:
+    image: postgres:12-alpine
+    container_name: portafolio_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: portafolio_digital
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mundolibre
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      # Scripts SQL ejecutados automáticamente la PRIMERA vez
+      # que se crea el contenedor (orden alfabético: 01, 02)
+      - ./docker/postgres:/docker-entrypoint-initdb.d:ro
+    networks:
+      - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d portafolio_digital"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Backend Laravel 8 (PHP 7.4) ──────────────────────────
+  backend:
+    build:
+      context: ./back
+      dockerfile: Dockerfile
+    container_name: portafolio_backend
+    restart: unless-stopped
+    working_dir: /var/www/html
+    volumes:
+      - ./back:/var/www/html
+      - backend_vendor:/var/www/html/vendor    # preservar vendor instalado en build
+    environment:
+      - APP_NAME=PortafolioDigital
+      - APP_ENV=local
+      - APP_DEBUG=true
+      - APP_URL=http://localhost:8000
+      - DB_CONNECTION=pgsql
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=portafolio_digital
+      - DB_USERNAME=postgres
+      - DB_PASSWORD=mundolibre
+      - SANCTUM_STATEFUL_DOMAINS=localhost:3000
+      - SESSION_DOMAIN=localhost
+      - FRONTEND_URL=http://localhost:3000
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - "8000:8000"
+    networks:
+      - app-network
+    command: >
+      sh -c "
+        if [ ! -f .env ]; then cp .env.example .env; fi &&
+        php artisan key:generate --force &&
+        php artisan storage:link 2>/dev/null || true &&
+        php artisan serve --host=0.0.0.0 --port=8000
+      "
+
+  # ── Frontend React + Vite ────────────────────────────────
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile.frontend
+    container_name: portafolio_frontend
+    restart: unless-stopped
+    volumes:
+      - ./front:/app
+      - frontend_node_modules:/app/node_modules  # preservar node_modules del build
+    ports:
+      - "3000:3000"
+    networks:
+      - app-network
+    environment:
+      - CHOKIDAR_USEPOLLING=true
+    depends_on:
+      - backend
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  postgres_data:
+  backend_vendor:
+  frontend_node_modules:

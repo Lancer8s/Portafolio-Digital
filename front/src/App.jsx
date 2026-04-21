@@ -1,0 +1,212 @@
+import { useState } from "react";
+import {
+  Routes,
+  Route,
+  useNavigate,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import { ThemeProvider } from "./context/ThemeContext";
+import { AppProvider, useApp } from "./context/AppContext";
+import Navbar from "./components/Navbar";
+
+import HomePage from "./homePage/HomePage";
+import LoginPage from "./loginUsuario/LoginPage";
+import AuthCallbackPage from "./authCallback/AuthCallbackPage";
+import RegistroUsuarioPage from "./registroUsuario/RegistroUsuarioPage";
+import EdicionPerfilPage from "./edicionPerfil/EdicionPerfilPage";
+import VistaEdicionPage from "./vistaEdicion/VistaEdicionPage";
+import EdicionHabilidadPage from "./edicionHabilidad/EdicionHabilidadPage";
+import EdicionProyectoPage from "./edicionProyecto/EdicionProyectoPage";
+import VistaProyectoPage from "./vistaProyecto/VistaProyectoPage";
+
+const pageVariants = {
+  initial: { opacity: 0, backgroundColor: "#000" },
+  animate: {
+    opacity: 1,
+    backgroundColor: "transparent",
+    transition: { duration: 0.35, ease: "easeOut" },
+  },
+  exit: {
+    opacity: 0,
+    backgroundColor: "#000",
+    transition: { duration: 0.2, ease: "easeIn" },
+  },
+};
+
+// Protected route wrapper
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useApp();
+
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          background: "#020617",
+        }}
+      >
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          style={{
+            width: 48,
+            height: 48,
+            border: "4px solid",
+            borderColor: "#3B82F6 transparent #3B82F6 transparent",
+            borderRadius: "50%",
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  return children;
+}
+
+function AnimatedRoutes() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const { userData, refreshUserData } = useApp();
+  const [editProyectoIdx, setEditProyectoIdx] = useState(null);
+
+  return (
+    <AnimatePresence mode="wait">
+      <motion.div
+        key={location.pathname}
+        variants={pageVariants}
+        initial="initial"
+        animate="animate"
+        exit="exit"
+        style={{ minHeight: "100vh" }}
+      >
+        <Routes location={location}>
+          {/* Public routes */}
+          <Route
+            path="/"
+            element={
+              <HomePage
+                onRegister={() => navigate("/registro")}
+                onLogin={() => navigate("/login")}
+              />
+            }
+          />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route
+            path="/registro"
+            element={
+              <RegistroUsuarioPage
+                onNext={() => {
+                  navigate("/edicion");
+                }}
+              />
+            }
+          />
+
+          {/* Protected routes */}
+          <Route
+            path="/edicion"
+            element={
+              <ProtectedRoute>
+                <EdicionPerfilPage
+                  userData={userData}
+                  onNext={() => {
+                    refreshUserData();
+                    navigate("/vista");
+                  }}
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vista"
+            element={
+              <ProtectedRoute>
+                <VistaEdicionPage
+                  userData={userData}
+                  onGoToHabilidad={() => navigate("/habilidad")}
+                  onGoToProyecto={() => {
+                    setEditProyectoIdx(null);
+                    navigate("/proyecto");
+                  }}
+                  onEditProyecto={(idx) => {
+                    setEditProyectoIdx(idx);
+                    navigate("/proyecto");
+                  }}
+                  onVerProyecto={(idx) =>
+                    navigate(`/proyecto/${idx}`)
+                  }
+                  onBack={() => navigate("/edicion")}
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/habilidad"
+            element={
+              <ProtectedRoute>
+                <EdicionHabilidadPage
+                  userData={userData}
+                  onBack={() => navigate("/vista")}
+                  onSave={() => {
+                    navigate("/vista");
+                  }}
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/proyecto"
+            element={
+              <ProtectedRoute>
+                <EdicionProyectoPage
+                  initialData={
+                    editProyectoIdx !== null
+                      ? userData.proyectos?.[editProyectoIdx]
+                      : null
+                  }
+                  onBack={() => navigate("/vista")}
+                  onSave={() => {
+                    setEditProyectoIdx(null);
+                    navigate("/vista");
+                  }}
+                />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/proyecto/:idx"
+            element={
+              <ProtectedRoute>
+                <VistaProyectoPage
+                  userData={userData}
+                  onBack={() => navigate("/vista")}
+                />
+              </ProtectedRoute>
+            }
+          />
+        </Routes>
+      </motion.div>
+    </AnimatePresence>
+  );
+}
+
+export default function App() {
+  return (
+    <ThemeProvider>
+      <AppProvider>
+        <Navbar />
+        <AnimatedRoutes />
+      </AppProvider>
+    </ThemeProvider>
+  );
+}
