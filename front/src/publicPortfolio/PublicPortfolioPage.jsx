@@ -13,6 +13,7 @@ export default function PublicPortfolioPage() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
 
   const bg = isDark ? "#020617" : "#F1F5F9";
   const text = isDark ? "#fff" : "#111";
@@ -22,9 +23,16 @@ export default function PublicPortfolioPage() {
 
   useEffect(() => {
     const fetchPortfolio = async () => {
+      const actualId = id.split('-').pop();
       try {
-        const resp = await axios.get(`http://localhost:8000/api/portafolio/${id}`);
+        const headers = {};
+        const token = localStorage.getItem("auth_token");
+        if (token) {
+          headers.Authorization = `Bearer ${token}`;
+        }
+        const resp = await axios.get(`http://localhost:8000/api/portafolio/${actualId}`, { headers });
         setData(resp.data.perfil);
+        setIsOwner(resp.data.perfil?.is_owner || false);
       } catch (err) {
         if (err.response?.status === 403) {
           setError("Este portafolio es privado.");
@@ -161,7 +169,7 @@ export default function PublicPortfolioPage() {
           {/* Habilidades */}
           <section style={{ marginBottom: 48 }}>
             <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 24 }}>💡</span> Habilidades
+              Habilidades
             </h2>
             <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
               {data.techSkills?.map((s, i) => (
@@ -180,7 +188,7 @@ export default function PublicPortfolioPage() {
           {/* Proyectos */}
           <section style={{ marginBottom: 48 }}>
             <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 24 }}>🚀</span> Proyectos Destacados
+              Proyectos Destacados
             </h2>
             {data.proyectos?.length === 0 ? (
               <p style={{ color: sub, fontSize: 14 }}>Aún no hay proyectos.</p>
@@ -211,7 +219,7 @@ export default function PublicPortfolioPage() {
           {/* Experiencia (Línea de tiempo) */}
           <section>
             <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-              <span style={{ fontSize: 24 }}>📈</span> Trayectoria
+              Trayectoria
             </h2>
             {data.experiencias?.length === 0 ? (
               <p style={{ color: sub, fontSize: 14 }}>Aún no hay experiencia registrada.</p>

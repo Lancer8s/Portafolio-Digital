@@ -27,6 +27,15 @@ export default function Navbar() {
 
   if (HIDDEN_ON.includes(location.pathname)) return null;
 
+  // Detectar si estamos en un portafolio público y si es del usuario actual
+  const isOnPublicPortfolio = location.pathname.startsWith('/portafolio/');
+  const isViewingOwnPortfolio = isOnPublicPortfolio && userData?.id_usuario && (() => {
+    const slug = location.pathname.replace('/portafolio/', '');
+    const slugId = slug.split('-').pop();
+    return String(userData.id_usuario) === String(slugId);
+  })();
+  const isViewingOthersPortfolio = isOnPublicPortfolio && !isViewingOwnPortfolio;
+
   const bg = isDark ? "#0F172A" : "#fff";
   const border = isDark ? "#1D283A" : "#E2E8F0";
   const text = isDark ? "#fff" : "#111";
@@ -97,28 +106,69 @@ export default function Navbar() {
       <span style={{ color: sub, fontSize: 13, display: "none" }}>{label}</span>
 
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        {isAuthenticated && userData?.id_usuario && (
-          <button
-            onClick={() => window.open(`/portafolio/${userData.id_usuario}`, "_blank")}
-            style={{
-              background: "#3B82F6",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "6px 12px",
-              fontSize: 13,
-              fontWeight: 600,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: 6
-            }}
-          >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-            Compartir
-          </button>
+        {isAuthenticated && userData?.id_usuario && !isViewingOthersPortfolio && (
+          isOnPublicPortfolio ? (
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                alert("URL copiada al portapapeles");
+              }}
+              style={{
+                background: "#3B82F6",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+              Copiar URL
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                const n = (userData?.nombreCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
+                const a = (userData?.apellidoCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
+                const namePart = [n, a].filter(Boolean).join('-');
+                const slug = namePart ? `${namePart}-${userData.id_usuario}` : userData.id_usuario;
+                window.open(`/portafolio/${slug}`, "_blank");
+              }}
+              style={{
+                background: "#3B82F6",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "6px 12px",
+                fontSize: 13,
+                fontWeight: 600,
+                cursor: "pointer",
+                display: "flex",
+                alignItems: "center",
+                gap: 6
+              }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+              Compartir
+            </button>
+          )
         )}
       
+        {/* Avatar + menu: solo mostrar si está autenticado Y no está viendo el portafolio de otro */}
+        {isViewingOthersPortfolio ? (
+          /* Visitante viendo portafolio ajeno: solo toggle de tema */
+          <button
+            onClick={toggleTheme}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center" }}
+          >
+            <img src={isDark ? iconoSol : iconoLuna} alt="tema" style={{ width: 24, height: 24 }} />
+          </button>
+        ) : (
         <div style={{ position: "relative" }}>
           <button
           onClick={() => setShowMenu(!showMenu)}
@@ -199,6 +249,7 @@ export default function Navbar() {
           )}
         </AnimatePresence>
       </div>
+        )}
     </div>
       <AnimatePresence>
         {showConfig && (
@@ -233,7 +284,10 @@ export default function Navbar() {
                 </p>
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end" }}>
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
+                <button onClick={() => setShowConfig(false)} style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontWeight: 600 }}>
+                  Volver atrás
+                </button>
                 <button onClick={() => setShowConfig(false)} style={{ background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)", color: "#fff", border: "none", borderRadius: 8, padding: "9px 24px", cursor: "pointer", fontWeight: 700 }}>
                   Hecho
                 </button>

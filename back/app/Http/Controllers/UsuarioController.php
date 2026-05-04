@@ -237,7 +237,7 @@ class UsuarioController extends Controller
      * Obtiene el perfil completo (proyectos, habilidades, etc) para vista pública.
      * Si visibilidad = 'privado', no lo permite.
      */
-    public function perfilPublico($id)
+    public function perfilPublico(Request $request, $id)
     {
         $result = DB::select("SELECT sp_obtener_perfil_usuario(?) AS result", [$id]);
         $data = json_decode($result[0]->result, true);
@@ -246,8 +246,17 @@ class UsuarioController extends Controller
             return response()->json($data, 404);
         }
 
-        // Verificar visibilidad
-        if ($data['perfil']['visibilidad'] === 'privado') {
+        // Determinar si el usuario autenticado es el dueño del portafolio
+        $authUser = null;
+        try {
+            $authUser = \Illuminate\Support\Facades\Auth::guard('sanctum')->user();
+        } catch (\Exception $e) {
+            // No autenticado, continuar como visitante
+        }
+        $isOwner = $authUser && (int) $authUser->id_usuario === (int) $id;
+
+        // Verificar visibilidad — el dueño siempre puede ver su propio portafolio
+        if ($data['perfil']['visibilidad'] === 'privado' && !$isOwner) {
             return response()->json([
                 'ok' => false,
                 'codigo' => 'PERFIL_PRIVADO',
@@ -255,7 +264,7 @@ class UsuarioController extends Controller
             ], 403);
         }
 
-        // Si es público, obtener habilidades, proyectos y experiencias
+        // Obtener habilidades, proyectos y experiencias
         $habilidadesObj = app(\App\Http\Controllers\HabilidadController::class)->listarParaUsuario($id);
         $proyectosObj = app(\App\Http\Controllers\ProyectoController::class)->listarParaUsuario($id);
         
@@ -270,9 +279,10 @@ class UsuarioController extends Controller
         $data['perfil']['softSkills'] = $habilidadesObj->getData(true)['softSkills'] ?? [];
         $data['perfil']['proyectos'] = $proyectosObj->getData(true)['proyectos'] ?? [];
         $data['perfil']['experiencias'] = $experiencias;
+        $data['perfil']['is_owner'] = $isOwner;
 
         // Ocultar datos sensibles
-        unset($data['perfil']['email']); // Opcional, pero recomendado
+        unset($data['perfil']['email']);
         unset($data['perfil']['ci_estado']);
         unset($data['perfil']['id_usuario']);
 

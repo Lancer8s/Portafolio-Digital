@@ -62,7 +62,7 @@ Route::prefix('auth')->group(function () {
 // Catálogo de habilidades (no requiere auth)
 Route::get('habilidades/catalogo', [HabilidadController::class, 'catalogo']);
 
-// Portafolio público (no requiere auth, pero valida visibilidad internamente)
+// Portafolio público (acepta auth opcional para detectar si es el dueño)
 Route::get('portafolio/{id}', [UsuarioController::class, 'perfilPublico']);
 
 // ── Rutas para Servir Archivos (Soluciona problema de symlinks en Windows/Docker) ──

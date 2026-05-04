@@ -37,6 +37,8 @@ export default function SkillsEditor({
   const [savingBio, setSavingBio] = useState(false);
   const [savingHab, setSavingHab] = useState(false);
   const [deletingProyecto, setDeletingProyecto] = useState(null);
+  const [deleteConfirmModal, setDeleteConfirmModal] = useState(null); // { proyecto, idx }
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [pendingPhoto, setPendingPhoto] = useState(null);      // File object
   const [pendingPhotoPreview, setPendingPhotoPreview] = useState(null); // blob URL
   const [pendingCI, setPendingCI] = useState(null);
@@ -205,10 +207,10 @@ export default function SkillsEditor({
     }
   };
 
-  // Eliminar proyecto via API
-  const handleDeleteProyecto = async (proyecto, idx) => {
-    if (!confirm("¿Estás seguro de que deseas eliminar este proyecto?"))
-      return;
+  // Eliminar proyecto via API — con confirmación
+  const handleDeleteProyecto = async () => {
+    if (!deleteConfirmModal) return;
+    const { proyecto, idx } = deleteConfirmModal;
     setDeletingProyecto(idx);
     try {
       const { data } = await proyectoAPI.eliminar(proyecto.id_proyecto);
@@ -225,6 +227,8 @@ export default function SkillsEditor({
       );
     } finally {
       setDeletingProyecto(null);
+      setDeleteConfirmModal(null);
+      setDeleteConfirmText("");
     }
   };
 
@@ -716,7 +720,7 @@ export default function SkillsEditor({
                   </div>
                 </div>
 
-                {/* Botones sobre la tarjeta */}
+                {/* Boton eliminar sobre la tarjeta */}
                 <div
                   style={{
                     position: "absolute",
@@ -729,29 +733,8 @@ export default function SkillsEditor({
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
-                      onEditProyecto(i);
-                    }}
-                    style={{
-                      background: "rgba(0,0,0,0.55)",
-                      border: "none",
-                      borderRadius: 6,
-                      padding: "5px 7px",
-                      cursor: "pointer",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 4,
-                    }}
-                  >
-                    <img
-                      src={lapiz}
-                      alt="editar"
-                      style={{ width: 13, height: 13 }}
-                    />
-                  </button>
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDeleteProyecto(p, i);
+                      setDeleteConfirmModal({ proyecto: p, idx: i });
+                      setDeleteConfirmText("");
                     }}
                     disabled={deletingProyecto === i}
                     style={{
@@ -1288,6 +1271,73 @@ export default function SkillsEditor({
                   }}
                 >
                   {savingHab ? "Guardando..." : "Guardar Cambios"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ====== MODAL CONFIRMAR ELIMINACIÓN DE PROYECTO ====== */}
+      <AnimatePresence>
+        {deleteConfirmModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => { setDeleteConfirmModal(null); setDeleteConfirmText(""); }}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              style={{ ...modalBox, maxWidth: 420 }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ color: "#ef4444", fontWeight: 700, marginBottom: 12, marginTop: 0, display: "flex", alignItems: "center", gap: 8 }}>
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#ef4444" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+                  <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+                </svg>
+                Eliminar Proyecto
+              </h3>
+              <p style={{ color: sub, fontSize: 14, lineHeight: 1.6, margin: "0 0 16px" }}>
+                Estás a punto de eliminar <strong style={{ color: text }}>{deleteConfirmModal.proyecto.titulo || deleteConfirmModal.proyecto.nombre}</strong>. Esta acción es <strong style={{ color: "#ef4444" }}>irreversible</strong>.
+              </p>
+              <p style={{ color: sub, fontSize: 13, marginBottom: 8 }}>
+                Escribe <strong style={{ color: text }}>confirmar</strong> para continuar:
+              </p>
+              <input
+                style={{ ...inp, borderColor: deleteConfirmText === "confirmar" ? "#22c55e" : border, marginBottom: 16 }}
+                placeholder="Escribe confirmar"
+                value={deleteConfirmText}
+                onChange={(e) => setDeleteConfirmText(e.target.value.toLowerCase())}
+                autoFocus
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <button
+                  onClick={() => { setDeleteConfirmModal(null); setDeleteConfirmText(""); }}
+                  style={{
+                    background: "none", border: `1px solid ${border}`,
+                    color: text, borderRadius: 8, padding: "9px 20px", cursor: "pointer",
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleDeleteProyecto}
+                  disabled={deleteConfirmText !== "confirmar" || deletingProyecto !== null}
+                  style={{
+                    background: deleteConfirmText === "confirmar" ? "#ef4444" : (isDark ? "#1D283A" : "#E2E8F0"),
+                    color: deleteConfirmText === "confirmar" ? "#fff" : sub,
+                    border: "none", borderRadius: 8, padding: "9px 24px",
+                    cursor: deleteConfirmText === "confirmar" ? "pointer" : "not-allowed",
+                    fontWeight: 700, opacity: deletingProyecto !== null ? 0.6 : 1,
+                    transition: "all 0.2s ease",
+                  }}
+                >
+                  {deletingProyecto !== null ? "Eliminando..." : "Eliminar Proyecto"}
                 </button>
               </div>
             </motion.div>
