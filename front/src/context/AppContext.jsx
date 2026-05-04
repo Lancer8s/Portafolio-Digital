@@ -140,8 +140,10 @@ export const AppProvider = ({ children }) => {
       }
 
       setUserDataState({
+        id_usuario: user?.id_usuario || perfil.id_usuario,
         nombreCompleto: nombre,
         apellidoCompleto: apellido,
+        telefono: perfil.telefono || "",
         email: perfil.email || "",
         titulo: perfil.profesion || perfil.titulo_profesional || "",
         biografia: perfil.biografia || "",

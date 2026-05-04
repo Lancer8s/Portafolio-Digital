@@ -36,6 +36,27 @@ class ProyectoController extends Controller
         return response()->json($data);
     }
 
+    public function listarParaUsuario($idUsuario)
+    {
+        $result = DB::select("SELECT sp_listar_proyectos_usuario(?) AS result", [$idUsuario]);
+        $data   = json_decode($result[0]->result, true);
+
+        if ($data['ok'] && !empty($data['proyectos'])) {
+            $data['proyectos'] = array_map(function ($p) {
+                $p['titulo'] = $p['nombre'] ?? '';
+                $p['link']   = $p['url_repositorio'] ?? '';
+                if (!empty($p['imagen_portada'])) {
+                    $p['imagen_portada_url'] = '/api/media/' . $p['imagen_portada'];
+                }
+                return $p;
+            }, $data['proyectos']);
+        } else {
+            $data['proyectos'] = [];
+        }
+
+        return response()->json(['proyectos' => $data['proyectos']]);
+    }
+
     /**
      * POST /api/proyectos
      * Crea un nuevo proyecto.

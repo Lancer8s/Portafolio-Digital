@@ -50,6 +50,7 @@ CREATE TABLE usuario (
   ci_estado      VARCHAR(50)  DEFAULT NULL,
   linkedin_url   VARCHAR(300),
   github_url     VARCHAR(300),
+  telefono       VARCHAR(50),
   redes_sociales JSONB        DEFAULT '[]'::jsonb,
   visibilidad    VARCHAR(20)  NOT NULL DEFAULT 'publico' CHECK (visibilidad IN ('publico','privado')),
   activo         BOOLEAN      NOT NULL DEFAULT TRUE,

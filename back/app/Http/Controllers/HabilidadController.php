@@ -53,6 +53,21 @@ class HabilidadController extends Controller
         return response()->json($data, $data['ok'] ? 200 : 404);
     }
 
+    public function listarParaUsuario($idUsuario)
+    {
+        $result = DB::select("SELECT sp_listar_habilidades_usuario(?) AS result", [$idUsuario]);
+        $data   = json_decode($result[0]->result, true);
+
+        if ($data['ok']) {
+            return response()->json([
+                'techSkills' => $data['tecnicas'] ?? [],
+                'softSkills' => $data['blandas'] ?? [],
+            ]);
+        }
+
+        return response()->json(['techSkills' => [], 'softSkills' => []]);
+    }
+
     /**
      * POST /api/habilidades
      * Vincula una habilidad del catálogo al perfil.

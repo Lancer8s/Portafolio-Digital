@@ -46,6 +46,7 @@ class UsuarioController extends Controller
             'github_url' => 'nullable|url|max:300',
             'visibilidad' => 'nullable|string|in:publico,privado',
             'redes_sociales' => 'nullable|array',
+            'telefono' => 'nullable|string|max:50',
         ]);
 
         if ($validator->fails()) {
@@ -58,7 +59,7 @@ class UsuarioController extends Controller
             DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
 
             $result = DB::select(
-                "SELECT sp_actualizar_perfil_usuario(?,?,?,?,?,?,?,?,?,?) AS result",
+                "SELECT sp_actualizar_perfil_usuario(?,?,?,?,?,?,?,?,?,?,?) AS result",
                 [
                     $id,
                     $request->nombre,
@@ -69,7 +70,8 @@ class UsuarioController extends Controller
                     $request->linkedin_url,
                     $request->github_url,
                     $request->visibilidad,
-                    $request->has('redes_sociales') ? json_encode($request->redes_sociales) : null
+                    $request->has('redes_sociales') ? json_encode($request->redes_sociales) : null,
+                    $request->telefono
                 ]
             );
 
@@ -228,5 +230,52 @@ class UsuarioController extends Controller
         }
 
         return response()->json($data, $data['ok'] ? 200 : 400);
+    }
+
+    /**
+     * GET /api/portafolio/{id}
+     * Obtiene el perfil completo (proyectos, habilidades, etc) para vista pública.
+     * Si visibilidad = 'privado', no lo permite.
+     */
+    public function perfilPublico($id)
+    {
+        $result = DB::select("SELECT sp_obtener_perfil_usuario(?) AS result", [$id]);
+        $data = json_decode($result[0]->result, true);
+
+        if (!$data['ok']) {
+            return response()->json($data, 404);
+        }
+
+        // Verificar visibilidad
+        if ($data['perfil']['visibilidad'] === 'privado') {
+            return response()->json([
+                'ok' => false,
+                'codigo' => 'PERFIL_PRIVADO',
+                'mensaje' => 'Este perfil es privado'
+            ], 403);
+        }
+
+        // Si es público, obtener habilidades, proyectos y experiencias
+        $habilidadesObj = app(\App\Http\Controllers\HabilidadController::class)->listarParaUsuario($id);
+        $proyectosObj = app(\App\Http\Controllers\ProyectoController::class)->listarParaUsuario($id);
+        
+        $experiencias = DB::select("
+            SELECT id_experiencia, tipo, institucion_empresa, cargo_titulo, 
+                   fecha_inicio, fecha_fin, descripcion 
+            FROM experiencia 
+            WHERE id_usuario = ? 
+            ORDER BY fecha_inicio DESC", [$id]);
+
+        $data['perfil']['techSkills'] = $habilidadesObj->getData(true)['techSkills'] ?? [];
+        $data['perfil']['softSkills'] = $habilidadesObj->getData(true)['softSkills'] ?? [];
+        $data['perfil']['proyectos'] = $proyectosObj->getData(true)['proyectos'] ?? [];
+        $data['perfil']['experiencias'] = $experiencias;
+
+        // Ocultar datos sensibles
+        unset($data['perfil']['email']); // Opcional, pero recomendado
+        unset($data['perfil']['ci_estado']);
+        unset($data['perfil']['id_usuario']);
+
+        return response()->json($data, 200);
     }
 }

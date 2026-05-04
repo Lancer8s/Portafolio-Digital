@@ -20,6 +20,7 @@ import VistaEdicionPage from "./vistaEdicion/VistaEdicionPage";
 import EdicionHabilidadPage from "./edicionHabilidad/EdicionHabilidadPage";
 import EdicionProyectoPage from "./edicionProyecto/EdicionProyectoPage";
 import VistaProyectoPage from "./vistaProyecto/VistaProyectoPage";
+import PublicPortfolioPage from "./publicPortfolio/PublicPortfolioPage";
 
 const pageVariants = {
   initial: { opacity: 0, backgroundColor: "#000" },
@@ -101,6 +102,7 @@ function AnimatedRoutes() {
           />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
+          <Route path="/portafolio/:id" element={<PublicPortfolioPage />} />
           <Route
             path="/registro"
             element={

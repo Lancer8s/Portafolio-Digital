@@ -121,6 +121,7 @@ export default function SkillsEditor({
       biografia: bioForm.biografia,
       visibilidad: bioForm.visibilidad,
       redes_sociales: bioForm.redes_sociales,
+      telefono: bioForm.telefono,
     });
     if (!data.ok) {
       showToast(data.mensaje || "Error al guardar", "error");
@@ -355,6 +356,12 @@ export default function SkillsEditor({
                 {userData.email}
               </div>
             )}
+            {userData?.telefono && (
+              <div style={{ color: sub, fontSize: 12, marginTop: 4 }}>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ marginRight: 4, verticalAlign: "-2px" }}><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                {userData.telefono}
+              </div>
+            )}
           </div>
         </div>
         {userData?.biografia ? (
@@ -395,6 +402,7 @@ export default function SkillsEditor({
             biografia: userData?.biografia || "",
             visibilidad: userData?.visibilidad || "publico",
             redes_sociales: userData?.redes_sociales || [],
+            telefono: userData?.telefono || "",
           });
           setEditBio(true);
         })}
@@ -805,6 +813,7 @@ export default function SkillsEditor({
                 { name: "nombreCompleto", label: "Nombre Completo" },
                 { name: "apellidoCompleto", label: "Apellido Completo" },
                 { name: "titulo", label: "Título / Rol" },
+                { name: "telefono", label: "Teléfono" },
               ].map(({ name, label }) => {
                 const disabled = userData?.nombre_modificado && (name === "nombreCompleto" || name === "apellidoCompleto");
                 return (
@@ -863,21 +872,26 @@ export default function SkillsEditor({
                   <div key={idx} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
                     <input
                       style={{ ...inp, flex: 1 }}
-                      placeholder="Plataforma (Ej. Twitter)"
-                      value={red.plataforma}
-                      onChange={(e) => {
-                        const newArr = [...bioForm.redes_sociales];
-                        newArr[idx].plataforma = e.target.value;
-                        setBioForm({ ...bioForm, redes_sociales: newArr });
-                      }}
-                    />
-                    <input
-                      style={{ ...inp, flex: 2 }}
-                      placeholder="https://..."
+                      placeholder="https://... o correo electrónico"
                       value={red.url}
                       onChange={(e) => {
                         const newArr = [...bioForm.redes_sociales];
-                        newArr[idx].url = e.target.value;
+                        const val = e.target.value;
+                        newArr[idx].url = val;
+                        
+                        // Infer platform automatically
+                        let plat = "Enlace";
+                        const lowVal = val.toLowerCase();
+                        if (lowVal.includes("instagram")) plat = "Instagram";
+                        else if (lowVal.includes("facebook")) plat = "Facebook";
+                        else if (lowVal.includes("twitter") || lowVal.includes("x.com")) plat = "X (Twitter)";
+                        else if (lowVal.includes("youtube")) plat = "YouTube";
+                        else if (lowVal.includes("linkedin")) plat = "LinkedIn";
+                        else if (lowVal.includes("github")) plat = "GitHub";
+                        else if (lowVal.includes("tiktok")) plat = "TikTok";
+                        else if (lowVal.includes("mail") || lowVal.includes("@")) plat = "Correo";
+                        
+                        newArr[idx].plataforma = plat;
                         setBioForm({ ...bioForm, redes_sociales: newArr });
                       }}
                     />

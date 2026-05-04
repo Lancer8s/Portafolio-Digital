@@ -10,7 +10,7 @@ export default function DefaultAvatar({ size = 40, style = {} }) {
         width: s,
         height: s,
         borderRadius: "50%",
-        background: "linear-gradient(145deg, #475569 0%, #334155 50%, #1e293b 100%)",
+        background: "linear-gradient(135deg, #60A5FA 0%, #3B82F6 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
@@ -22,11 +22,11 @@ export default function DefaultAvatar({ size = 40, style = {} }) {
     >
       <svg width={s * 0.55} height={s * 0.55} viewBox="0 0 24 24" fill="none">
         {/* Head */}
-        <circle cx="12" cy="9" r="4" fill="rgba(226,232,240,0.8)" />
+        <circle cx="12" cy="9" r="4" fill="#ffffff" />
         {/* Shoulders */}
         <path
           d="M4.5 22c0-4.14 3.36-7.5 7.5-7.5s7.5 3.36 7.5 7.5"
-          fill="rgba(226,232,240,0.8)"
+          fill="#ffffff"
         />
       </svg>
     </div>
