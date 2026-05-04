@@ -18,11 +18,18 @@ export default function StatsBar({ userData, isDark }) {
   ];
 
   return (
-    <div style={{
-      display: "flex", flexDirection: "column",
-      gap: 12, height: "100%", overflowY: "auto", paddingRight: "10px",
-      scrollbarWidth: "none", msOverflowStyle: "none"
-    }}>
+    <>
+      <style>{`
+        @media (max-width: 768px) {
+          .stats-container { flex-direction: row !important; flex-wrap: wrap !important; height: auto !important; overflow-y: visible !important; }
+          .stats-container h3 { width: 100%; }
+        }
+      `}</style>
+      <div className="stats-container" style={{
+        display: "flex", flexDirection: "column",
+        gap: 12, height: "100%", overflowY: "auto", paddingRight: "10px",
+        scrollbarWidth: "none", msOverflowStyle: "none"
+      }}>
       {/* Título de la sección para el sidebar */}
       <h3 style={{ color: text, fontSize: 16, fontWeight: 800, margin: "10px 0 10px 4px", textTransform: "uppercase", letterSpacing: "1px" }}>Estadísticas</h3>
       {stats.map((s, i) => (
@@ -63,5 +70,6 @@ export default function StatsBar({ userData, isDark }) {
         </div>
       )}
     </div>
+    </>
   );
 }

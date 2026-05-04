@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { validateProfileData, validateProfileImage, getInitials } from "../services/profile.service";
 import { perfilAPI } from "../../api";
 import { useApp } from "../../context/AppContext";
+import DefaultAvatar from "../../components/DefaultAvatar";
 
 export default function ProfileForm({ onNext, isDark }) {
   const { userData, debouncedRefresh } = useApp();
@@ -215,8 +216,6 @@ export default function ProfileForm({ onNext, isDark }) {
       {step === "datos" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {[
-            { name: "nombreCompleto", label: "Nombre Completo" },
-            { name: "apellidoCompleto", label: "Apellido Completo" },
             { name: "titulo", label: "Titulo / Rol" },
           ].map(({ name, label }) => (
             <div key={name}>
@@ -309,22 +308,7 @@ export default function ProfileForm({ onNext, isDark }) {
                 }}
               />
             ) : (
-              <div
-                style={{
-                  width: 130,
-                  height: 130,
-                  background: "#3B82F6",
-                  borderRadius: 12,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: 40,
-                  fontWeight: 700,
-                  color: "#fff",
-                }}
-              >
-                {initials}
-              </div>
+              <DefaultAvatar size={130} style={{ borderRadius: 12 }} />
             )}
             <p style={{ color: text, fontWeight: 600 }}>Foto de Perfil</p>
             <p style={{ color: sub, fontSize: 12 }}>

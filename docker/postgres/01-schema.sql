@@ -47,7 +47,7 @@ CREATE TABLE usuario (
   id_imagen      INT REFERENCES imagen(id_imagen) ON DELETE SET NULL,
   nombre_modificado BOOLEAN   NOT NULL DEFAULT FALSE,
   id_imagen_ci   INT REFERENCES imagen(id_imagen) ON DELETE SET NULL,
-  ci_estado      VARCHAR(50)  DEFAULT 'Pendiente de revisión',
+  ci_estado      VARCHAR(50)  DEFAULT NULL,
   linkedin_url   VARCHAR(300),
   github_url     VARCHAR(300),
   redes_sociales JSONB        DEFAULT '[]'::jsonb,

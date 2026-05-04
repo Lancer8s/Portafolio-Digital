@@ -6,6 +6,7 @@ import { useApp } from "../context/AppContext";
 import { perfilAPI } from "../api";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
+import DefaultAvatar from "./DefaultAvatar";
 
 const HIDDEN_ON = ["/", "/registro", "/login", "/auth/callback"];
 
@@ -114,15 +115,7 @@ export default function Navbar() {
               alt=""
             />
           ) : (
-            <div
-              style={{
-                width: 34, height: 34, background: "#3B82F6", borderRadius: "50%",
-                display: "flex", alignItems: "center", justifyContent: "center",
-                color: "#fff", fontWeight: 700, fontSize: 13, border: `2px solid ${border}`
-              }}
-            >
-              {initials}
-            </div>
+            <DefaultAvatar size={34} style={{ border: `2px solid ${border}` }} />
           )}
         </button>
 

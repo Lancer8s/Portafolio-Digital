@@ -5,6 +5,7 @@ import lapizOscuro from "../../assets/lapizOscuro.png";
 import { useApp } from "../../context/AppContext";
 import { perfilAPI, habilidadAPI, proyectoAPI } from "../../api";
 import ExperienciaList from "./ExperienciaList";
+import DefaultAvatar from "../../components/DefaultAvatar";
 
 export default function SkillsEditor({
   userData,
@@ -333,23 +334,7 @@ export default function SkillsEditor({
             alt=""
           />
         ) : (
-          <div
-            style={{
-              width: 40,
-              height: 40,
-              background: "#3B82F6",
-              borderRadius: 8,
-              flexShrink: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#fff",
-              fontWeight: 700,
-              fontSize: 14,
-            }}
-          >
-            {initials}
-          </div>
+          <DefaultAvatar size={40} style={{ borderRadius: 8 }} />
         )}
         <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
           <span
@@ -917,22 +902,7 @@ export default function SkillsEditor({
                       }}
                     />
                   ) : (
-                    <div
-                      style={{
-                        width: 56,
-                        height: 56,
-                        background: "#3B82F6",
-                        borderRadius: 8,
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: "#fff",
-                        fontWeight: 700,
-                        fontSize: 18,
-                      }}
-                    >
-                      {initials}
-                    </div>
+                    <DefaultAvatar size={56} style={{ borderRadius: 8 }} />
                   )}
                   <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
                     <button

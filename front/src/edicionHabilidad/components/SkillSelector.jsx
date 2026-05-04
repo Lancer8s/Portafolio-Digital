@@ -267,13 +267,20 @@ export default function SkillSelector({ isDark, onBack, onSave, userData }) {
               <p style={{ color: sub, fontSize: 12, marginBottom: 8 }}>
                 Añadir Nivel de la habilidad
               </p>
+              <style>{`
+                .skill-range { -webkit-appearance: none; appearance: none; width: 100%; height: 8px; border-radius: 4px; outline: none; cursor: pointer; }
+                .skill-range::-webkit-slider-thumb { -webkit-appearance: none; appearance: none; width: 20px; height: 20px; border-radius: 50%; background: #3B82F6; cursor: grab; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+                .skill-range::-webkit-slider-thumb:active { cursor: grabbing; transform: scale(1.15); }
+                .skill-range::-moz-range-thumb { width: 20px; height: 20px; border-radius: 50%; background: #3B82F6; cursor: grab; border: 2px solid #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.3); }
+              `}</style>
               <input
+                className="skill-range"
                 type="range"
                 min={0}
                 max={100}
                 value={techLevel}
                 onChange={(e) => setTechLevel(Number(e.target.value))}
-                style={{ width: "100%", accentColor: "#3B82F6" }}
+                style={{ background: `linear-gradient(to right, #3B82F6 ${techLevel}%, ${isDark ? '#1D283A' : '#E2E8F0'} ${techLevel}%)` }}
               />
               <span style={{ color: text, fontWeight: 700, fontSize: 15 }}>
                 {techLevel}%
