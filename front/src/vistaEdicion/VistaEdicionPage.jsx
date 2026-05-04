@@ -7,7 +7,7 @@ export default function VistaEdicionPage({ userData,
     onGoToHabilidad, onGoToProyecto, onBack, 
     onEditDatos, onEditProyecto, onVerProyecto }) {
   const { isDark } = useTheme();
-  const bg = isDark ? "#020617" : "#D9D9D9";
+  const bg = isDark ? "#020617" : "#F1F5F9";
 
   return (
     <>

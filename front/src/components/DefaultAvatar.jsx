@@ -1,33 +1,32 @@
 /**
- * Default avatar silhouette — used when no profile photo is available.
- * Shows a clean person-shaped icon like phone contacts.
+ * Default avatar — modern silhouette with subtle gradient.
+ * Used when no profile photo is uploaded.
  */
 export default function DefaultAvatar({ size = 40, style = {} }) {
+  const s = size;
   return (
     <div
       style={{
-        width: size,
-        height: size,
+        width: s,
+        height: s,
         borderRadius: "50%",
-        background: "linear-gradient(135deg, #94a3b8 0%, #64748b 100%)",
+        background: "linear-gradient(145deg, #475569 0%, #334155 50%, #1e293b 100%)",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         flexShrink: 0,
         overflow: "hidden",
+        boxShadow: "inset 0 2px 6px rgba(0,0,0,0.25)",
         ...style,
       }}
     >
-      <svg
-        width={size * 0.6}
-        height={size * 0.6}
-        viewBox="0 0 24 24"
-        fill="none"
-      >
-        <circle cx="12" cy="8" r="4.5" fill="rgba(255,255,255,0.85)" />
+      <svg width={s * 0.55} height={s * 0.55} viewBox="0 0 24 24" fill="none">
+        {/* Head */}
+        <circle cx="12" cy="9" r="4" fill="rgba(226,232,240,0.8)" />
+        {/* Shoulders */}
         <path
-          d="M4 21c0-4.418 3.582-8 8-8s8 3.582 8 8"
-          fill="rgba(255,255,255,0.85)"
+          d="M4.5 22c0-4.14 3.36-7.5 7.5-7.5s7.5 3.36 7.5 7.5"
+          fill="rgba(226,232,240,0.8)"
         />
       </svg>
     </div>

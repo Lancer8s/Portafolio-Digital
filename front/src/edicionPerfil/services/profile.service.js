@@ -1,10 +1,8 @@
 export const getInitials = (nombre = "", apellido = "") =>
   `${nombre.charAt(0)}${apellido.charAt(0)}`.toUpperCase() || "??";
 
-export const validateProfileData = ({ nombreCompleto, apellidoCompleto, titulo }) => {
+export const validateProfileData = ({ titulo }) => {
   const errors = {};
-  if (!nombreCompleto.trim()) errors.nombreCompleto = "El nombre completo es obligatorio";
-  if (!apellidoCompleto.trim()) errors.apellidoCompleto = "El apellido es obligatorio";
   if (!titulo.trim()) errors.titulo = "El título/rol es obligatorio";
   return errors;
 };

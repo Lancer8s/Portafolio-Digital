@@ -4,6 +4,13 @@ import { experienciaAPI } from "../../api";
 import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
 
+const formatDate = (dateStr) => {
+  if (!dateStr) return "Actualidad";
+  const d = new Date(dateStr);
+  if (isNaN(d.getTime())) return dateStr;
+  return d.toLocaleDateString("es-BO", { year: "numeric", month: "short", day: "numeric" });
+};
+
 export default function ExperienciaList({ isDark }) {
   const [experiencias, setExperiencias] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -15,7 +22,7 @@ export default function ExperienciaList({ isDark }) {
   const text = isDark ? "#fff" : "#111";
   const sub = isDark ? "#94a3b8" : "#807F81";
   const border = isDark ? "#1D283A" : "#E2E8F0";
-  const box = isDark ? "#0F172A" : "#F8FAFC";
+  const box = isDark ? "#0F172A" : "#fff";
   const lapiz = isDark ? lapizClaro : lapizOscuro;
 
   const showToast = (msg, type = "success") => {
@@ -23,12 +30,15 @@ export default function ExperienciaList({ isDark }) {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const sortExperiencias = (list) =>
+    [...list].sort((a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio));
+
   const loadData = async () => {
     setLoading(true);
     try {
       const { data } = await experienciaAPI.listar();
       if (data.ok) {
-        setExperiencias(data.experiencias || []);
+        setExperiencias(sortExperiencias(data.experiencias || []));
       }
     } catch (err) {
       console.error(err);
@@ -37,9 +47,7 @@ export default function ExperienciaList({ isDark }) {
     }
   };
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  useEffect(() => { loadData(); }, []);
 
   const handleEdit = (exp) => {
     setForm({
@@ -72,7 +80,6 @@ export default function ExperienciaList({ isDark }) {
     try {
       const payload = { ...form };
       if (!payload.fecha_fin) payload.fecha_fin = null;
-      
       let res;
       if (form.id_experiencia) {
         res = await experienciaAPI.actualizar(form.id_experiencia, payload);
@@ -106,56 +113,87 @@ export default function ExperienciaList({ isDark }) {
   const inp = {
     background: isDark ? "#1D283A" : "#F8FAFC",
     border: `1px solid ${border}`,
-    color: text,
-    borderRadius: 8,
-    padding: "10px 14px",
-    fontSize: 14,
-    outline: "none",
-    width: "100%",
-    boxSizing: "border-box",
+    color: text, borderRadius: 8, padding: "10px 14px",
+    fontSize: 14, outline: "none", width: "100%", boxSizing: "border-box",
   };
   const lbl = { color: sub, fontSize: 12, marginBottom: 4, display: "block" };
 
   return (
-    <div style={{ marginBottom: 40 }}>
+    <div style={{ marginBottom: 24 }}>
       {toast && (
         <div style={{ position: "fixed", top: 20, left: "50%", transform: "translateX(-50%)", background: toast.type === "success" ? "#16a34a" : "#ef4444", color: "#fff", borderRadius: 8, padding: "10px 24px", fontWeight: 600, fontSize: 14, zIndex: 999 }}>
           {toast.msg}
         </div>
       )}
 
-      <button onClick={handleAddNew} style={{ background: "none", border: "none", cursor: "pointer", color: "#3B82F6", fontWeight: 700, fontSize: 17, display: "flex", alignItems: "center", gap: 8, marginBottom: 12, padding: 0 }}>
-        <span style={{ fontSize: 22 }}>+</span> Añadir Experiencia o Formación
+      <button onClick={handleAddNew} style={{ background: "none", border: "none", cursor: "pointer", color: "#3B82F6", fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8, marginBottom: 14, padding: 0 }}>
+        <span style={{ fontSize: 20 }}>+</span> Añadir Experiencia
       </button>
 
       {experiencias.length === 0 ? (
         <p style={{ color: sub, fontSize: 13 }}>No hay experiencia registrada aún.</p>
       ) : (
-        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-          {experiencias.map(exp => (
-            <div key={exp.id_experiencia} style={{ background: box, border: `1px solid ${border}`, borderRadius: 10, padding: 16, position: "relative" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
-                <div>
-                  <div style={{ color: "#3B82F6", fontSize: 12, fontWeight: 700, textTransform: "uppercase", marginBottom: 4 }}>
-                    {exp.tipo === "laboral" ? "Laboral" : "Académica"}
+        <div style={{ position: "relative", paddingLeft: 24 }}>
+          {/* Vertical timeline line */}
+          <div style={{
+            position: "absolute", left: 7, top: 6, bottom: 6, width: 2,
+            background: isDark
+              ? "linear-gradient(to bottom, #3B82F6, #6366F1 50%, transparent)"
+              : "linear-gradient(to bottom, #3B82F6, #6366F1 50%, transparent)",
+            borderRadius: 2,
+          }} />
+
+          {experiencias.map((exp, i) => (
+            <motion.div
+              key={exp.id_experiencia}
+              initial={{ opacity: 0, x: -10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: i * 0.06 }}
+              style={{ position: "relative", marginBottom: i < experiencias.length - 1 ? 16 : 0 }}
+            >
+              {/* Dot */}
+              <div style={{
+                position: "absolute", left: -20, top: 8, width: 12, height: 12,
+                borderRadius: "50%", background: "#3B82F6",
+                border: `2px solid ${isDark ? "#0F172A" : "#F8FAFC"}`,
+                boxShadow: "0 0 0 3px rgba(59,130,246,0.2)",
+              }} />
+
+              <div style={{
+                background: box, border: `1px solid ${border}`,
+                borderRadius: 10, padding: "12px 14px",
+                transition: "box-shadow 0.2s",
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                      <span style={{
+                        display: "inline-block", fontSize: 10, fontWeight: 700, textTransform: "uppercase",
+                        letterSpacing: "0.05em", padding: "2px 8px", borderRadius: 4,
+                        background: exp.tipo === "laboral" ? "rgba(59,130,246,0.12)" : "rgba(168,85,247,0.12)",
+                        color: exp.tipo === "laboral" ? "#3B82F6" : "#a855f7",
+                      }}>
+                        {exp.tipo === "laboral" ? "Laboral" : "Académica"}
+                      </span>
+                      <span style={{ color: sub, fontSize: 11 }}>
+                        {formatDate(exp.fecha_inicio)} — {formatDate(exp.fecha_fin)}
+                      </span>
+                    </div>
+                    <h4 style={{ color: text, fontSize: 14, margin: "2px 0 1px", fontWeight: 600 }}>{exp.cargo_titulo}</h4>
+                    <div style={{ color: sub, fontSize: 12 }}>{exp.institucion_empresa}</div>
+                    {exp.descripcion && <p style={{ color: text, fontSize: 12, margin: "6px 0 0", whiteSpace: "pre-wrap", opacity: 0.85, lineHeight: 1.5 }}>{exp.descripcion}</p>}
                   </div>
-                  <h3 style={{ color: text, fontSize: 16, margin: "0 0 4px 0" }}>{exp.cargo_titulo}</h3>
-                  <div style={{ color: sub, fontSize: 14, marginBottom: 8 }}>{exp.institucion_empresa}</div>
-                  <div style={{ color: sub, fontSize: 12, marginBottom: 8 }}>
-                    {exp.fecha_inicio} — {exp.fecha_fin ? exp.fecha_fin : "Actualidad"}
+                  <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: 8 }}>
+                    <button onClick={() => handleEdit(exp)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                      <img src={lapiz} alt="editar" style={{ width: 13, height: 13 }} />
+                    </button>
+                    <button onClick={() => deleteExp(exp.id_experiencia)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontWeight: "bold", fontSize: 14, padding: 4 }}>
+                      ✕
+                    </button>
                   </div>
-                  {exp.descripcion && <p style={{ color: text, fontSize: 13, margin: 0, whiteSpace: "pre-wrap" }}>{exp.descripcion}</p>}
-                </div>
-                <div style={{ display: "flex", gap: 8 }}>
-                  <button onClick={() => handleEdit(exp)} style={{ background: "none", border: "none", cursor: "pointer" }}>
-                    <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
-                  </button>
-                  <button onClick={() => deleteExp(exp.id_experiencia)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontWeight: "bold" }}>
-                    ✕
-                  </button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           ))}
         </div>
       )}
@@ -165,7 +203,6 @@ export default function ExperienciaList({ isDark }) {
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
           <div style={{ background: isDark ? "#0F172A" : "#fff", border: `1px solid ${border}`, borderRadius: 14, padding: 24, width: "100%", maxWidth: 480 }}>
             <h3 style={{ color: text, margin: "0 0 20px 0", fontSize: 18 }}>{form.id_experiencia ? "Editar" : "Añadir"} Experiencia</h3>
-            
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
                 <label style={lbl}>Tipo</label>
@@ -197,7 +234,6 @@ export default function ExperienciaList({ isDark }) {
                 <textarea style={{...inp, resize: "vertical"}} rows={3} value={form.descripcion} onChange={e => setForm({...form, descripcion: e.target.value})} />
               </div>
             </div>
-
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
               <button onClick={() => setModalOpen(false)} style={{ background: "none", border: "none", color: text, cursor: "pointer", fontWeight: 600 }}>Cancelar</button>
               <button onClick={saveExp} disabled={saving} style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "8px 20px", fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>

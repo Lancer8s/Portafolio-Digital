@@ -86,8 +86,14 @@ export default function RegisterForm({ isDark }) {
           backendErrors.contrasena = resp.errores.password[0];
         setErrors(backendErrors);
       } else {
+        // Handle garbled UTF-8 from backend or use known codes
+        const codigo = resp?.codigo;
+        const mensajeMap = {
+          EMAIL_DUPLICADO: "El correo electrónico ya está registrado",
+          ERROR_INTERNO: "Error interno del servidor",
+        };
         setApiError(
-          resp?.mensaje || "Error de conexión con el servidor"
+          mensajeMap[codigo] || resp?.mensaje || "Error de conexión con el servidor"
         );
       }
     } finally {

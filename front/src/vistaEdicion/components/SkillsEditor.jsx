@@ -277,7 +277,7 @@ export default function SkillsEditor({
   return (
     <div
       style={{
-        maxWidth: 640,
+        maxWidth: 820,
         margin: "0 auto",
         padding: "0 16px 80px",
         boxSizing: "border-box",
@@ -307,55 +307,76 @@ export default function SkillsEditor({
         </div>
       )}
 
-      {/* HEADER */}
+      {/* PROFILE CARD — social-media style */}
       <motion.div
-        initial={{ opacity: 0, y: -16 }}
+        initial={{ opacity: 0, y: 10 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3 }}
         style={{
-          display: "flex",
-          alignItems: "center",
-          gap: 12,
-          padding: "14px 0",
-          borderBottom: `1px solid ${border}`,
-          marginBottom: 28,
+          background: isDark ? "#0F172A" : "#fff",
+          border: `1px solid ${border}`,
+          borderRadius: 16,
+          padding: "24px 28px",
+          marginBottom: 24,
+          boxShadow: isDark ? "none" : "0 1px 6px rgba(0,0,0,0.05)",
         }}
       >
-        {userData?.preview || userData?.foto_url ? (
-          <img
-            src={userData.preview || userData.foto_url}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 8,
-              objectFit: "cover",
-              flexShrink: 0,
-            }}
-            alt=""
-          />
-        ) : (
-          <DefaultAvatar size={40} style={{ borderRadius: 8 }} />
-        )}
-        <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
-          <span
-            style={{
-              color: text,
-              fontWeight: 600,
-              fontSize: 16,
-              overflow: "hidden",
-              textOverflow: "ellipsis",
-              whiteSpace: "nowrap",
-            }}
-          >
-            {userData?.nombreCompleto} {userData?.apellidoCompleto}
-          </span>
-          <span style={{ color: "#3B82F6", fontWeight: 700, fontSize: 13, marginTop: 2 }}>
-            {userData?.titulo || "Tu Rol/Título"}
-          </span>
-          <p style={{ color: sub, fontSize: 13, margin: "6px 0 0", lineHeight: 1.5, wordBreak: "break-word" }}>
-            {userData?.biografia || "Añade una breve biografía..."}
-          </p>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 18 }}>
+          {userData?.preview || userData?.foto_url ? (
+            <img
+              src={userData.preview || userData.foto_url}
+              style={{
+                width: 72, height: 72, borderRadius: "50%",
+                objectFit: "cover", flexShrink: 0,
+                border: `3px solid ${isDark ? "#1D283A" : "#E2E8F0"}`,
+              }}
+              alt=""
+            />
+          ) : (
+            <DefaultAvatar size={72} />
+          )}
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <h2 style={{
+              color: text, fontSize: 20, fontWeight: 700, margin: "0 0 4px",
+              lineHeight: 1.2,
+            }}>
+              {userData?.nombreCompleto} {userData?.apellidoCompleto}
+            </h2>
+            {userData?.titulo && (
+              <span style={{
+                display: "inline-block", fontSize: 12, fontWeight: 600,
+                color: "#3B82F6", background: isDark ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.08)",
+                padding: "3px 10px", borderRadius: 6, marginBottom: 6,
+              }}>
+                {userData.titulo}
+              </span>
+            )}
+            {userData?.email && (
+              <div style={{ color: sub, fontSize: 12, marginTop: 4 }}>
+                {userData.email}
+              </div>
+            )}
+          </div>
         </div>
+        {userData?.biografia ? (
+          <p style={{
+            color: text, fontSize: 14, lineHeight: 1.65,
+            margin: "16px 0 0", padding: "14px 16px",
+            background: isDark ? "rgba(30,41,59,0.5)" : "#F8FAFC",
+            borderRadius: 10, borderLeft: "3px solid #3B82F6",
+            whiteSpace: "pre-wrap", wordBreak: "break-word",
+          }}>
+            {userData.biografia}
+          </p>
+        ) : (
+          <p style={{
+            color: sub, fontSize: 13, fontStyle: "italic",
+            margin: "14px 0 0", padding: "12px 16px",
+            background: isDark ? "rgba(30,41,59,0.3)" : "#F8FAFC",
+            borderRadius: 10, borderLeft: "3px solid #3B82F6",
+          }}>
+            Añade una breve biografía desde &quot;Editar Datos&quot;...
+          </p>
+        )}
       </motion.div>
 
       {/* Editar Datos */}
@@ -541,20 +562,11 @@ export default function SkillsEditor({
         })}
       </div>
 
-      {/* EXPERIENCIA */}
+      {/* PROYECTOS — moved before timeline */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.22 }}
-      >
-        <ExperienciaList isDark={isDark} />
-      </motion.div>
-
-      {/* PROYECTOS */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.25 }}
         style={{ marginBottom: 10 }}
       >
         <button
@@ -578,7 +590,7 @@ export default function SkillsEditor({
         <div
           style={{
             display: "grid",
-            gridTemplateColumns: "repeat(auto-fill, minmax(200px,1fr))",
+            gridTemplateColumns: "repeat(auto-fill, minmax(220px,1fr))",
             gap: 16,
           }}
         >
@@ -637,27 +649,9 @@ export default function SkillsEditor({
                         strokeWidth="1.5"
                       >
                         <rect x="3" y="3" width="7" height="7" rx="1" />
-                        <rect
-                          x="14"
-                          y="3"
-                          width="7"
-                          height="7"
-                          rx="1"
-                        />
-                        <rect
-                          x="3"
-                          y="14"
-                          width="7"
-                          height="7"
-                          rx="1"
-                        />
-                        <rect
-                          x="14"
-                          y="14"
-                          width="7"
-                          height="7"
-                          rx="1"
-                        />
+                        <rect x="14" y="3" width="7" height="7" rx="1" />
+                        <rect x="3" y="14" width="7" height="7" rx="1" />
+                        <rect x="14" y="14" width="7" height="7" rx="1" />
                       </svg>
                     )}
                   </div>
@@ -770,6 +764,15 @@ export default function SkillsEditor({
             ))
           )}
         </div>
+      </motion.div>
+
+      {/* EXPERIENCIA / TIMELINE — after projects */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.28 }}
+      >
+        <ExperienciaList isDark={isDark} />
       </motion.div>
 
       {/* ====== MODAL EDITAR DATOS / BIOGRAFÍA ====== */}
