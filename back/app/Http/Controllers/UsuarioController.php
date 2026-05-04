@@ -24,7 +24,7 @@ class UsuarioController extends Controller
 
         // La foto_url del SP es la ruta relativa; construimos la URL completa
         if ($data['ok'] && !empty($data['perfil']['foto_url'])) {
-            $data['perfil']['foto_url'] = asset('storage/' . $data['perfil']['foto_url']);
+            $data['perfil']['foto_url'] = '/api/media/' . $data['perfil']['foto_url'];
         }
 
         return response()->json($data, $data['ok'] ? 200 : 404);
@@ -41,6 +41,11 @@ class UsuarioController extends Controller
             'apellido'  => 'nullable|string|max:80',
             'profesion' => 'nullable|string|max:120',
             'biografia' => 'nullable|string',
+            'titulo_profesional' => 'nullable|string|max:150',
+            'linkedin_url' => 'nullable|url|max:300',
+            'github_url' => 'nullable|url|max:300',
+            'visibilidad' => 'nullable|string|in:publico,privado',
+            'redes_sociales' => 'nullable|array',
         ]);
 
         if ($validator->fails()) {
@@ -53,13 +58,18 @@ class UsuarioController extends Controller
             DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
 
             $result = DB::select(
-                "SELECT sp_actualizar_perfil_usuario(?,?,?,?,?) AS result",
+                "SELECT sp_actualizar_perfil_usuario(?,?,?,?,?,?,?,?,?,?) AS result",
                 [
                     $id,
                     $request->nombre,
                     $request->apellido,
                     $request->profesion,
                     $request->biografia,
+                    $request->titulo_profesional,
+                    $request->linkedin_url,
+                    $request->github_url,
+                    $request->visibilidad,
+                    $request->has('redes_sociales') ? json_encode($request->redes_sociales) : null
                 ]
             );
 
@@ -96,18 +106,65 @@ class UsuarioController extends Controller
             DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
 
             $result = DB::select(
-                "SELECT sp_actualizar_foto_perfil(?,?,?,?,?) AS result",
-                [$id, $ruta, $nombre, $tipo, $tamanioKb]
+                "SELECT sp_actualizar_foto_perfil(?,?,?,?,?,?) AS result",
+                [$id, $ruta, $nombre, $tipo, $tamanioKb, 'perfil']
             );
 
             return json_decode($result[0]->result, true);
         });
 
         if ($data['ok']) {
-            $data['foto_url'] = asset('storage/' . $ruta);
+            $data['foto_url'] = '/api/media/' . $ruta;
         }
 
         return response()->json($data, $data['ok'] ? 200 : 400);
+    }
+
+    public function actualizarCI(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ci' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
+        }
+
+        $id   = $request->user()->id_usuario;
+        $file = $request->file('ci');
+
+        $ruta       = $file->store('documentos_ci', 'public');
+        $nombre     = $file->getClientOriginalName();
+        $tipo       = $file->getMimeType();
+        $tamanioKb  = (int) round($file->getSize() / 1024);
+
+        $data = DB::transaction(function () use ($id, $ruta, $nombre, $tipo, $tamanioKb) {
+            DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
+
+            // We can just reuse sp_actualizar_foto_perfil or create a new one. 
+            // Wait, we need to update id_imagen_ci and ci_estado!
+            // Let's do it with raw queries or eloquent since it's simple.
+            
+            // First, insert image.
+            $imagenId = DB::table('imagen')->insertGetId([
+                'ruta' => $ruta,
+                'nombre' => $nombre,
+                'tipo' => $tipo,
+                'tamanio_kb' => $tamanioKb,
+                'contexto' => 'perfil'
+            ], 'id_imagen');
+
+            DB::table('usuario')
+                ->where('id_usuario', $id)
+                ->update([
+                    'id_imagen_ci' => $imagenId,
+                    'ci_estado' => 'Pendiente de revisión'
+                ]);
+
+            return ['ok' => true, 'mensaje' => 'Documento recibido. Tu identidad está pendiente de verificación'];
+        });
+
+        return response()->json($data, 200);
     }
 
     /**
@@ -118,7 +175,7 @@ class UsuarioController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'password_actual' => 'required|string',
-            'password_nuevo'  => 'required|string|min:6',
+            'password_nuevo'  => 'required|string|min:8',
         ]);
 
         if ($validator->fails()) {

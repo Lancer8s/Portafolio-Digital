@@ -126,20 +126,19 @@ export default function LoginPage() {
             : "0 8px 40px rgba(0,0,0,0.1)",
         }}
       >
-        <div
+        <h1
           style={{
-            background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
-            borderRadius: 10,
-            padding: "14px 20px",
-            marginBottom: 12,
+            color: text,
+            fontSize: 28,
+            fontWeight: 800,
             textAlign: "center",
+            marginBottom: 8,
+            letterSpacing: "-0.5px"
           }}
         >
-          <h1 style={{ color: "#fff", fontSize: 24, fontWeight: 700 }}>
-            Iniciar Sesión
-          </h1>
-        </div>
-        <p style={{ color: sub, textAlign: "center", marginBottom: 20 }}>
+          Bienvenido
+        </h1>
+        <p style={{ color: sub, textAlign: "center", marginBottom: 24, fontSize: 14 }}>
           Ingresa tus credenciales para continuar
         </p>
 

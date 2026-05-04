@@ -21,8 +21,15 @@ class Usuario extends Authenticatable
         'email',
         'password_hash',
         'profesion',
+        'titulo_profesional',
         'biografia',
         'id_imagen',
+        'nombre_modificado',
+        'id_imagen_ci',
+        'ci_estado',
+        'linkedin_url',
+        'github_url',
+        'visibilidad',
         'activo',
     ];
 

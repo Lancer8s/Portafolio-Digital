@@ -69,6 +69,13 @@ export const perfilAPI = {
       headers: { "Content-Type": "multipart/form-data" },
     });
   },
+  subirCI: (file) => {
+    const fd = new FormData();
+    fd.append("ci", file);
+    return api.post("/usuario/ci", fd, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+  },
 };
 
 // ────────────────────────────────────────────────────────
@@ -108,4 +115,14 @@ export const proyectoAPI = {
     api.delete(`/proyectos/${idProyecto}/imagenes/${idImagen}`),
   sincronizarHabilidades: (idProyecto, ids_habilidades) =>
     api.put(`/proyectos/${idProyecto}/habilidades`, { ids_habilidades }),
+};
+
+// ────────────────────────────────────────────────────────
+//  Experiencias endpoints
+// ────────────────────────────────────────────────────────
+export const experienciaAPI = {
+  listar: () => api.get("/experiencias"),
+  crear: (data) => api.post("/experiencias", data),
+  actualizar: (id, data) => api.put(`/experiencias/${id}`, data),
+  eliminar: (id) => api.delete(`/experiencias/${id}`),
 };

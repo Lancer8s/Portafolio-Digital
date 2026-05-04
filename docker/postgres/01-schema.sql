@@ -42,8 +42,16 @@ CREATE TABLE usuario (
   email          VARCHAR(150) NOT NULL UNIQUE,
   password_hash  VARCHAR(255) NOT NULL,
   profesion      VARCHAR(120),
+  titulo_profesional VARCHAR(150),
   biografia      TEXT,
   id_imagen      INT REFERENCES imagen(id_imagen) ON DELETE SET NULL,
+  nombre_modificado BOOLEAN   NOT NULL DEFAULT FALSE,
+  id_imagen_ci   INT REFERENCES imagen(id_imagen) ON DELETE SET NULL,
+  ci_estado      VARCHAR(50)  DEFAULT 'Pendiente de revisión',
+  linkedin_url   VARCHAR(300),
+  github_url     VARCHAR(300),
+  redes_sociales JSONB        DEFAULT '[]'::jsonb,
+  visibilidad    VARCHAR(20)  NOT NULL DEFAULT 'publico' CHECK (visibilidad IN ('publico','privado')),
   activo         BOOLEAN      NOT NULL DEFAULT TRUE,
   fecha_registro TIMESTAMP    NOT NULL DEFAULT NOW()
 );
@@ -60,6 +68,21 @@ CREATE TABLE oauth_account (
   refresh_token    TEXT,
   created_at       TIMESTAMP    DEFAULT NOW(),
   UNIQUE (provider, provider_user_id)
+);
+
+-- ============================================================
+-- 3.2 experiencia (laboral y académica)
+-- ============================================================
+CREATE TABLE experiencia (
+  id_experiencia SERIAL PRIMARY KEY,
+  id_usuario     INT NOT NULL REFERENCES usuario(id_usuario) ON DELETE CASCADE,
+  tipo           VARCHAR(20) NOT NULL CHECK (tipo IN ('laboral','academica')),
+  institucion_empresa VARCHAR(150) NOT NULL,
+  cargo_titulo   VARCHAR(150) NOT NULL,
+  fecha_inicio   DATE NOT NULL,
+  fecha_fin      DATE,
+  descripcion    TEXT,
+  fecha_registro TIMESTAMP NOT NULL DEFAULT NOW()
 );
 
 -- ============================================================
@@ -355,7 +378,11 @@ SELECT
   u.id_usuario,
   u.nombre || ' ' || u.apellido AS nombre_completo,
   u.profesion,
+  u.titulo_profesional,
   u.biografia,
+  u.linkedin_url,
+  u.github_url,
+  u.visibilidad,
   i.ruta                         AS foto_url
 FROM  usuario u
 LEFT  JOIN imagen i ON i.id_imagen = u.id_imagen

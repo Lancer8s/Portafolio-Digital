@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { validateProfileData, validateProfileImage, getInitials } from "../services/profile.service";
 import { perfilAPI } from "../../api";
 import { useApp } from "../../context/AppContext";
@@ -12,26 +12,33 @@ export default function ProfileForm({ onNext, isDark }) {
     titulo: "",
     biografia: "",
     foto: null,
+    ci: null,
   });
   const [errors, setErrors] = useState({});
   const [imgError, setImgError] = useState(null);
   const [preview, setPreview] = useState(null);
+  const [ciPreview, setCiPreview] = useState(null);
   const [toast, setToast] = useState(null);
   const [saving, setSaving] = useState(false);
+  const [savingCI, setSavingCI] = useState(false);
+
+  const hasLoaded = React.useRef(false);
 
   // Cargar datos existentes del contexto
   useEffect(() => {
-    if (userData) {
+    if (userData && !hasLoaded.current) {
       setData({
         nombreCompleto: userData.nombreCompleto || "",
         apellidoCompleto: userData.apellidoCompleto || "",
-        titulo: userData.titulo || "",
+        titulo: userData.titulo || userData.titulo_profesional || "",
         biografia: userData.biografia || "",
         foto: null,
+        ci: null,
       });
       if (userData.foto_url || userData.preview) {
         setPreview(userData.foto_url || userData.preview);
       }
+      hasLoaded.current = true;
     }
   }, [userData]);
 
@@ -74,7 +81,8 @@ export default function ProfileForm({ onNext, isDark }) {
         nombre: data.nombreCompleto,
         apellido: data.apellidoCompleto,
         profesion: data.titulo,
-        biografia: data.biografia,
+        titulo_profesional: data.titulo,
+        biografia: data.biografia
       });
       if (resp.ok) {
         showToast("Perfil actualizado correctamente");
@@ -137,6 +145,37 @@ export default function ProfileForm({ onNext, isDark }) {
       setPreview(null);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleCIFile = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const err = validateProfileImage(file);
+    if (err) {
+      showToast(err, "error");
+      return;
+    }
+
+    // Show CI preview locally
+    setCiPreview(URL.createObjectURL(file));
+
+    setSavingCI(true);
+    try {
+      const { data: resp } = await perfilAPI.subirCI(file);
+      if (resp.ok) {
+        showToast("CI subido correctamente para revisión");
+        debouncedRefresh();
+      } else {
+        showToast("Error al subir el CI", "error");
+        setCiPreview(null);
+      }
+    } catch (err) {
+      const msg = err.response?.data?.errores?.ci?.[0] || "Error al subir el CI";
+      showToast(msg, "error");
+      setCiPreview(null);
+    } finally {
+      setSavingCI(false);
     }
   };
 
@@ -206,6 +245,8 @@ export default function ProfileForm({ onNext, isDark }) {
               )}
             </div>
           ))}
+
+
           <div>
             <label style={lbl}>Breve Biografía</label>
             <textarea
@@ -324,6 +365,51 @@ export default function ProfileForm({ onNext, isDark }) {
                 hidden
                 onChange={handleFile}
                 disabled={saving}
+              />
+            </label>
+          </div>
+
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 12,
+              marginTop: 20,
+              paddingTop: 20,
+              borderTop: `1px solid ${border}`
+            }}
+          >
+            <p style={{ color: text, fontWeight: 600 }}>Cédula de Identidad (CI)</p>
+            <p style={{ color: sub, fontSize: 12, textAlign: 'center' }}>
+              Adjunta una foto de tu CI para futura verificación de identidad
+            </p>
+            {userData?.ci_estado && (
+              <p style={{ color: userData.ci_estado === 'Pendiente de revisión' ? '#eab308' : '#16a34a', fontSize: 13, fontWeight: 600 }}>
+                Estado: {userData.ci_estado}
+              </p>
+            )}
+            {ciPreview && (
+              <img src={ciPreview} alt="CI" style={{ width: 120, height: 80, objectFit: 'cover', borderRadius: 8, border: `1px solid ${border}` }} />
+            )}
+            <label
+              style={{
+                background: isDark ? "#1D283A" : "#E2E8F0",
+                color: text,
+                borderRadius: 8,
+                padding: "10px 28px",
+                cursor: savingCI ? "not-allowed" : "pointer",
+                fontWeight: 600,
+                opacity: savingCI ? 0.7 : 1,
+              }}
+            >
+              {savingCI ? "Subiendo CI..." : "Subir CI"}
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/jpg"
+                hidden
+                onChange={handleCIFile}
+                disabled={savingCI}
               />
             </label>
           </div>

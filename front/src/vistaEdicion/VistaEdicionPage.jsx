@@ -12,26 +12,25 @@ export default function VistaEdicionPage({ userData,
   const bg = isDark ? "#020617" : "#D9D9D9";
 
   return (
-    <div style={{ minHeight: "100vh", background: bg }}>
-      <button onClick={toggleTheme} style={{
-        position: "fixed", top: 16, right: 16, zIndex: 100,
-        background: "none", border: "none", cursor: "pointer", padding: 0,
-      }}>
-        <img src={isDark ? iconoSol : iconoLuna} alt="tema" style={{ width: 28, height: 28 }} />
-      </button>
+    <div style={{ minHeight: "100vh", background: bg, display: "flex", flexDirection: "row", alignItems: "flex-start" }}>
 
-      <StatsBar userData={userData} isDark={isDark} />
 
-      <VistaModule
-        userData={userData}
-        isDark={isDark}
-        onGoToHabilidad={onGoToHabilidad}
-        onGoToProyecto={onGoToProyecto}
-        onBack={onBack}
-        onEditDatos={onEditDatos} 
-        onEditProyecto={onEditProyecto}
-        onVerProyecto={onVerProyecto}
-      />
+      <div style={{ width: "260px", flexShrink: 0, position: "sticky", top: 0, height: "100vh", padding: "20px 0 20px 20px", boxSizing: "border-box" }}>
+        <StatsBar userData={userData} isDark={isDark} />
+      </div>
+
+      <div style={{ flex: 1, padding: "20px 20px 20px 0" }}>
+        <VistaModule
+          userData={userData}
+          isDark={isDark}
+          onGoToHabilidad={onGoToHabilidad}
+          onGoToProyecto={onGoToProyecto}
+          onBack={onBack}
+          onEditDatos={onEditDatos} 
+          onEditProyecto={onEditProyecto}
+          onVerProyecto={onVerProyecto}
+        />
+      </div>
     </div>
   );
 }

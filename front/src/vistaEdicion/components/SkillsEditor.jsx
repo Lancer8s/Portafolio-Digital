@@ -4,6 +4,7 @@ import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
 import { useApp } from "../../context/AppContext";
 import { perfilAPI, habilidadAPI, proyectoAPI } from "../../api";
+import ExperienciaList from "./ExperienciaList";
 
 export default function SkillsEditor({
   userData,
@@ -23,6 +24,8 @@ export default function SkillsEditor({
     apellidoCompleto: userData?.apellidoCompleto || "",
     titulo: userData?.titulo || "",
     biografia: userData?.biografia || "",
+    visibilidad: userData?.visibilidad || "publico",
+    redes_sociales: userData?.redes_sociales || [],
   });
 
   const [editHab, setEditHab] = useState(false);
@@ -35,7 +38,11 @@ export default function SkillsEditor({
   const [deletingProyecto, setDeletingProyecto] = useState(null);
   const [pendingPhoto, setPendingPhoto] = useState(null);      // File object
   const [pendingPhotoPreview, setPendingPhotoPreview] = useState(null); // blob URL
+  const [pendingCI, setPendingCI] = useState(null);
+  const [pendingCIPreview, setPendingCIPreview] = useState(null);
+  const [savingCI, setSavingCI] = useState(false);
   const fotoRef = useRef(null);
+  const ciRef = useRef(null);
 
   const text = isDark ? "#fff" : "#111";
   const sub = isDark ? "#94a3b8" : "#807F81";
@@ -109,7 +116,10 @@ export default function SkillsEditor({
       nombre: bioForm.nombreCompleto,
       apellido: bioForm.apellidoCompleto,
       profesion: bioForm.titulo,
+      titulo_profesional: bioForm.titulo,
       biografia: bioForm.biografia,
+      visibilidad: bioForm.visibilidad,
+      redes_sociales: bioForm.redes_sociales,
     });
     if (!data.ok) {
       showToast(data.mensaje || "Error al guardar", "error");
@@ -341,58 +351,26 @@ export default function SkillsEditor({
             {initials}
           </div>
         )}
-        <span
-          style={{
-            color: text,
-            fontWeight: 600,
-            fontSize: 15,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
-          {userData?.nombreCompleto} {userData?.apellidoCompleto}
-        </span>
-      </motion.div>
-
-      {/* TÍTULO */}
-      <motion.h1
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.05 }}
-        style={{
-          color: text,
-          fontWeight: 800,
-          textAlign: "center",
-          marginBottom: 16,
-          fontSize: "clamp(20px, 5vw, 32px)",
-          wordBreak: "break-word",
-          overflowWrap: "break-word",
-        }}
-      >
-        {userData?.titulo || "Tu Título"}
-      </motion.h1>
-
-      {/* BIOGRAFÍA — caja */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        style={{ ...section, marginBottom: 8 }}
-      >
-        <p
-          style={{
-            color: sub,
-            lineHeight: 1.7,
-            fontSize: 14,
-            margin: 0,
-            wordBreak: "break-word",
-            overflowWrap: "break-word",
-            whiteSpace: "pre-wrap",
-          }}
-        >
-          {userData?.biografia || "Tu biografía aparecerá aquí."}
-        </p>
+        <div style={{ display: "flex", flexDirection: "column", flex: 1, minWidth: 0 }}>
+          <span
+            style={{
+              color: text,
+              fontWeight: 600,
+              fontSize: 16,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {userData?.nombreCompleto} {userData?.apellidoCompleto}
+          </span>
+          <span style={{ color: "#3B82F6", fontWeight: 700, fontSize: 13, marginTop: 2 }}>
+            {userData?.titulo || "Tu Rol/Título"}
+          </span>
+          <p style={{ color: sub, fontSize: 13, margin: "6px 0 0", lineHeight: 1.5, wordBreak: "break-word" }}>
+            {userData?.biografia || "Añade una breve biografía..."}
+          </p>
+        </div>
       </motion.div>
 
       {/* Editar Datos */}
@@ -409,6 +387,8 @@ export default function SkillsEditor({
             apellidoCompleto: userData?.apellidoCompleto || "",
             titulo: userData?.titulo || "",
             biografia: userData?.biografia || "",
+            visibilidad: userData?.visibilidad || "publico",
+            redes_sociales: userData?.redes_sociales || [],
           });
           setEditBio(true);
         })}
@@ -575,6 +555,15 @@ export default function SkillsEditor({
           setEditHab(true);
         })}
       </div>
+
+      {/* EXPERIENCIA */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.22 }}
+      >
+        <ExperienciaList isDark={isDark} />
+      </motion.div>
 
       {/* PROYECTOS */}
       <motion.div
@@ -828,12 +817,15 @@ export default function SkillsEditor({
                 { name: "nombreCompleto", label: "Nombre Completo" },
                 { name: "apellidoCompleto", label: "Apellido Completo" },
                 { name: "titulo", label: "Título / Rol" },
-              ].map(({ name, label }) => (
+              ].map(({ name, label }) => {
+                const disabled = userData?.nombre_modificado && (name === "nombreCompleto" || name === "apellidoCompleto");
+                return (
                 <div key={name} style={{ marginBottom: 12 }}>
                   <label style={lbl}>{label}</label>
                   <input
-                    style={inp}
+                    style={{ ...inp, opacity: disabled ? 0.6 : 1, cursor: disabled ? "not-allowed" : "text" }}
                     value={bioForm[name]}
+                    disabled={disabled}
                     onChange={(e) =>
                       setBioForm((f) => ({
                         ...f,
@@ -841,8 +833,19 @@ export default function SkillsEditor({
                       }))
                     }
                   />
+                  {disabled ? (
+                    <span style={{ color: "#ef4444", fontSize: 11, marginTop: 4, display: "block" }}>
+                      Este campo no se puede volver a modificar.
+                    </span>
+                  ) : (
+                    (name === "nombreCompleto" || name === "apellidoCompleto") && (
+                      <span style={{ color: sub, fontSize: 11, marginTop: 4, display: "block" }}>
+                        ⚠️ Atención: solo podrás modificar tu {label.toLowerCase()} <b>una única vez</b>.
+                      </span>
+                    )
+                  )}
                 </div>
-              ))}
+              )})}
               <div style={{ marginBottom: 18 }}>
                 <label style={lbl}>Biografía</label>
                 <textarea
@@ -856,6 +859,46 @@ export default function SkillsEditor({
                     }))
                   }
                 />
+              </div>
+
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                  <label style={{ ...lbl, margin: 0 }}>Redes Sociales y URLs</label>
+                  <button 
+                    onClick={() => setBioForm(f => ({ ...f, redes_sociales: [...(f.redes_sociales || []), { plataforma: "", url: "" }] }))}
+                    style={{ background: "none", border: "none", color: "#3B82F6", fontWeight: 600, cursor: "pointer", fontSize: 12 }}
+                  >
+                    + Añadir
+                  </button>
+                </div>
+                {(bioForm.redes_sociales || []).map((red, idx) => (
+                  <div key={idx} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
+                    <input
+                      style={{ ...inp, flex: 1 }}
+                      placeholder="Plataforma (Ej. Twitter)"
+                      value={red.plataforma}
+                      onChange={(e) => {
+                        const newArr = [...bioForm.redes_sociales];
+                        newArr[idx].plataforma = e.target.value;
+                        setBioForm({ ...bioForm, redes_sociales: newArr });
+                      }}
+                    />
+                    <input
+                      style={{ ...inp, flex: 2 }}
+                      placeholder="https://..."
+                      value={red.url}
+                      onChange={(e) => {
+                        const newArr = [...bioForm.redes_sociales];
+                        newArr[idx].url = e.target.value;
+                        setBioForm({ ...bioForm, redes_sociales: newArr });
+                      }}
+                    />
+                    <button 
+                      onClick={() => setBioForm(f => ({ ...f, redes_sociales: f.redes_sociales.filter((_, i) => i !== idx) }))}
+                      style={{ background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, padding: "0 10px", cursor: "pointer", fontWeight: "bold" }}
+                    >✕</button>
+                  </div>
+                ))}
               </div>
 
               {/* ── Foto de Perfil ── */}
@@ -935,6 +978,99 @@ export default function SkillsEditor({
                     }}
                   />
                 </div>
+              </div>
+
+              {/* ── Verificación de Identidad (CI) ── */}
+              <div style={{ marginBottom: 18, paddingTop: 14, borderTop: `1px solid ${border}` }}>
+                <label style={{ ...lbl, fontWeight: 700, fontSize: 13 }}>Verificación de Identidad</label>
+                {userData?.ci_estado ? (
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginTop: 8 }}>
+                    <div style={{
+                      display: "inline-flex", alignItems: "center", gap: 6,
+                      background: userData.ci_estado === 'Verificado' ? 'rgba(22,163,74,0.15)' : 'rgba(234,179,8,0.15)',
+                      color: userData.ci_estado === 'Verificado' ? '#16a34a' : '#eab308',
+                      padding: "6px 12px", borderRadius: 6, fontSize: 13, fontWeight: 600
+                    }}>
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        {userData.ci_estado === 'Verificado' ? (
+                          <><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>
+                        ) : (
+                          <><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></>
+                        )}
+                      </svg>
+                      {userData.ci_estado}
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{ marginTop: 8 }}>
+                    <p style={{ color: sub, fontSize: 12, marginBottom: 10, marginTop: 0 }}>
+                      Sube una foto de tu Cédula de Identidad para verificar tu cuenta. Un administrador revisará tu solicitud.
+                    </p>
+                    {pendingCIPreview && (
+                      <img src={pendingCIPreview} alt="CI preview" style={{ width: 120, height: 80, objectFit: "cover", borderRadius: 8, marginBottom: 8, border: `1px solid ${border}` }} />
+                    )}
+                    <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+                      <button
+                        onClick={() => ciRef.current?.click()}
+                        style={{
+                          background: isDark ? "#1D283A" : "#E2E8F0",
+                          color: text, border: "none", borderRadius: 6,
+                          padding: "7px 16px", cursor: "pointer", fontWeight: 600, fontSize: 13,
+                        }}
+                      >
+                        {pendingCI ? "Cambiar CI" : "Seleccionar CI"}
+                      </button>
+                      {pendingCI && (
+                        <button
+                          onClick={async () => {
+                            setSavingCI(true);
+                            try {
+                              const { data: resp } = await perfilAPI.subirCI(pendingCI);
+                              if (resp.ok) {
+                                showToast("CI enviado para verificación");
+                                setPendingCI(null);
+                                setPendingCIPreview(null);
+                                debouncedRefresh();
+                              } else {
+                                showToast("Error al subir CI", "error");
+                              }
+                            } catch { showToast("Error al subir CI", "error"); }
+                            finally { setSavingCI(false); }
+                          }}
+                          disabled={savingCI}
+                          style={{
+                            background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                            color: "#fff", border: "none", borderRadius: 6,
+                            padding: "7px 16px", cursor: "pointer", fontWeight: 600, fontSize: 13,
+                            opacity: savingCI ? 0.6 : 1,
+                          }}
+                        >
+                          {savingCI ? "Enviando..." : "Enviar para Verificación"}
+                        </button>
+                      )}
+                      <input
+                        ref={ciRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/jpg"
+                        hidden
+                        onChange={(e) => {
+                          const file = e.target.files[0];
+                          if (!file) return;
+                          if (file.size > 2 * 1024 * 1024) { showToast("La imagen no puede superar 2MB", "error"); return; }
+                          if (!["image/jpeg", "image/png"].includes(file.type)) { showToast("Solo JPG/PNG", "error"); return; }
+                          if (pendingCIPreview) URL.revokeObjectURL(pendingCIPreview);
+                          setPendingCI(file);
+                          setPendingCIPreview(URL.createObjectURL(file));
+                        }}
+                      />
+                    </div>
+                    {pendingCI && (
+                      <span style={{ color: "#16a34a", fontSize: 11, marginTop: 4, display: "block" }}>
+                        ✓ Archivo seleccionado: {pendingCI.name}
+                      </span>
+                    )}
+                  </div>
+                )}
               </div>
               <div
                 style={{

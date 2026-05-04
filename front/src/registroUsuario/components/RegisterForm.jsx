@@ -36,6 +36,20 @@ export default function RegisterForm({ isDark }) {
     setApiError("");
   };
 
+  const calculateStrength = (pass) => {
+    let score = 0;
+    if (!pass) return { score, text: "", color: "transparent" };
+    if (pass.length > 7) score += 1;
+    if (pass.length > 10) score += 1;
+    if (/[A-Z]/.test(pass)) score += 1;
+    if (/[0-9]/.test(pass)) score += 1;
+    if (/[^A-Za-z0-9]/.test(pass)) score += 1;
+    if (score < 2) return { score: 1, text: "Débil", color: "#ef4444" };
+    if (score < 4) return { score: 2, text: "Media", color: "#eab308" };
+    return { score: 3, text: "Fuerte", color: "#22c55e" };
+  };
+  const str = calculateStrength(form.contrasena);
+
   const submit = async () => {
     const errs = validateRegisterForm(form);
     if (Object.keys(errs).length) {
@@ -143,6 +157,16 @@ export default function RegisterForm({ isDark }) {
             >
               {errors[name]}
             </span>
+          )}
+          {name === "contrasena" && form.contrasena && (
+            <div style={{ marginTop: 6 }}>
+              <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+                <div style={{ flex: 1, height: 4, borderRadius: 2, background: str.score >= 1 ? str.color : (isDark ? "#334155" : "#e2e8f0") }} />
+                <div style={{ flex: 1, height: 4, borderRadius: 2, background: str.score >= 2 ? str.color : (isDark ? "#334155" : "#e2e8f0") }} />
+                <div style={{ flex: 1, height: 4, borderRadius: 2, background: str.score >= 3 ? str.color : (isDark ? "#334155" : "#e2e8f0") }} />
+              </div>
+              <span style={{ color: str.color, fontSize: 11, fontWeight: 600 }}>Seguridad: {str.text}</span>
+            </div>
           )}
         </div>
       ))}

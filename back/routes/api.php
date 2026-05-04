@@ -5,6 +5,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\HabilidadController;
 use App\Http\Controllers\ProyectoController;
+use App\Http\Controllers\ExperienciaController;
 
 /*
 |--------------------------------------------------------------------------
@@ -61,6 +62,16 @@ Route::prefix('auth')->group(function () {
 // Catálogo de habilidades (no requiere auth)
 Route::get('habilidades/catalogo', [HabilidadController::class, 'catalogo']);
 
+// ── Rutas para Servir Archivos (Soluciona problema de symlinks en Windows/Docker) ──
+Route::get('media/{path}', function ($path) {
+    if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+        abort(404);
+    }
+    $file = \Illuminate\Support\Facades\Storage::disk('public')->get($path);
+    $type = \Illuminate\Support\Facades\Storage::disk('public')->mimeType($path);
+    return response($file, 200)->header('Content-Type', $type);
+})->where('path', '.*');
+
 // ── Rutas protegidas ─────────────────────────────────────────────────────
 Route::middleware('auth:sanctum')->group(function () {
 
@@ -73,6 +84,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('perfil',     [UsuarioController::class, 'perfil']);
         Route::put('perfil',     [UsuarioController::class, 'actualizarPerfil']);
         Route::post('foto',      [UsuarioController::class, 'actualizarFoto']);
+        Route::post('ci',        [UsuarioController::class, 'actualizarCI']);
         Route::put('password',   [UsuarioController::class, 'cambiarPassword']);
         Route::delete('/',       [UsuarioController::class, 'desactivar']);
     });
@@ -85,6 +97,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('sincronizar',               [HabilidadController::class, 'sincronizar']);
         Route::put('{idHabilidad}/nivel',       [HabilidadController::class, 'editarNivel']);
         Route::delete('{idHabilidad}',          [HabilidadController::class, 'eliminar']);
+    });
+
+    // Experiencias
+    Route::prefix('experiencias')->group(function () {
+        Route::get('/', [ExperienciaController::class, 'listar']);
+        Route::post('/', [ExperienciaController::class, 'crear']);
+        Route::put('{id}', [ExperienciaController::class, 'actualizar']);
+        Route::delete('{id}', [ExperienciaController::class, 'eliminar']);
     });
 
     // Proyectos

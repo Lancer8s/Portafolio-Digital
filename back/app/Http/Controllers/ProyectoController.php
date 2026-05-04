@@ -27,7 +27,7 @@ class ProyectoController extends Controller
                 $p['link']   = $p['url_repositorio'] ?? '';
 
                 if (!empty($p['imagen_portada'])) {
-                    $p['imagen_portada_url'] = asset('storage/' . $p['imagen_portada']);
+                    $p['imagen_portada_url'] = '/api/media/' . $p['imagen_portada'];
                 }
                 return $p;
             }, $data['proyectos']);
@@ -91,7 +91,7 @@ class ProyectoController extends Controller
             // Construir URLs completas de imágenes
             if (!empty($data['proyecto']['imagenes'])) {
                 $data['proyecto']['imagenes'] = array_map(function ($img) {
-                    $img['url'] = asset('storage/' . $img['ruta']);
+                    $img['url'] = '/api/media/' . $img['ruta'];
                     return $img;
                 }, $data['proyecto']['imagenes']);
             }
@@ -205,7 +205,7 @@ class ProyectoController extends Controller
         });
 
         if ($data['ok']) {
-            $data['url'] = asset('storage/' . $ruta);
+            $data['url'] = '/api/media/' . $ruta;
         } else {
             // Si el SP falló, borrar el archivo que ya subimos
             Storage::disk('public')->delete($ruta);

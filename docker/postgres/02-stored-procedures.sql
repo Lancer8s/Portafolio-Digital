@@ -279,7 +279,12 @@ CREATE OR REPLACE FUNCTION sp_actualizar_perfil_usuario(
   p_nombre     VARCHAR(80)  DEFAULT NULL,
   p_apellido   VARCHAR(80)  DEFAULT NULL,
   p_profesion  VARCHAR(120) DEFAULT NULL,
-  p_biografia  TEXT         DEFAULT NULL
+  p_biografia  TEXT         DEFAULT NULL,
+  p_titulo_profesional VARCHAR(150) DEFAULT NULL,
+  p_linkedin_url VARCHAR(300) DEFAULT NULL,
+  p_github_url VARCHAR(300) DEFAULT NULL,
+  p_visibilidad VARCHAR(20) DEFAULT NULL,
+  p_redes_sociales JSONB DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -299,16 +304,33 @@ BEGIN
 
   UPDATE usuario
   SET
-    nombre    = COALESCE(p_nombre,    nombre),
-    apellido  = COALESCE(p_apellido,  apellido),
+    nombre_modificado = CASE
+      WHEN nombre_modificado = TRUE THEN TRUE
+      WHEN p_nombre IS NOT NULL AND p_nombre <> nombre THEN TRUE
+      WHEN p_apellido IS NOT NULL AND p_apellido <> apellido THEN TRUE
+      ELSE nombre_modificado
+    END,
+    nombre    = CASE WHEN nombre_modificado = TRUE THEN nombre ELSE COALESCE(p_nombre, nombre) END,
+    apellido  = CASE WHEN nombre_modificado = TRUE THEN apellido ELSE COALESCE(p_apellido, apellido) END,
     profesion = COALESCE(p_profesion, profesion),
-    biografia = COALESCE(p_biografia, biografia)
+    biografia = COALESCE(p_biografia, biografia),
+    titulo_profesional = COALESCE(p_titulo_profesional, titulo_profesional),
+    linkedin_url = COALESCE(p_linkedin_url, linkedin_url),
+    github_url = COALESCE(p_github_url, github_url),
+    visibilidad = COALESCE(p_visibilidad, visibilidad),
+    redes_sociales = COALESCE(p_redes_sociales, redes_sociales)
   WHERE id_usuario = p_id_usuario
   RETURNING jsonb_build_object(
     'nombre',    nombre,
     'apellido',  apellido,
     'profesion', profesion,
-    'biografia', biografia
+    'biografia', biografia,
+    'titulo_profesional', titulo_profesional,
+    'linkedin_url', linkedin_url,
+    'github_url', github_url,
+    'visibilidad', visibilidad,
+    'redes_sociales', redes_sociales,
+    'nombre_modificado', nombre_modificado
   ) INTO v_nuevo;
 
   RETURN jsonb_build_object(
@@ -337,7 +359,8 @@ CREATE OR REPLACE FUNCTION sp_actualizar_foto_perfil(
   p_ruta       VARCHAR(300),
   p_nombre     VARCHAR(150) DEFAULT NULL,
   p_tipo       VARCHAR(20)  DEFAULT NULL,
-  p_tamanio_kb INT          DEFAULT NULL
+  p_tamanio_kb INT          DEFAULT NULL,
+  p_contexto   VARCHAR(20)  DEFAULT 'perfil'
 )
 RETURNS JSONB
 LANGUAGE plpgsql
@@ -355,7 +378,7 @@ BEGIN
 
   -- Insertar nueva imagen
   INSERT INTO imagen (ruta, nombre, tipo, tamanio_kb, contexto)
-  VALUES (p_ruta, p_nombre, p_tipo, p_tamanio_kb, 'perfil')
+  VALUES (p_ruta, p_nombre, p_tipo, p_tamanio_kb, COALESCE(p_contexto, 'perfil'))
   RETURNING id_imagen INTO v_id_imagen_nuevo;
 
   PERFORM set_config('app.usuario_actual', p_id_usuario::TEXT, TRUE);
@@ -1026,7 +1049,9 @@ BEGIN
   SELECT to_jsonb(sub) INTO v_perfil
   FROM (
     SELECT nombre, apellido, email, profesion, biografia, activo,
-           fecha_registro, id_imagen
+           fecha_registro, id_imagen, titulo_profesional, linkedin_url,
+           github_url, visibilidad, nombre_modificado, redes_sociales,
+           ci_estado, id_imagen_ci
     FROM   usuario
     WHERE  id_usuario = p_id_usuario
   ) sub;
@@ -1080,7 +1105,14 @@ BEGIN
       'email',           v_perfil->>'email',
       'profesion',       v_perfil->>'profesion',
       'biografia',       v_perfil->>'biografia',
+      'titulo_profesional', v_perfil->>'titulo_profesional',
+      'linkedin_url',    v_perfil->>'linkedin_url',
+      'github_url',      v_perfil->>'github_url',
+      'redes_sociales',  COALESCE(v_perfil->'redes_sociales', '[]'::jsonb),
+      'visibilidad',     v_perfil->>'visibilidad',
+      'nombre_modificado', (v_perfil->>'nombre_modificado')::BOOLEAN,
       'foto_url',        v_foto,
+      'ci_estado',       v_perfil->>'ci_estado',
       'activo',          (v_perfil->>'activo')::BOOLEAN,
       'fecha_registro',  v_perfil->>'fecha_registro',
       'roles',           COALESCE(v_roles, '[]'::JSONB),

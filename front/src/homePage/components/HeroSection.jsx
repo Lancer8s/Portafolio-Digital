@@ -1,7 +1,9 @@
 import { getHeroText } from "../services/home.service";
 import iconoSol from "../../assets/iconoSol.png";
 import iconoLuna from "../../assets/iconoLuna.png";
+import { useApp } from "../../context/AppContext";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function HeroSection({
   isDark,
@@ -14,6 +16,8 @@ export default function HeroSection({
   const sub = isDark ? "#94a3b8" : "#807F81";
   const nav = isDark ? "#0F172A" : "#fff";
   const border = isDark ? "#1D283A" : "#E2E8F0";
+  const { isAuthenticated } = useApp();
+  const navigate = useNavigate();
 
   return (
     <div
@@ -21,7 +25,7 @@ export default function HeroSection({
         minHeight: "100vh",
         background: isDark
           ? "linear-gradient(180deg, #020617 0%, #0F172A 100%)"
-          : "linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%)",
+          : "#ffffff",
       }}
     >
       {/* NAVBAR */}
@@ -70,38 +74,58 @@ export default function HeroSection({
 
         {/* Nav derecha */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-          <button
-            onClick={onLogin}
-            style={{
-              background: "none",
-              border: "none",
-              cursor: "pointer",
-              color: "#3B82F6",
-              fontWeight: 600,
-              fontSize: 14,
-              display: "flex",
-              alignItems: "center",
-              gap: 6,
-            }}
-          >
-            Iniciar Sesión
-          </button>
-          <button
-            onClick={onRegister}
-            style={{
-              background:
-                "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
-              color: "#fff",
-              border: "none",
-              borderRadius: 8,
-              padding: "8px 20px",
-              cursor: "pointer",
-              fontWeight: 700,
-              fontSize: 13,
-            }}
-          >
-            Registrarse
-          </button>
+          {isAuthenticated ? (
+            <button
+              onClick={() => navigate("/vista")}
+              style={{
+                background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "8px 20px",
+                cursor: "pointer",
+                fontWeight: 700,
+                fontSize: 13,
+              }}
+            >
+              Ir a mi Portafolio
+            </button>
+          ) : (
+            <>
+              <button
+                onClick={onLogin}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#3B82F6",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                Iniciar Sesión
+              </button>
+              <button
+                onClick={onRegister}
+                style={{
+                  background:
+                    "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "8px 20px",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                  fontSize: 13,
+                }}
+              >
+                Registrarse
+              </button>
+            </>
+          )}
           <button
             onClick={toggleTheme}
             style={{
@@ -356,7 +380,7 @@ export default function HeroSection({
               right: 20,
               background: isDark
                 ? "rgba(15,23,42,0.95)"
-                : "rgba(255,255,255,0.95)",
+                : "#ffffff",
               backdropFilter: "blur(8px)",
               border: `1px solid ${border}`,
               borderRadius: 12,
@@ -366,7 +390,8 @@ export default function HeroSection({
               gap: 14,
               boxShadow: isDark
                 ? "0 8px 30px rgba(0,0,0,0.4)"
-                : "0 8px 30px rgba(0,0,0,0.1)",
+                : "0 10px 40px rgba(0,0,0,0.2)",
+              zIndex: 10,
             }}
           >
             <div
