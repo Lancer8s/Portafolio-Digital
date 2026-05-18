@@ -15,6 +15,7 @@ export default function ExperienciaList({ isDark }) {
   const [experiencias, setExperiencias] = useState([]);
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ id_experiencia: null, tipo: "laboral", institucion_empresa: "", cargo_titulo: "", fecha_inicio: "", fecha_fin: "", descripcion: "" });
   const [toast, setToast] = useState(null);
@@ -126,9 +127,23 @@ export default function ExperienciaList({ isDark }) {
         </div>
       )}
 
-      <button onClick={handleAddNew} style={{ background: "none", border: "none", cursor: "pointer", color: "#3B82F6", fontWeight: 700, fontSize: 15, display: "flex", alignItems: "center", gap: 8, marginBottom: 14, padding: 0 }}>
-        <span style={{ fontSize: 20 }}>+</span> Añadir Experiencia
-      </button>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <p style={{ color: text, fontWeight: 700, fontSize: 17, margin: 0, padding: 0 }}>
+          Experiencia
+        </p>
+        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+          <button onClick={handleAddNew} style={{ background: "none", border: "none", cursor: "pointer", color: "#3B82F6", fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
+            <img src={lapiz} alt="añadir" style={{ width: 14, height: 14 }} />
+            <span>Añadir Experiencia</span>
+          </button>
+          {experiencias.length > 0 && (
+            <button onClick={() => setIsEditing(!isEditing)} style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
+              <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
+              <span>{isEditing ? "Hecho" : "Editar Experiencias"}</span>
+            </button>
+          )}
+        </div>
+      </div>
 
       {experiencias.length === 0 ? (
         <p style={{ color: sub, fontSize: 13 }}>No hay experiencia registrada aún.</p>
@@ -183,14 +198,16 @@ export default function ExperienciaList({ isDark }) {
                     <div style={{ color: sub, fontSize: 12 }}>{exp.institucion_empresa}</div>
                     {exp.descripcion && <p style={{ color: text, fontSize: 12, margin: "6px 0 0", whiteSpace: "pre-wrap", opacity: 0.85, lineHeight: 1.5 }}>{exp.descripcion}</p>}
                   </div>
-                  <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: 8 }}>
-                    <button onClick={() => handleEdit(exp)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-                      <img src={lapiz} alt="editar" style={{ width: 13, height: 13 }} />
-                    </button>
-                    <button onClick={() => deleteExp(exp.id_experiencia)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontWeight: "bold", fontSize: 14, padding: 4 }}>
-                      ✕
-                    </button>
-                  </div>
+                  {isEditing && (
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: 8 }}>
+                      <button onClick={() => handleEdit(exp)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
+                        <img src={lapiz} alt="editar" style={{ width: 13, height: 13 }} />
+                      </button>
+                      <button onClick={() => deleteExp(exp.id_experiencia)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontWeight: "bold", fontSize: 14, padding: 4 }}>
+                        ✕
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </motion.div>

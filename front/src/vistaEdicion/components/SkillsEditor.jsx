@@ -20,6 +20,7 @@ export default function SkillsEditor({
 
   // Modales de edición inline
   const [editBio, setEditBio] = useState(false);
+  const [isEditingProyectos, setIsEditingProyectos] = useState(false);
   const [bioForm, setBioForm] = useState({
     nombreCompleto: userData?.nombreCompleto || "",
     apellidoCompleto: userData?.apellidoCompleto || "",
@@ -279,6 +280,34 @@ export default function SkillsEditor({
       (userData?.apellidoCompleto || "")[0] || ""
     }`.toUpperCase() || "??";
 
+  // Calcular completitud
+  const missingData = [];
+  let completion = 0;
+
+  if (userData?.titulo) {
+    completion += 25;
+  } else {
+    missingData.push("Título o Profesión");
+  }
+
+  if (userData?.telefono) {
+    completion += 25;
+  } else {
+    missingData.push("Teléfono");
+  }
+
+  if (userData?.biografia) {
+    completion += 25;
+  } else {
+    missingData.push("Biografía");
+  }
+
+  if (userData?.foto_url || userData?.preview) {
+    completion += 25;
+  } else {
+    missingData.push("Foto de Perfil");
+  }
+
   return (
     <div
       style={{
@@ -310,6 +339,86 @@ export default function SkillsEditor({
         >
           {toast.msg}
         </div>
+      )}
+
+      {/* Completar Datos Widget */}
+      {completion < 100 && (
+        <motion.div
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          style={{
+            background: isDark ? "linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.05))" : "linear-gradient(135deg, #EFF6FF, #EEF2FF)",
+            border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "#BFDBFE"}`,
+            borderRadius: 16,
+            padding: "20px 24px",
+            marginBottom: 24,
+            display: "flex",
+            flexDirection: "column",
+            gap: 12
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <h3 style={{ margin: 0, color: text, fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+              Completar Perfil
+            </h3>
+            <span style={{ color: "#3B82F6", fontWeight: 800, fontSize: 16 }}>{completion}%</span>
+          </div>
+          
+          <div style={{ width: "100%", height: 8, background: isDark ? "#1D283A" : "#E2E8F0", borderRadius: 99, overflow: "hidden" }}>
+            <motion.div 
+              initial={{ width: 0 }} 
+              animate={{ width: `${completion}%` }} 
+              transition={{ duration: 1, ease: "easeOut" }}
+              style={{ height: "100%", background: "#3B82F6", borderRadius: 99 }}
+            />
+          </div>
+
+          <div style={{ marginTop: 4 }}>
+            <p style={{ margin: "0 0 8px 0", color: sub, fontSize: 13 }}>Te falta completar los siguientes datos:</p>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+              {missingData.map((item, idx) => (
+                <span key={idx} style={{ 
+                  background: isDark ? "rgba(255,255,255,0.05)" : "#fff", 
+                  border: `1px solid ${border}`,
+                  color: text, 
+                  fontSize: 12, 
+                  padding: "4px 10px", 
+                  borderRadius: 6,
+                  boxShadow: isDark ? "none" : "0 1px 2px rgba(0,0,0,0.05)"
+                }}>
+                  {item}
+                </span>
+              ))}
+            </div>
+            <button
+              onClick={() => {
+                setBioForm({
+                  nombreCompleto: userData?.nombreCompleto || "",
+                  apellidoCompleto: userData?.apellidoCompleto || "",
+                  titulo: userData?.titulo || "",
+                  biografia: userData?.biografia || "",
+                  visibilidad: userData?.visibilidad || "publico",
+                  telefono: userData?.telefono || "",
+                });
+                setEditBio(true);
+              }}
+              style={{
+                marginTop: 16,
+                background: "#3B82F6",
+                color: "#fff",
+                border: "none",
+                borderRadius: 8,
+                padding: "8px 16px",
+                fontSize: 13,
+                fontWeight: 700,
+                cursor: "pointer"
+              }}
+            >
+              Completar ahora
+            </button>
+          </div>
+        </motion.div>
       )}
 
       {/* PROFILE CARD — social-media style */}
@@ -344,7 +453,7 @@ export default function SkillsEditor({
               color: text, fontSize: 20, fontWeight: 700, margin: "0 0 4px",
               lineHeight: 1.2,
             }}>
-              {userData?.nombreCompleto} {userData?.apellidoCompleto}
+              {userData?.nombreCompleto}{userData?.apellidoCompleto ? ` ${userData?.apellidoCompleto}` : ''}
             </h2>
             {userData?.titulo && (
               <span style={{
@@ -412,31 +521,24 @@ export default function SkillsEditor({
         })}
       </div>
 
-      {/* HABILIDADES — un solo enlace */}
+      {/* HABILIDADES */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.15 }}
         style={{ marginBottom: 8 }}
       >
-        <button
-          onClick={onGoToHabilidad}
+        <p
           style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "#3B82F6",
+            color: text,
             fontWeight: 700,
             fontSize: 17,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
             marginBottom: 12,
             padding: 0,
           }}
         >
-          <span style={{ fontSize: 22 }}>+</span> Añadir Habilidades
-        </button>
+          Habilidades
+        </p>
 
         {/* Técnicas */}
         <div style={section}>
@@ -559,14 +661,16 @@ export default function SkillsEditor({
         </div>
       </motion.div>
 
-      {/* Editar Habilidad */}
+      {/* Editar / Añadir Habilidades */}
       <div
         style={{
           display: "flex",
           justifyContent: "flex-end",
+          gap: 10,
           marginBottom: 28,
         }}
       >
+        {editBtn("Añadir Habilidades", onGoToHabilidad)}
         {editBtn("Editar Habilidades", () => {
           setTechList(userData?.techSkills || []);
           setSoftList(userData?.softSkills || []);
@@ -581,24 +685,28 @@ export default function SkillsEditor({
         transition={{ delay: 0.22 }}
         style={{ marginBottom: 10 }}
       >
-        <button
-          onClick={onGoToProyecto}
-          style={{
-            background: "none",
-            border: "none",
-            cursor: "pointer",
-            color: "#3B82F6",
-            fontWeight: 700,
-            fontSize: 17,
-            display: "flex",
-            alignItems: "center",
-            gap: 8,
-            marginBottom: 12,
-            padding: 0,
-          }}
-        >
-          <span style={{ fontSize: 22 }}>+</span> Añadir Nuevo Proyecto
-        </button>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <p
+            style={{
+              color: text,
+              fontWeight: 700,
+              fontSize: 17,
+              margin: 0,
+              padding: 0,
+            }}
+          >
+            Proyectos
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {editBtn("Añadir Proyecto", onGoToProyecto)}
+            {proyectos.length > 0 && (
+              <button onClick={() => setIsEditingProyectos(!isEditingProyectos)} style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
+                <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
+                <span>{isEditingProyectos ? "Hecho" : "Editar Proyectos"}</span>
+              </button>
+            )}
+          </div>
+        </div>
         <div
           style={{
             display: "grid",
@@ -720,37 +828,58 @@ export default function SkillsEditor({
                   </div>
                 </div>
 
-                {/* Boton eliminar sobre la tarjeta */}
-                <div
-                  style={{
-                    position: "absolute",
-                    top: 8,
-                    right: 8,
-                    display: "flex",
-                    gap: 4,
-                  }}
-                >
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setDeleteConfirmModal({ proyecto: p, idx: i });
-                      setDeleteConfirmText("");
-                    }}
-                    disabled={deletingProyecto === i}
+                {/* Botones de acción sobre la tarjeta (solo en modo edición) */}
+                {isEditingProyectos && (
+                  <div
                     style={{
-                      background: "rgba(239,68,68,0.85)",
-                      border: "none",
-                      borderRadius: 6,
-                      padding: "5px 7px",
-                      cursor: "pointer",
-                      color: "#fff",
-                      fontSize: 12,
-                      fontWeight: 700,
+                      position: "absolute",
+                      top: 8,
+                      right: 8,
+                      display: "flex",
+                      gap: 4,
                     }}
                   >
-                    {deletingProyecto === i ? "..." : "✕"}
-                  </button>
-                </div>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onEditProyecto(i);
+                      }}
+                      style={{
+                        background: "rgba(59,130,246,0.85)",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "5px",
+                        cursor: "pointer",
+                        color: "#fff",
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                      }}
+                    >
+                      <img src={lapizClaro} alt="editar" style={{ width: 14, height: 14 }} />
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeleteConfirmModal({ proyecto: p, idx: i });
+                        setDeleteConfirmText("");
+                      }}
+                      disabled={deletingProyecto === i}
+                      style={{
+                        background: "rgba(239,68,68,0.85)",
+                        border: "none",
+                        borderRadius: 6,
+                        padding: "5px 7px",
+                        cursor: "pointer",
+                        color: "#fff",
+                        fontSize: 12,
+                        fontWeight: 700,
+                      }}
+                    >
+                      {deletingProyecto === i ? "..." : "✕"}
+                    </button>
+                  </div>
+                )}
               </motion.div>
             ))
           )}
@@ -795,7 +924,7 @@ export default function SkillsEditor({
               {[
                 { name: "nombreCompleto", label: "Nombre Completo" },
                 { name: "apellidoCompleto", label: "Apellido Completo" },
-                { name: "titulo", label: "Título / Rol" },
+                { name: "titulo", label: "Título o Profesión" },
                 { name: "telefono", label: "Teléfono" },
               ].map(({ name, label }) => {
                 const disabled = userData?.nombre_modificado && (name === "nombreCompleto" || name === "apellidoCompleto");
@@ -841,50 +970,7 @@ export default function SkillsEditor({
                 />
               </div>
 
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
-                  <label style={{ ...lbl, margin: 0 }}>Redes Sociales y URLs</label>
-                  <button 
-                    onClick={() => setBioForm(f => ({ ...f, redes_sociales: [...(f.redes_sociales || []), { plataforma: "", url: "" }] }))}
-                    style={{ background: "none", border: "none", color: "#3B82F6", fontWeight: 600, cursor: "pointer", fontSize: 12 }}
-                  >
-                    + Añadir
-                  </button>
-                </div>
-                {(bioForm.redes_sociales || []).map((red, idx) => (
-                  <div key={idx} style={{ display: "flex", gap: 8, marginBottom: 8 }}>
-                    <input
-                      style={{ ...inp, flex: 1 }}
-                      placeholder="https://... o correo electrónico"
-                      value={red.url}
-                      onChange={(e) => {
-                        const newArr = [...bioForm.redes_sociales];
-                        const val = e.target.value;
-                        newArr[idx].url = val;
-                        
-                        // Infer platform automatically
-                        let plat = "Enlace";
-                        const lowVal = val.toLowerCase();
-                        if (lowVal.includes("instagram")) plat = "Instagram";
-                        else if (lowVal.includes("facebook")) plat = "Facebook";
-                        else if (lowVal.includes("twitter") || lowVal.includes("x.com")) plat = "X (Twitter)";
-                        else if (lowVal.includes("youtube")) plat = "YouTube";
-                        else if (lowVal.includes("linkedin")) plat = "LinkedIn";
-                        else if (lowVal.includes("github")) plat = "GitHub";
-                        else if (lowVal.includes("tiktok")) plat = "TikTok";
-                        else if (lowVal.includes("mail") || lowVal.includes("@")) plat = "Correo";
-                        
-                        newArr[idx].plataforma = plat;
-                        setBioForm({ ...bioForm, redes_sociales: newArr });
-                      }}
-                    />
-                    <button 
-                      onClick={() => setBioForm(f => ({ ...f, redes_sociales: f.redes_sociales.filter((_, i) => i !== idx) }))}
-                      style={{ background: "#ef4444", color: "#fff", border: "none", borderRadius: 8, padding: "0 10px", cursor: "pointer", fontWeight: "bold" }}
-                    >✕</button>
-                  </div>
-                ))}
-              </div>
+
 
               {/* ── Foto de Perfil ── */}
               <div style={{ marginBottom: 18 }}>

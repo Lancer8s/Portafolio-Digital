@@ -115,6 +115,8 @@ export const proyectoAPI = {
     api.delete(`/proyectos/${idProyecto}/imagenes/${idImagen}`),
   sincronizarHabilidades: (idProyecto, ids_habilidades) =>
     api.put(`/proyectos/${idProyecto}/habilidades`, { ids_habilidades }),
+  toggleVisibilidad: (idProyecto, visible_portafolio) =>
+    api.put(`/proyectos/${idProyecto}/visibilidad`, { visible_portafolio }),
 };
 
 // ────────────────────────────────────────────────────────

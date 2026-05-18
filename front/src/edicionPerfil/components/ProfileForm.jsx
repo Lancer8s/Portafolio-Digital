@@ -11,6 +11,7 @@ export default function ProfileForm({ onNext, isDark }) {
     nombreCompleto: "",
     apellidoCompleto: "",
     titulo: "",
+    telefono: "",
     biografia: "",
     foto: null,
     ci: null,
@@ -32,6 +33,7 @@ export default function ProfileForm({ onNext, isDark }) {
         nombreCompleto: userData.nombreCompleto || "",
         apellidoCompleto: userData.apellidoCompleto || "",
         titulo: userData.titulo || userData.titulo_profesional || "",
+        telefono: userData.telefono || "",
         biografia: userData.biografia || "",
         foto: null,
         ci: null,
@@ -83,6 +85,7 @@ export default function ProfileForm({ onNext, isDark }) {
         apellido: data.apellidoCompleto,
         profesion: data.titulo,
         titulo_profesional: data.titulo,
+        telefono: data.telefono,
         biografia: data.biografia
       });
       if (resp.ok) {
@@ -216,7 +219,8 @@ export default function ProfileForm({ onNext, isDark }) {
       {step === "datos" ? (
         <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
           {[
-            { name: "titulo", label: "Titulo / Rol" },
+            { name: "titulo", label: "Título o Profesión" },
+            { name: "telefono", label: "Teléfono" },
           ].map(({ name, label }) => (
             <div key={name}>
               <label style={lbl}>{label}</label>

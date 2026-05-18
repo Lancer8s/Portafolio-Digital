@@ -164,16 +164,22 @@ export default function RegisterForm({ isDark }) {
               {errors[name]}
             </span>
           )}
-          {name === "contrasena" && form.contrasena && (
-            <div style={{ marginTop: 6 }}>
-              <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
-                <div style={{ flex: 1, height: 4, borderRadius: 2, background: str.score >= 1 ? str.color : (isDark ? "#334155" : "#e2e8f0") }} />
-                <div style={{ flex: 1, height: 4, borderRadius: 2, background: str.score >= 2 ? str.color : (isDark ? "#334155" : "#e2e8f0") }} />
-                <div style={{ flex: 1, height: 4, borderRadius: 2, background: str.score >= 3 ? str.color : (isDark ? "#334155" : "#e2e8f0") }} />
-              </div>
-              <span style={{ color: str.color, fontSize: 11, fontWeight: 600 }}>Seguridad: {str.text}</span>
-            </div>
-          )}
+          {(() => {
+            if ((name === "contrasena" || name === "confirmarContrasena") && form[name]) {
+              const currentStr = calculateStrength(form[name]);
+              return (
+                <div style={{ marginTop: 6 }}>
+                  <div style={{ display: "flex", gap: 4, marginBottom: 4 }}>
+                    <div style={{ flex: 1, height: 4, borderRadius: 2, background: currentStr.score >= 1 ? currentStr.color : (isDark ? "#334155" : "#e2e8f0") }} />
+                    <div style={{ flex: 1, height: 4, borderRadius: 2, background: currentStr.score >= 2 ? currentStr.color : (isDark ? "#334155" : "#e2e8f0") }} />
+                    <div style={{ flex: 1, height: 4, borderRadius: 2, background: currentStr.score >= 3 ? currentStr.color : (isDark ? "#334155" : "#e2e8f0") }} />
+                  </div>
+                  <span style={{ color: currentStr.color, fontSize: 11, fontWeight: 600 }}>Seguridad: {currentStr.text}</span>
+                </div>
+              );
+            }
+            return null;
+          })()}
         </div>
       ))}
 

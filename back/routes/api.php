@@ -120,5 +120,6 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('{idProyecto}/imagenes',        [ProyectoController::class, 'agregarImagen']);
         Route::delete('{idProyecto}/imagenes/{idImagen}', [ProyectoController::class, 'eliminarImagen']);
         Route::put('{idProyecto}/habilidades',      [ProyectoController::class, 'sincronizarHabilidades']);
+        Route::put('{idProyecto}/visibilidad',       [ProyectoController::class, 'toggleVisibilidad']);
     });
 });

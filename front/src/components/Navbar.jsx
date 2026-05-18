@@ -3,7 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import { useApp } from "../context/AppContext";
-import { perfilAPI } from "../api";
+import { perfilAPI, proyectoAPI } from "../api";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
 import DefaultAvatar from "./DefaultAvatar";
@@ -107,56 +107,83 @@ export default function Navbar() {
 
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
         {isAuthenticated && userData?.id_usuario && !isViewingOthersPortfolio && (
-          isOnPublicPortfolio ? (
+          <>
+            {/* Visibilidad del portafolio - botón directo en header */}
             <button
-              onClick={() => {
-                navigator.clipboard.writeText(window.location.href);
-                alert("URL copiada al portapapeles");
-              }}
+              onClick={() => { setShowConfig(true); setShowMenu(false); }}
+              title="Visibilidad del portafolio"
               style={{
-                background: "#3B82F6",
-                color: "#fff",
-                border: "none",
+                background: "none",
+                border: `1px solid ${border}`,
                 borderRadius: 8,
-                padding: "6px 12px",
-                fontSize: 13,
-                fontWeight: 600,
                 cursor: "pointer",
+                padding: "6px 10px",
                 display: "flex",
                 alignItems: "center",
-                gap: 6
-              }}
-            >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-              Copiar URL
-            </button>
-          ) : (
-            <button
-              onClick={() => {
-                const n = (userData?.nombreCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
-                const a = (userData?.apellidoCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
-                const namePart = [n, a].filter(Boolean).join('-');
-                const slug = namePart ? `${namePart}-${userData.id_usuario}` : userData.id_usuario;
-                window.open(`/portafolio/${slug}`, "_blank");
-              }}
-              style={{
-                background: "#3B82F6",
-                color: "#fff",
-                border: "none",
-                borderRadius: 8,
-                padding: "6px 12px",
+                gap: 6,
+                color: text,
                 fontSize: 13,
                 fontWeight: 600,
-                cursor: "pointer",
-                display: "flex",
-                alignItems: "center",
-                gap: 6
               }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-              Compartir
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
+                <circle cx="12" cy="12" r="3"/>
+              </svg>
+              Visibilidad
             </button>
-          )
+
+            {isOnPublicPortfolio ? (
+              <button
+                onClick={() => {
+                  navigator.clipboard.writeText(window.location.href);
+                  alert("URL copiada al portapapeles");
+                }}
+                style={{
+                  background: "#3B82F6",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "6px 12px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                Copiar URL
+              </button>
+            ) : (
+              <button
+                onClick={() => {
+                  const n = (userData?.nombreCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
+                  const a = (userData?.apellidoCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
+                  const namePart = [n, a].filter(Boolean).join('-');
+                  const slug = namePart ? `${namePart}-${userData.id_usuario}` : userData.id_usuario;
+                  window.open(`/portafolio/${slug}`, "_blank");
+                }}
+                style={{
+                  background: "#3B82F6",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "6px 12px",
+                  fontSize: 13,
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+                Compartir
+              </button>
+            )}
+          </>
         )}
       
         {/* Avatar + menu: solo mostrar si está autenticado Y no está viendo el portafolio de otro */}
@@ -217,12 +244,7 @@ export default function Navbar() {
                 <p style={{ margin: 0, color: sub, fontSize: 12 }}>{userData?.email || "Usuario"}</p>
               </div>
 
-              <button
-                onClick={() => { setShowMenu(false); setShowConfig(true); }}
-                style={{ width: "100%", textAlign: "left", padding: "10px 16px", background: "none", border: "none", cursor: "pointer", color: text, fontSize: 14, display: "flex", alignItems: "center", gap: 10 }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg> Ajustes del Portafolio
-              </button>
+
               
               <button
                 onClick={() => { toggleTheme(); setShowMenu(false); }}
@@ -259,16 +281,16 @@ export default function Navbar() {
             <motion.div initial={{ scale: 0.92, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.92, opacity: 0 }} 
               style={{ background: bg, padding: 24, borderRadius: 16, width: "100%", maxWidth: 400, border: `1px solid ${border}`, boxShadow: "0 10px 40px rgba(0,0,0,0.2)" }} 
               onClick={(e) => e.stopPropagation()}>
-              <h3 style={{ color: text, fontWeight: 700, marginBottom: 18, marginTop: 0 }}>Ajustes del Portafolio</h3>
+              <h3 style={{ color: text, fontWeight: 700, marginBottom: 18, marginTop: 0 }}>Visibilidad del portafolio</h3>
               
               <div style={{ marginBottom: 18 }}>
-                <label style={{ display: "block", color: sub, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Visibilidad</label>
+                <label style={{ display: "block", color: sub, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Visibilidad General</label>
                 <select
                   style={{ width: "100%", padding: "12px 14px", borderRadius: 8, border: `1px solid ${border}`, background: isDark ? "#1D283A" : "#F8FAFC", color: text, fontSize: 15, outline: "none", appearance: "auto" }}
                   value={userData?.visibilidad || "publico"}
                   onChange={async (e) => {
                     const val = e.target.value;
-                    setUserData({ visibilidad: val });
+                    setUserData({ ...userData, visibilidad: val });
                     await perfilAPI.actualizar({
                       nombre: userData.nombreCompleto,
                       apellido: userData.apellidoCompleto,
@@ -283,6 +305,35 @@ export default function Navbar() {
                   Si es privado, tu portafolio no será visible para personas sin sesión iniciada.
                 </p>
               </div>
+
+              {userData?.proyectos?.length > 0 && (
+                <div style={{ marginBottom: 18, maxHeight: "250px", overflowY: "auto" }}>
+                  <label style={{ display: "block", color: sub, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Proyectos Destacados</label>
+                  <p style={{ color: sub, fontSize: 12, marginBottom: 10, marginTop: 0 }}>Selecciona qué proyectos aparecerán en tu portafolio público.</p>
+                  
+                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                    {userData.proyectos.map((p, idx) => (
+                      <div key={p.id_proyecto} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px", borderRadius: "8px", border: `1px solid ${border}`, background: isDark ? "#1D283A" : "#F8FAFC" }}>
+                        <span style={{ color: text, fontSize: 14, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{p.nombre || p.titulo}</span>
+                        <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                          <input 
+                            type="checkbox" 
+                            checked={p.visible_portafolio !== false}
+                            onChange={async (e) => {
+                              const newVal = e.target.checked;
+                              const updatedProyectos = [...userData.proyectos];
+                              updatedProyectos[idx] = { ...p, visible_portafolio: newVal };
+                              setUserData({ ...userData, proyectos: updatedProyectos });
+                              await proyectoAPI.toggleVisibilidad(p.id_proyecto, newVal);
+                            }}
+                            style={{ accentColor: "#3B82F6", width: 16, height: 16 }}
+                          />
+                        </label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
                 <button onClick={() => setShowConfig(false)} style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontWeight: 600 }}>

@@ -21,6 +21,7 @@ export default function SkillSelector({ isDark, onBack, onSave, userData }) {
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
   const [catalogo, setCatalogo] = useState([]);
+  const [groupedTech, setGroupedTech] = useState({});
 
   // Cargar catálogo de habilidades del backend
   useEffect(() => {
@@ -32,6 +33,7 @@ export default function SkillSelector({ isDark, onBack, onSave, userData }) {
           // y blandas como array plano [...]
           const flat = [];
           if (data.tecnicas && typeof data.tecnicas === "object") {
+            setGroupedTech(data.tecnicas);
             Object.values(data.tecnicas).forEach((items) => {
               if (Array.isArray(items)) {
                 items.forEach((item) => flat.push(item));
@@ -230,28 +232,58 @@ export default function SkillSelector({ isDark, onBack, onSave, userData }) {
             background: bg,
           }}
         >
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: 8,
-              marginBottom: 14,
-            }}
-          >
-            {TECH_SUGGESTIONS.map((s) => {
-              const alreadyHas = existingTech.includes(s.toLowerCase());
-              return (
-                <button
-                  key={s}
-                  style={chipStyle(selectedTech === s, alreadyHas)}
-                  onClick={() => handleSelectTech(s)}
-                  title={alreadyHas ? "Ya tienes esta habilidad" : ""}
-                >
-                  {s}
-                  {alreadyHas && " ✓"}
-                </button>
-              );
-            })}
+          <div>
+            {Object.keys(groupedTech).length > 0 ? (
+              <>
+                {Object.entries(groupedTech).map(([category, items]) => (
+                  <div key={category} style={{ marginBottom: 16 }}>
+                    <p style={{ color: sub, fontSize: 13, marginBottom: 8, fontWeight: 600 }}>{category}</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {items.map((item) => {
+                        const s = item.nombre;
+                        const alreadyHas = existingTech.includes(s.toLowerCase());
+                        return (
+                          <button
+                            key={s}
+                            style={chipStyle(selectedTech === s, alreadyHas)}
+                            onClick={() => handleSelectTech(s)}
+                            title={alreadyHas ? "Ya tienes esta habilidad" : ""}
+                          >
+                            {s}
+                            {alreadyHas && " ✓"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+                <div style={{ marginTop: 10 }}>
+                  <button
+                    style={chipStyle(selectedTech === "Otro", false)}
+                    onClick={() => handleSelectTech("Otro")}
+                  >
+                    Otro
+                  </button>
+                </div>
+              </>
+            ) : (
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 14 }}>
+                {TECH_SUGGESTIONS.map((s) => {
+                  const alreadyHas = existingTech.includes(s.toLowerCase());
+                  return (
+                    <button
+                      key={s}
+                      style={chipStyle(selectedTech === s, alreadyHas)}
+                      onClick={() => handleSelectTech(s)}
+                      title={alreadyHas ? "Ya tienes esta habilidad" : ""}
+                    >
+                      {s}
+                      {alreadyHas && " ✓"}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {selectedTech && (

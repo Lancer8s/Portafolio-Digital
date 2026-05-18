@@ -1,6 +1,16 @@
 
 
+import { useState } from "react";
+import { createPortal } from "react-dom";
+import { perfilAPI } from "../../api";
+import { useApp } from "../../context/AppContext";
+
 export default function StatsBar({ userData, isDark }) {
+  const { debouncedRefresh } = useApp();
+  const [showRedesModal, setShowRedesModal] = useState(false);
+  const [redesForm, setRedesForm] = useState([]);
+  const [savingRedes, setSavingRedes] = useState(false);
+
   const border = isDark ? "#1D283A" : "#E2E8F0";
   const text   = isDark ? "#fff"    : "#111";
   const sub    = isDark ? "#94a3b8" : "#807F81";
@@ -45,9 +55,20 @@ export default function StatsBar({ userData, isDark }) {
       ))}
 
       {/* Redes Sociales */}
-      {(userData?.redes_sociales?.length > 0 || userData?.linkedin_url || userData?.github_url) && (
-        <div style={{ marginTop: 16 }}>
-          <h3 style={{ color: text, fontSize: 14, fontWeight: 800, margin: "0 0 10px 4px", textTransform: "uppercase", letterSpacing: "1px" }}>Redes Sociales</h3>
+      <div style={{ marginTop: 16 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", margin: "0 0 10px 4px" }}>
+          <h3 style={{ color: text, fontSize: 14, fontWeight: 800, margin: 0, textTransform: "uppercase", letterSpacing: "1px" }}>Redes Sociales</h3>
+          <button 
+            onClick={() => {
+              setRedesForm(userData?.redes_sociales || []);
+              setShowRedesModal(true);
+            }} 
+            style={{ background: "none", border: "none", cursor: "pointer", color: "#3B82F6", fontSize: 20, padding: 0, fontWeight: "bold" }}
+          >
+            +
+          </button>
+        </div>
+        {(userData?.redes_sociales?.length > 0 || userData?.linkedin_url || userData?.github_url) && (
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             {/* Retrocompatibilidad con DB original */}
             {userData?.linkedin_url && (
@@ -94,7 +115,91 @@ export default function StatsBar({ userData, isDark }) {
               );
             })}
           </div>
-        </div>
+        )}
+      </div>
+
+      {/* Modal Redes Sociales */}
+      {showRedesModal && createPortal(
+        <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 999999, padding: 20 }}>
+          <div style={{ background: isDark ? "#0F172A" : "#fff", border: `1px solid ${border}`, borderRadius: 14, padding: 24, width: "100%", maxWidth: 400, maxHeight: "90vh", overflowY: "auto" }}>
+            <h3 style={{ color: text, fontWeight: 700, margin: "0 0 20px 0" }}>Redes Sociales</h3>
+            
+            {redesForm.map((red, i) => (
+              <div key={i} style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+                <input
+                  placeholder="URL (ej. https://linkedin.com/in/tu-perfil)"
+                  value={red.url}
+                  onChange={(e) => {
+                    const newR = [...redesForm];
+                    const val = e.target.value;
+                    newR[i].url = val;
+                    
+                    let plat = "Enlace";
+                    const lowVal = val.toLowerCase();
+                    if (lowVal.includes("instagram")) plat = "Instagram";
+                    else if (lowVal.includes("facebook")) plat = "Facebook";
+                    else if (lowVal.includes("twitter") || lowVal.includes("x.com")) plat = "X (Twitter)";
+                    else if (lowVal.includes("youtube")) plat = "YouTube";
+                    else if (lowVal.includes("linkedin")) plat = "LinkedIn";
+                    else if (lowVal.includes("github")) plat = "GitHub";
+                    else if (lowVal.includes("tiktok")) plat = "TikTok";
+                    else if (lowVal.includes("mail") || lowVal.includes("@")) plat = "Correo";
+                    
+                    newR[i].plataforma = plat;
+                    setRedesForm(newR);
+                  }}
+                  style={{ flex: 1, background: isDark ? "#1D283A" : "#F8FAFC", border: `1px solid ${border}`, color: text, borderRadius: 8, padding: "8px 12px", fontSize: 14, outline: "none", minWidth: 0 }}
+                />
+                <button
+                  onClick={() => setRedesForm(redesForm.filter((_, idx) => idx !== i))}
+                  style={{ background: "none", border: "none", color: "#ef4444", fontSize: 16, cursor: "pointer", fontWeight: "bold" }}
+                >
+                  ✕
+                </button>
+              </div>
+            ))}
+            
+            <button
+              onClick={() => setRedesForm([...redesForm, { plataforma: "", url: "" }])}
+              style={{ background: "none", border: "none", color: "#3B82F6", fontWeight: 700, cursor: "pointer", fontSize: 14, padding: 0, marginBottom: 20 }}
+            >
+              + Añadir otra red
+            </button>
+
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+              <button
+                onClick={() => setShowRedesModal(false)}
+                style={{ background: "none", border: "none", color: sub, cursor: "pointer", fontWeight: 600 }}
+              >
+                Cancelar
+              </button>
+              <button
+                disabled={savingRedes}
+                onClick={async () => {
+                  setSavingRedes(true);
+                  try {
+                    const validRedes = redesForm.filter(r => r.url.trim());
+                    await perfilAPI.actualizar({
+                      nombre: userData.nombreCompleto,
+                      apellido: userData.apellidoCompleto,
+                      redes_sociales: validRedes
+                    });
+                    debouncedRefresh();
+                    setShowRedesModal(false);
+                  } catch (e) {
+                    console.error(e);
+                  } finally {
+                    setSavingRedes(false);
+                  }
+                }}
+                style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "8px 16px", cursor: "pointer", fontWeight: 600 }}
+              >
+                {savingRedes ? "Guardando..." : "Guardar"}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
       )}
     </div>
     </>

@@ -293,4 +293,42 @@ class ProyectoController extends Controller
 
         return response()->json($data, $data['ok'] ? 200 : 400);
     }
+
+    /**
+     * PUT /api/proyectos/{id}/visibilidad
+     * Cambia la visibilidad de un proyecto en el portafolio público.
+     * Body: { visible_portafolio: true|false }
+     */
+    public function toggleVisibilidad(Request $request, int $idProyecto)
+    {
+        $validator = Validator::make($request->all(), [
+            'visible_portafolio' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
+        }
+
+        $id = $request->user()->id_usuario;
+
+        // Verificar que el proyecto pertenece al usuario
+        $proyecto = DB::table('proyecto')
+            ->where('id_proyecto', $idProyecto)
+            ->where('id_usuario', $id)
+            ->first();
+
+        if (!$proyecto) {
+            return response()->json(['ok' => false, 'mensaje' => 'Proyecto no encontrado'], 404);
+        }
+
+        DB::table('proyecto')
+            ->where('id_proyecto', $idProyecto)
+            ->update(['visible_portafolio' => $request->visible_portafolio]);
+
+        return response()->json([
+            'ok' => true,
+            'mensaje' => $request->visible_portafolio ? 'Proyecto visible en portafolio' : 'Proyecto oculto del portafolio',
+            'visible_portafolio' => $request->visible_portafolio,
+        ]);
+    }
 }
