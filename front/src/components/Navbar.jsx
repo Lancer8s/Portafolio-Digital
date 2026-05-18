@@ -306,34 +306,6 @@ export default function Navbar() {
                 </p>
               </div>
 
-              {userData?.proyectos?.length > 0 && (
-                <div style={{ marginBottom: 18, maxHeight: "250px", overflowY: "auto" }}>
-                  <label style={{ display: "block", color: sub, fontSize: 13, fontWeight: 600, marginBottom: 6 }}>Proyectos Destacados</label>
-                  <p style={{ color: sub, fontSize: 12, marginBottom: 10, marginTop: 0 }}>Selecciona qué proyectos aparecerán en tu portafolio público.</p>
-                  
-                  <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-                    {userData.proyectos.map((p, idx) => (
-                      <div key={p.id_proyecto} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px", borderRadius: "8px", border: `1px solid ${border}`, background: isDark ? "#1D283A" : "#F8FAFC" }}>
-                        <span style={{ color: text, fontSize: 14, fontWeight: 500, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "200px" }}>{p.nombre || p.titulo}</span>
-                        <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-                          <input 
-                            type="checkbox" 
-                            checked={p.visible_portafolio !== false}
-                            onChange={async (e) => {
-                              const newVal = e.target.checked;
-                              const updatedProyectos = [...userData.proyectos];
-                              updatedProyectos[idx] = { ...p, visible_portafolio: newVal };
-                              setUserData({ ...userData, proyectos: updatedProyectos });
-                              await proyectoAPI.toggleVisibilidad(p.id_proyecto, newVal);
-                            }}
-                            style={{ accentColor: "#3B82F6", width: 16, height: 16 }}
-                          />
-                        </label>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 12 }}>
                 <button onClick={() => setShowConfig(false)} style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontWeight: 600 }}>

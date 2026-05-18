@@ -131,9 +131,12 @@ export default function ExperienciaList({ isDark }) {
         <p style={{ color: text, fontWeight: 700, fontSize: 17, margin: 0, padding: 0 }}>
           Experiencia
         </p>
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <button onClick={handleAddNew} style={{ background: "none", border: "none", cursor: "pointer", color: "#3B82F6", fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
-            <img src={lapiz} alt="añadir" style={{ width: 14, height: 14 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+          <button onClick={handleAddNew} style={{ background: "none", border: "none", cursor: "pointer", color: "#3B82F6", fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 5, padding: 0 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
             <span>Añadir Experiencia</span>
           </button>
           {experiencias.length > 0 && (

@@ -271,6 +271,30 @@ export default function SkillsEditor({
     </button>
   );
 
+  const addBtn = (label, onClick) => (
+    <button
+      onClick={onClick}
+      style={{
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 5,
+        color: "#3B82F6",
+        fontSize: 13,
+        fontWeight: 600,
+        padding: 0,
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <span>{label}</span>
+    </button>
+  );
+
   const techSkills = userData?.techSkills || [];
   const softSkills = userData?.softSkills || [];
   const proyectos = userData?.proyectos || [];
@@ -666,11 +690,12 @@ export default function SkillsEditor({
         style={{
           display: "flex",
           justifyContent: "flex-end",
-          gap: 10,
+          alignItems: "center",
+          gap: 20,
           marginBottom: 28,
         }}
       >
-        {editBtn("Añadir Habilidades", onGoToHabilidad)}
+        {addBtn("Añadir Habilidades", onGoToHabilidad)}
         {editBtn("Editar Habilidades", () => {
           setTechList(userData?.techSkills || []);
           setSoftList(userData?.softSkills || []);
@@ -697,8 +722,8 @@ export default function SkillsEditor({
           >
             Proyectos
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            {editBtn("Añadir Proyecto", onGoToProyecto)}
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            {addBtn("Añadir Proyecto", onGoToProyecto)}
             {proyectos.length > 0 && (
               <button onClick={() => setIsEditingProyectos(!isEditingProyectos)} style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
                 <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
