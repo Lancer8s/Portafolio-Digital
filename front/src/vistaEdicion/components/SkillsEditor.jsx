@@ -6,6 +6,8 @@ import { useApp } from "../../context/AppContext";
 import { perfilAPI, habilidadAPI, proyectoAPI } from "../../api";
 import ExperienciaList from "./ExperienciaList";
 import DefaultAvatar from "../../components/DefaultAvatar";
+import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
+import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
 
 export default function SkillsEditor({
   userData,
@@ -38,6 +40,8 @@ export default function SkillsEditor({
   const [savingBio, setSavingBio] = useState(false);
   const [savingHab, setSavingHab] = useState(false);
   const [deletingProyecto, setDeletingProyecto] = useState(null);
+  const [showAddSkill, setShowAddSkill] = useState(false);
+  const [showAddProyecto, setShowAddProyecto] = useState(false);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState(null); // { proyecto, idx }
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [pendingPhoto, setPendingPhoto] = useState(null);      // File object
@@ -552,17 +556,27 @@ export default function SkillsEditor({
         transition={{ delay: 0.15 }}
         style={{ marginBottom: 8 }}
       >
-        <p
-          style={{
-            color: text,
-            fontWeight: 700,
-            fontSize: 17,
-            marginBottom: 12,
-            padding: 0,
-          }}
-        >
-          Habilidades
-        </p>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+          <p
+            style={{
+              color: text,
+              fontWeight: 700,
+              fontSize: 17,
+              margin: 0,
+              padding: 0,
+            }}
+          >
+            Habilidades
+          </p>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            {addBtn("Añadir Habilidades", () => setShowAddSkill(true))}
+            {editBtn("Editar Habilidades", () => {
+              setTechList(userData?.techSkills || []);
+              setSoftList(userData?.softSkills || []);
+              setEditHab(true);
+            })}
+          </div>
+        </div>
 
         {/* Técnicas */}
         <div style={section}>
@@ -685,23 +699,7 @@ export default function SkillsEditor({
         </div>
       </motion.div>
 
-      {/* Editar / Añadir Habilidades */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          alignItems: "center",
-          gap: 20,
-          marginBottom: 28,
-        }}
-      >
-        {addBtn("Añadir Habilidades", onGoToHabilidad)}
-        {editBtn("Editar Habilidades", () => {
-          setTechList(userData?.techSkills || []);
-          setSoftList(userData?.softSkills || []);
-          setEditHab(true);
-        })}
-      </div>
+
 
       {/* PROYECTOS — moved before timeline */}
       <motion.div
@@ -723,7 +721,7 @@ export default function SkillsEditor({
             Proyectos
           </p>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            {addBtn("Añadir Proyecto", onGoToProyecto)}
+            {addBtn("Añadir Proyecto", () => setShowAddProyecto(true))}
             {proyectos.length > 0 && (
               <button onClick={() => setIsEditingProyectos(!isEditingProyectos)} style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
                 <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
@@ -1451,6 +1449,66 @@ export default function SkillsEditor({
                   {deletingProyecto !== null ? "Eliminando..." : "Eliminar Proyecto"}
                 </button>
               </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+      {/* ====== MODAL AÑADIR HABILIDAD ====== */}
+      <AnimatePresence>
+        {showAddSkill && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => setShowAddSkill(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              style={{ ...modalBox, maxWidth: 600, maxHeight: "85vh", overflowY: "auto" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <SkillSelector
+                isDark={isDark}
+                userData={userData}
+                onBack={() => setShowAddSkill(false)}
+                onSave={() => {
+                  setShowAddSkill(false);
+                  debouncedRefresh();
+                }}
+              />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ====== MODAL AÑADIR PROYECTO ====== */}
+      <AnimatePresence>
+        {showAddProyecto && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => setShowAddProyecto(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.92, opacity: 0 }}
+              style={{ ...modalBox, maxWidth: 620, maxHeight: "90vh", overflowY: "auto" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <ProyectoForm
+                isDark={isDark}
+                onBack={() => setShowAddProyecto(false)}
+                onSave={() => {
+                  setShowAddProyecto(false);
+                  debouncedRefresh();
+                }}
+              />
             </motion.div>
           </motion.div>
         )}
