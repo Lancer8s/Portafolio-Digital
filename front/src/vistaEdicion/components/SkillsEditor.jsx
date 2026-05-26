@@ -558,27 +558,29 @@ export default function SkillsEditor({
         )}
       </motion.div>
 
-      {/* Editar Datos */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginBottom: 28,
-        }}
-      >
-        {editBtn("Editar Datos", () => {
-          setBioForm({
-            nombreCompleto: userData?.nombreCompleto || "",
-            apellidoCompleto: userData?.apellidoCompleto || "",
-            titulo: userData?.titulo || "",
-            biografia: userData?.biografia || "",
-            visibilidad: userData?.visibilidad || "publico",
-            redes_sociales: userData?.redes_sociales || [],
-            telefono: userData?.telefono || "",
-          });
-          setEditBio(true);
-        })}
-      </div>
+      {/* Editar Datos — solo visible cuando el perfil está completo */}
+      {completion >= 100 && (
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            marginBottom: 28,
+          }}
+        >
+          {editBtn("Editar Datos", () => {
+            setBioForm({
+              nombreCompleto: userData?.nombreCompleto || "",
+              apellidoCompleto: userData?.apellidoCompleto || "",
+              titulo: userData?.titulo || "",
+              biografia: userData?.biografia || "",
+              visibilidad: userData?.visibilidad || "publico",
+              redes_sociales: userData?.redes_sociales || [],
+              telefono: userData?.telefono || "",
+            });
+            setEditBio(true);
+          })}
+        </div>
+      )}
 
       {/* HABILIDADES */}
       <motion.div
