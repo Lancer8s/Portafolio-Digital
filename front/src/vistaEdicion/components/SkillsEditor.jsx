@@ -1453,7 +1453,7 @@ export default function SkillsEditor({
           </motion.div>
         )}
       </AnimatePresence>
-      {/* ====== MODAL AÑADIR HABILIDAD ====== */}
+      {/*MODAL AÑADIR HABILIDAD*/}
       <AnimatePresence>
         {showAddSkill && (
           <motion.div
