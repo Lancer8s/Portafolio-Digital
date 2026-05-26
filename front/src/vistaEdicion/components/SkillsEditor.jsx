@@ -9,6 +9,7 @@ import DefaultAvatar from "../../components/DefaultAvatar";
 import VerificationBadge from "../../components/VerificationBadge";
 import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
+import StarToggle from "../../components/StarToggle";
 
 export default function SkillsEditor({
   userData,
@@ -793,6 +794,14 @@ export default function SkillsEditor({
                   position: "relative",
                 }}
               >
+                {/* Estrellita de destacado (Top Left) */}
+                <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}>
+                  <StarToggle 
+                    projectId={p.id_proyecto} 
+                    initiallyVisible={p.visible_portafolio !== false} 
+                  />
+                </div>
+
                 <div onClick={() => onVerProyecto(i)}>
                   <div
                     style={{

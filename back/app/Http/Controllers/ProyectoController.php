@@ -331,4 +331,46 @@ class ProyectoController extends Controller
             'visible_portafolio' => $request->visible_portafolio,
         ]);
     }
-}
+    /**
+     * PUT /api/proyectos/visibilidad-multiple
+     * Cambia la visibilidad de varios proyectos en el portafolio público.
+     * Body: { ids: [int], visible_portafolio: true|false }
+     */
+    public function toggleVisibilidadMultiple(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+            'visible_portafolio' => 'required|boolean',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
+        }
+
+        $userId = $request->user()->id_usuario;
+        $ids = $request->ids;
+
+        // Verify ownership of all provided projects
+        $ownedCount = DB::table('proyecto')
+            ->where('id_usuario', $userId)
+            ->whereIn('id_proyecto', $ids)
+            ->count();
+
+        if ($ownedCount !== count($ids)) {
+            return response()->json(['ok' => false, 'mensaje' => 'Algunos proyectos no pertenecen al usuario'], 404);
+        }
+
+        DB::table('proyecto')
+            ->whereIn('id_proyecto', $ids)
+            ->where('id_usuario', $userId)
+            ->update(['visible_portafolio' => $request->visible_portafolio]);
+
+        return response()->json([
+            'ok' => true,
+            'mensaje' => $request->visible_portafolio ? 'Proyectos visibles en portafolio' : 'Proyectos ocultos del portafolio',
+            'visible_portafolio' => $request->visible_portafolio,
+            'ids' => $ids,
+        ]);
+    }
+}
