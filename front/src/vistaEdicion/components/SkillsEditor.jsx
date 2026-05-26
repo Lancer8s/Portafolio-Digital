@@ -960,21 +960,48 @@ export default function SkillsEditor({
             onClick={() => setEditBio(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              style={modalBox}
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 520,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
             >
-              <h3
-                style={{
-                  color: text,
-                  fontWeight: 700,
-                  marginBottom: 18,
-                }}
-              >
-                Editar Datos
-              </h3>
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setEditBio(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Editar Datos</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Modifica tu información personal y profesional
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
               {[
                 { name: "nombreCompleto", label: "Nombre Completo" },
                 { name: "apellidoCompleto", label: "Apellido Completo" },
@@ -1048,7 +1075,7 @@ export default function SkillsEditor({
                     <button
                       onClick={() => fotoRef.current?.click()}
                       style={{
-                        background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                        background: "#3B82F6",
                         color: "#fff",
                         border: "none",
                         borderRadius: 6,
@@ -1149,7 +1176,7 @@ export default function SkillsEditor({
                           }}
                           disabled={savingCI}
                           style={{
-                            background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                            background: "#3B82F6",
                             color: "#fff", border: "none", borderRadius: 6,
                             padding: "7px 16px", cursor: "pointer", fontWeight: 600, fontSize: 13,
                             opacity: savingCI ? 0.6 : 1,
@@ -1207,7 +1234,7 @@ export default function SkillsEditor({
                   disabled={savingBio}
                   style={{
                     background:
-                      "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                      "#3B82F6",
                     color: "#fff",
                     border: "none",
                     borderRadius: 8,
@@ -1219,6 +1246,7 @@ export default function SkillsEditor({
                 >
                   {savingBio ? "Guardando..." : "Guardar Cambios"}
                 </button>
+              </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1493,21 +1521,48 @@ export default function SkillsEditor({
             onClick={() => setEditHab(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              style={modalBox}
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 520,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
             >
-              <h3
-                style={{
-                  color: text,
-                  fontWeight: 700,
-                  marginBottom: 16,
-                }}
-              >
-                Editar Habilidades
-              </h3>
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setEditHab(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Editar Habilidades</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Ajusta niveles o elimina habilidades de tu perfil
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
 
               {/* Técnicas */}
               <p style={{ color: sub, fontSize: 13, marginBottom: 10 }}>
@@ -1657,7 +1712,7 @@ export default function SkillsEditor({
                   disabled={savingHab}
                   style={{
                     background:
-                      "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                      "#3B82F6",
                     color: "#fff",
                     border: "none",
                     borderRadius: 8,
@@ -1669,6 +1724,7 @@ export default function SkillsEditor({
                 >
                   {savingHab ? "Guardando..." : "Guardar Cambios"}
                 </button>
+              </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1752,12 +1808,48 @@ export default function SkillsEditor({
             onClick={() => setShowAddSkill(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              style={{ ...modalBox, maxWidth: 600, maxHeight: "85vh", overflowY: "auto" }}
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 600,
+                maxHeight: "85vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
             >
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setShowAddSkill(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Añadir Habilidades</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Selecciona habilidades técnicas y blandas para tu perfil
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
               <SkillSelector
                 isDark={isDark}
                 userData={userData}
@@ -1767,6 +1859,7 @@ export default function SkillsEditor({
                   debouncedRefresh();
                 }}
               />
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1783,12 +1876,48 @@ export default function SkillsEditor({
             onClick={() => setShowAddProyecto(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              style={{ ...modalBox, maxWidth: 620, maxHeight: "90vh", overflowY: "auto" }}
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 620,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
             >
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setShowAddProyecto(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Añadir Proyecto</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Agrega un nuevo proyecto a tu portafolio
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
               <ProyectoForm
                 isDark={isDark}
                 onBack={() => setShowAddProyecto(false)}
@@ -1797,6 +1926,7 @@ export default function SkillsEditor({
                   debouncedRefresh();
                 }}
               />
+              </div>
             </motion.div>
           </motion.div>
         )}

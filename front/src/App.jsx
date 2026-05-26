@@ -108,7 +108,7 @@ function AnimatedRoutes() {
             element={
               <RegistroUsuarioPage
                 onNext={() => {
-                  navigate("/edicion");
+                  navigate("/vista");
                 }}
               />
             }

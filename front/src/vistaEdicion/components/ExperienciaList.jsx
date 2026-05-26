@@ -221,8 +221,46 @@ export default function ExperienciaList({ isDark }) {
       {/* Modal */}
       {modalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div style={{ background: isDark ? "#0F172A" : "#fff", border: `1px solid ${border}`, borderRadius: 14, padding: 24, width: "100%", maxWidth: 480 }}>
-            <h3 style={{ color: text, margin: "0 0 20px 0", fontSize: 18 }}>{form.id_experiencia ? "Editar" : "Añadir"} Experiencia</h3>
+          <div style={{
+            background: isDark ? "#0F172A" : "#fff",
+            border: `1px solid ${border}`,
+            borderRadius: 20,
+            padding: 0,
+            width: "100%",
+            maxWidth: 520,
+            maxHeight: "90vh",
+            overflowY: "auto",
+            boxSizing: "border-box",
+            boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+          }}>
+            {/* Header */}
+            <div style={{
+              background: "#3B82F6",
+              padding: "24px 28px 20px",
+              borderRadius: "20px 20px 0 0",
+              position: "relative",
+            }}>
+              <button
+                onClick={() => setModalOpen(false)}
+                style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                ✕
+              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                {form.id_experiencia ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                )}
+                <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>{form.id_experiencia ? "Editar" : "Añadir"} Experiencia</h3>
+              </div>
+              <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                {form.id_experiencia ? "Modifica los datos de esta experiencia" : "Registra una nueva experiencia laboral o académica"}
+              </p>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "24px 28px 28px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
                 <label style={lbl}>Tipo</label>
@@ -255,10 +293,11 @@ export default function ExperienciaList({ isDark }) {
               </div>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-              <button onClick={() => setModalOpen(false)} style={{ background: "none", border: "none", color: text, cursor: "pointer", fontWeight: 600 }}>Cancelar</button>
-              <button onClick={saveExp} disabled={saving} style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "8px 20px", fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
+              <button onClick={() => setModalOpen(false)} style={{ background: "none", border: `1px solid ${border}`, color: text, borderRadius: 10, padding: "10px 22px", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Cancelar</button>
+              <button onClick={saveExp} disabled={saving} style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 10, padding: "10px 28px", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1, boxShadow: "0 4px 14px rgba(59,130,246,0.3)" }}>
                 {saving ? "Guardando..." : "Guardar"}
               </button>
+            </div>
             </div>
           </div>
         </div>

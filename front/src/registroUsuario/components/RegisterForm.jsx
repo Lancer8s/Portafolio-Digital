@@ -69,7 +69,7 @@ export default function RegisterForm({ isDark }) {
       if (data.ok) {
         login(data.token, data.usuario);
         refreshUserData(); // fire-and-forget
-        navigate("/edicion");
+        navigate("/vista");
       } else {
         setApiError(data.mensaje || "Error al registrar");
       }
