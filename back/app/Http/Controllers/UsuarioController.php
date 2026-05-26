@@ -281,9 +281,8 @@ class UsuarioController extends Controller
         $data['perfil']['experiencias'] = $experiencias;
         $data['perfil']['is_owner'] = $isOwner;
 
-        // Ocultar datos sensibles
+        // Ocultar datos sensibles (ci_estado se mantiene para el badge de verificación)
         unset($data['perfil']['email']);
-        unset($data['perfil']['ci_estado']);
         unset($data['perfil']['id_usuario']);
 
         return response()->json($data, 200);

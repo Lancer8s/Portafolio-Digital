@@ -6,6 +6,7 @@ import { useApp } from "../../context/AppContext";
 import { perfilAPI, habilidadAPI, proyectoAPI } from "../../api";
 import ExperienciaList from "./ExperienciaList";
 import DefaultAvatar from "../../components/DefaultAvatar";
+import VerificationBadge from "../../components/VerificationBadge";
 import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
 
@@ -510,9 +511,10 @@ export default function SkillsEditor({
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 style={{
               color: text, fontSize: 20, fontWeight: 700, margin: "0 0 4px",
-              lineHeight: 1.2,
+              lineHeight: 1.2, display: "flex", alignItems: "center", gap: 6,
             }}>
-              {userData?.nombreCompleto}{userData?.apellidoCompleto ? ` ${userData?.apellidoCompleto}` : ''}
+              <span>{userData?.nombreCompleto}{userData?.apellidoCompleto ? ` ${userData?.apellidoCompleto}` : ''}</span>
+              <VerificationBadge ciEstado={userData?.ci_estado} size={20} showUnverified />
             </h2>
             {userData?.titulo && (
               <span style={{
