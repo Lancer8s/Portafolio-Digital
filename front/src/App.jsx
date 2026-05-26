@@ -21,6 +21,7 @@ import EdicionHabilidadPage from "./edicionHabilidad/EdicionHabilidadPage";
 import EdicionProyectoPage from "./edicionProyecto/EdicionProyectoPage";
 import VistaProyectoPage from "./vistaProyecto/VistaProyectoPage";
 import PublicPortfolioPage from "./publicPortfolio/PublicPortfolioPage";
+import AdminDashboardPage from "./adminDashboard/AdminDashboardPage";
 
 const pageVariants = {
   initial: { opacity: 0, backgroundColor: "#000" },
@@ -37,8 +38,9 @@ const pageVariants = {
 };
 
 // Protected route wrapper
-function ProtectedRoute({ children }) {
-  const { isAuthenticated, loading } = useApp();
+function ProtectedRoute({ children, requireAdmin = false }) {
+  const { isAuthenticated, loading, userData } = useApp();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -68,6 +70,16 @@ function ProtectedRoute({ children }) {
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
+  }
+
+  const isAdmin = userData?.roles?.includes('administrador');
+
+  if (isAdmin && location.pathname !== '/admin') {
+    return <Navigate to="/admin" replace />;
+  }
+
+  if (!isAdmin && requireAdmin) {
+    return <Navigate to="/vista" replace />;
   }
 
   return children;
@@ -193,6 +205,14 @@ function AnimatedRoutes() {
                   userData={userData}
                   onBack={() => navigate("/vista")}
                 />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin"
+            element={
+              <ProtectedRoute requireAdmin={true}>
+                <AdminDashboardPage />
               </ProtectedRoute>
             }
           />

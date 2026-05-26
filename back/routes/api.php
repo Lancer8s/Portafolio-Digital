@@ -6,6 +6,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\HabilidadController;
 use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\ExperienciaController;
+use App\Http\Controllers\AdminController;
 
 /*
 |--------------------------------------------------------------------------
@@ -121,5 +122,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('{idProyecto}/imagenes/{idImagen}', [ProyectoController::class, 'eliminarImagen']);
         Route::put('{idProyecto}/habilidades',      [ProyectoController::class, 'sincronizarHabilidades']);
         Route::put('{idProyecto}/visibilidad',       [ProyectoController::class, 'toggleVisibilidad']);
+    });
+
+    // Admin
+    Route::prefix('admin')->group(function () {
+        Route::get('ci-pending', [AdminController::class, 'getPendingCI']);
+        Route::put('ci-verify/{id}', [AdminController::class, 'verifyCI']);
     });
 });

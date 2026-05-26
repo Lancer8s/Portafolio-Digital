@@ -153,6 +153,7 @@ export const AppProvider = ({ children }) => {
         github_url: perfil.github_url || "",
         visibilidad: perfil.visibilidad || "publico",
         ci_estado: perfil.ci_estado || null,
+        roles: perfil.roles || user?.roles || [],
         foto_url: perfil.foto_url || null,
         preview: perfil.foto_url || null,
         techSkills,
