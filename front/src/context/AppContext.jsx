@@ -13,9 +13,15 @@ export const AppProvider = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loading, setLoading] = useState(true);       // cargando sesión inicial
 
-  // Ref para evitar refreshes concurrentes y throttlear llamadas
+  // Evita llamadas concurrentes, pero NO pierde un refresh solicitado durante otra carga.
   const refreshingRef = useRef(false);
+  const queuedRefreshRef = useRef(false);
   const refreshTimerRef = useRef(null);
+  const userRef = useRef(null);
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
 
   // ── Helper para actualizar userData parcialmente ──
   const setUserData = (updater) =>
@@ -27,6 +33,7 @@ export const AppProvider = ({ children }) => {
   const login = useCallback((token, usuario) => {
     localStorage.setItem("auth_token", token);
     setUser(usuario);
+    userRef.current = usuario;
     setIsAuthenticated(true);
   }, []);
 
@@ -39,6 +46,7 @@ export const AppProvider = ({ children }) => {
     }
     localStorage.removeItem("auth_token");
     setUser(null);
+    userRef.current = null;
     setIsAuthenticated(false);
     setUserDataState({ techSkills: [], softSkills: [], proyectos: [] });
   }, []);
@@ -54,6 +62,7 @@ export const AppProvider = ({ children }) => {
       const { data } = await authAPI.me();
       if (data.ok) {
         setUser(data.usuario);
+        userRef.current = data.usuario;
         setIsAuthenticated(true);
         setLoading(false);
         return true;
@@ -66,23 +75,24 @@ export const AppProvider = ({ children }) => {
   }, []);
 
   // ── Cargar datos completos del usuario (perfil + habilidades + proyectos) ──
-  // Optimizado: evita concurrencia, throttlea a 500ms mínimo entre llamadas
   const refreshUserData = useCallback(async () => {
-    if (!localStorage.getItem("auth_token")) return;
+    if (!localStorage.getItem("auth_token")) return null;
 
-    // Si ya se está refresheando, no hacer otra llamada
-    if (refreshingRef.current) return;
+    // Si ya existe un refresh en curso, dejamos uno en cola para que no se pierda.
+    if (refreshingRef.current) {
+      queuedRefreshRef.current = true;
+      return null;
+    }
+
     refreshingRef.current = true;
 
     try {
-      // Usar allSettled para que un fallo parcial no pierda todo
       const [perfilRes, habRes, proyRes] = await Promise.allSettled([
         perfilAPI.obtener(),
         habilidadAPI.listar(),
         proyectoAPI.listar(),
       ]);
 
-      // Extraer data de cada resultado (puede ser fulfilled o rejected)
       const perfilData =
         perfilRes.status === "fulfilled" && perfilRes.value.data?.ok
           ? perfilRes.value.data
@@ -95,7 +105,6 @@ export const AppProvider = ({ children }) => {
           : {};
       const allHabs = habData.habilidades || [];
 
-      // También soportar formato { tecnicas, blandas } directamente
       const tecnicas =
         allHabs.length > 0
           ? allHabs.filter((h) => h.tipo === "tecnica")
@@ -125,26 +134,27 @@ export const AppProvider = ({ children }) => {
         titulo: p.titulo || p.nombre || "",
         descripcion: p.descripcion || "",
         link: p.link || p.url_repositorio || "",
-        fecha: p.fecha_creacion || "",
+        fecha: p.fecha_creacion || p.fecha || "",
         imagen_portada_url: p.imagen_portada_url || null,
         habilidades: p.habilidades || [],
         imagenes: p.imagenes || [],
+        visible_portafolio: p.visible_portafolio ?? p.destacado ?? p.es_destacado ?? false,
       }));
 
-      // Si el perfil falló pero tenemos el 'me' del usuario, usar esos datos
+      const currentUser = userRef.current;
       let nombre = perfil.nombre || "";
       let apellido = perfil.apellido || "";
-      if (!nombre && user) {
-        nombre = user.nombre || "";
-        apellido = user.apellido || "";
+      if (!nombre && currentUser) {
+        nombre = currentUser.nombre || "";
+        apellido = currentUser.apellido || "";
       }
 
-      setUserDataState({
-        id_usuario: user?.id_usuario || perfil.id_usuario,
+      const nextData = {
+        id_usuario: currentUser?.id_usuario || perfil.id_usuario,
         nombreCompleto: nombre,
         apellidoCompleto: apellido,
         telefono: perfil.telefono || "",
-        email: perfil.email || "",
+        email: perfil.email || currentUser?.email || "",
         titulo: perfil.profesion || perfil.titulo_profesional || "",
         biografia: perfil.biografia || "",
         nombre_modificado: perfil.nombre_modificado || false,
@@ -153,22 +163,32 @@ export const AppProvider = ({ children }) => {
         github_url: perfil.github_url || "",
         visibilidad: perfil.visibilidad || "publico",
         ci_estado: perfil.ci_estado || null,
-        roles: perfil.roles || user?.roles || [],
+        roles: perfil.roles || currentUser?.roles || [],
         foto_url: perfil.foto_url || null,
         preview: perfil.foto_url || null,
         techSkills,
         softSkills,
         proyectos,
-      });
+      };
+
+      setUserDataState(nextData);
+      return nextData;
     } catch (err) {
       console.error("Error cargando datos del usuario:", err);
+      return null;
     } finally {
       refreshingRef.current = false;
+
+      if (queuedRefreshRef.current) {
+        queuedRefreshRef.current = false;
+        setTimeout(() => {
+          refreshUserData();
+        }, 0);
+      }
     }
-  }, [user]);
+  }, []);
 
   // ── Refresh debounced: colapsa múltiples llamadas en una sola ──
-  // Usar esta versión cuando se hacen varias operaciones seguidas
   const debouncedRefresh = useCallback(() => {
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
@@ -176,7 +196,7 @@ export const AppProvider = ({ children }) => {
     refreshTimerRef.current = setTimeout(() => {
       refreshUserData();
       refreshTimerRef.current = null;
-    }, 300);
+    }, 200);
   }, [refreshUserData]);
 
   // Restaurar sesión al montar
@@ -189,6 +209,7 @@ export const AppProvider = ({ children }) => {
   const resetState = () => {
     localStorage.removeItem("auth_token");
     setUser(null);
+    userRef.current = null;
     setIsAuthenticated(false);
     setUserDataState({ techSkills: [], softSkills: [], proyectos: [] });
   };

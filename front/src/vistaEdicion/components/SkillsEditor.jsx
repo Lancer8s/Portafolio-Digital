@@ -1,7 +1,6 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import lapizClaro from "../../assets/lapizClaro.png";
-import lapizOscuro from "../../assets/lapizOscuro.png";
 import { useApp } from "../../context/AppContext";
 import { perfilAPI, habilidadAPI, proyectoAPI } from "../../api";
 import ExperienciaList from "./ExperienciaList";
@@ -20,7 +19,7 @@ export default function SkillsEditor({
   onEditProyecto = () => {},
   onVerProyecto = () => {},
 }) {
-  const { setUserData, debouncedRefresh } = useApp();
+  const { setUserData, refreshUserData, debouncedRefresh } = useApp();
 
   // Modales de edición inline
   const [editBio, setEditBio] = useState(false);
@@ -64,11 +63,35 @@ export default function SkillsEditor({
   const sub = isDark ? "#94a3b8" : "#807F81";
   const border = isDark ? "#1D283A" : "#E2E8F0";
   const box = isDark ? "#0F172A" : "#F8FAFC";
-  const lapiz = isDark ? lapizClaro : lapizOscuro;
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const normalizeTechSkills = (skills = []) =>
+    skills
+      .filter((s) => s && s.id_habilidad)
+      .map((s) => ({
+        id_habilidad: s.id_habilidad,
+        nombre: s.nombre || "",
+        nivel: Number(s.nivel ?? 50),
+      }));
+
+  const normalizeSoftSkills = (skills = []) =>
+    skills
+      .filter((s) => s && typeof s !== "string" && s.id_habilidad)
+      .map((s) => ({
+        id_habilidad: s.id_habilidad,
+        nombre: s.nombre || "",
+      }));
+
+  const refreshImmediately = async () => {
+    try {
+      await refreshUserData();
+    } catch {
+      debouncedRefresh();
+    }
   };
 
   const overlay = {
@@ -111,87 +134,101 @@ export default function SkillsEditor({
   };
 
   // Guardar biografía + foto (si hay pendiente) via API
- const saveBio = async () => {
-  // Validaciones de campos obligatorios
-  if (!bioForm.nombreCompleto.trim()) {
-    showToast("El nombre completo es obligatorio", "error");
-    return;
-  }
-  if (!bioForm.apellidoCompleto.trim()) {
-    showToast("El apellido es obligatorio", "error");
-    return;
-  }
-  if (!bioForm.titulo.trim()) {
-    showToast("El título es obligatorio", "error");
-    return;
-  }
-
-  setSavingBio(true);
-  try {
-    const { data } = await perfilAPI.actualizar({
-      nombre: bioForm.nombreCompleto,
-      apellido: bioForm.apellidoCompleto,
-      profesion: bioForm.titulo,
-      titulo_profesional: bioForm.titulo,
-      biografia: bioForm.biografia,
-      visibilidad: bioForm.visibilidad,
-      redes_sociales: bioForm.redes_sociales,
-      telefono: bioForm.telefono,
-    });
-    if (!data.ok) {
-      showToast(data.mensaje || "Error al guardar", "error");
-      setSavingBio(false);
+  const saveBio = async () => {
+    // Validaciones de campos obligatorios
+    if (!bioForm.nombreCompleto.trim()) {
+      showToast("El nombre completo es obligatorio", "error");
+      return;
+    }
+    if (!bioForm.apellidoCompleto.trim()) {
+      showToast("El apellido es obligatorio", "error");
+      return;
+    }
+    if (!bioForm.titulo.trim()) {
+      showToast("El título es obligatorio", "error");
       return;
     }
 
-    if (pendingPhoto) {
-      try {
-        const { data: fotoResp } = await perfilAPI.subirFoto(pendingPhoto);
-        if (!fotoResp.ok) {
+    setSavingBio(true);
+    try {
+      const payload = {
+        nombre: bioForm.nombreCompleto,
+        apellido: bioForm.apellidoCompleto,
+        profesion: bioForm.titulo,
+        titulo_profesional: bioForm.titulo,
+        biografia: bioForm.biografia,
+        visibilidad: bioForm.visibilidad,
+        redes_sociales: bioForm.redes_sociales,
+        telefono: bioForm.telefono,
+      };
+
+      const { data } = await perfilAPI.actualizar(payload);
+      if (!data.ok) {
+        showToast(data.mensaje || "Error al guardar", "error");
+        return;
+      }
+
+      let nextFotoUrl = userData?.foto_url || userData?.preview || null;
+      if (pendingPhoto) {
+        try {
+          const { data: fotoResp } = await perfilAPI.subirFoto(pendingPhoto);
+          if (fotoResp.ok) {
+            nextFotoUrl = fotoResp.foto_url || nextFotoUrl;
+          } else {
+            showToast("Datos guardados, pero error al subir foto", "error");
+          }
+        } catch {
           showToast("Datos guardados, pero error al subir foto", "error");
         }
-      } catch {
-        showToast("Datos guardados, pero error al subir foto", "error");
+        setPendingPhoto(null);
+        if (pendingPhotoPreview) {
+          URL.revokeObjectURL(pendingPhotoPreview);
+          setPendingPhotoPreview(null);
+        }
       }
-      setPendingPhoto(null);
-      if (pendingPhotoPreview) {
-        URL.revokeObjectURL(pendingPhotoPreview);
-        setPendingPhotoPreview(null);
-      }
-    }
 
-    showToast("Cambios guardados correctamente");
-    debouncedRefresh();
-    setEditBio(false);
-  } catch (err) {
-    showToast(
-      err.response?.data?.mensaje || "Error de conexión",
-      "error"
-    );
-  } finally {
-    setSavingBio(false);
-  }
-};
+      setUserData((prev) => ({
+        ...prev,
+        nombreCompleto: payload.nombre,
+        apellidoCompleto: payload.apellido,
+        titulo: payload.profesion,
+        biografia: payload.biografia,
+        telefono: payload.telefono || "",
+        visibilidad: payload.visibilidad || prev.visibilidad,
+        redes_sociales: payload.redes_sociales || prev.redes_sociales || [],
+        foto_url: nextFotoUrl,
+        preview: nextFotoUrl,
+      }));
+
+      showToast("Cambios guardados correctamente");
+      await refreshImmediately();
+      setEditBio(false);
+    } catch (err) {
+      showToast(
+        err.response?.data?.mensaje || "Error de conexión",
+        "error"
+      );
+    } finally {
+      setSavingBio(false);
+    }
+  };
 
   // Guardar habilidades via API (sincronizar)
   const saveHab = async () => {
     setSavingHab(true);
     try {
-      // Filtrar items con id_habilidad válido
-      const techPayload = techList
-        .filter((s) => s.id_habilidad)
-        .map((s) => ({
-          id_habilidad: s.id_habilidad,
-          nivel: s.nivel ?? 50,
-        }));
+      const nextTechSkills = normalizeTechSkills(techList);
+      const nextSoftSkills = normalizeSoftSkills(softList);
 
-      const softPayload = softList
-        .filter((s) => typeof s !== "string" && s.id_habilidad)
-        .map((s) => ({
-          id_habilidad: s.id_habilidad,
-        }));
+      const techPayload = nextTechSkills.map((s) => ({
+        id_habilidad: s.id_habilidad,
+        nivel: s.nivel ?? 50,
+      }));
 
-      // Ejecutar ambas sincronizaciones en paralelo
+      const softPayload = nextSoftSkills.map((s) => ({
+        id_habilidad: s.id_habilidad,
+      }));
+
       const [techRes, softRes] = await Promise.allSettled([
         habilidadAPI.sincronizar("tecnica", techPayload),
         habilidadAPI.sincronizar("blanda", softPayload),
@@ -200,16 +237,28 @@ export default function SkillsEditor({
       const techOk = techRes.status === "fulfilled" && techRes.value.data?.ok;
       const softOk = softRes.status === "fulfilled" && softRes.value.data?.ok;
 
-      if (techOk && softOk) {
-        showToast("Habilidades actualizadas correctamente");
-      } else if (techOk || softOk) {
-        showToast("Algunas habilidades no se sincronizaron", "error");
-      } else {
-        showToast("Error al sincronizar habilidades", "error");
+      if (techOk || softOk) {
+        setUserData((prev) => ({
+          ...prev,
+          techSkills: techOk ? nextTechSkills : prev.techSkills,
+          softSkills: softOk ? nextSoftSkills : prev.softSkills,
+        }));
       }
 
-      debouncedRefresh();
-      setEditHab(false);
+      if (techOk && softOk) {
+        showToast("Habilidades actualizadas correctamente");
+        await refreshImmediately();
+        setEditHab(false);
+      } else if (techOk || softOk) {
+        showToast("Algunas habilidades no se sincronizaron", "error");
+        await refreshImmediately();
+      } else {
+        const msg =
+          techRes.reason?.response?.data?.mensaje ||
+          softRes.reason?.response?.data?.mensaje ||
+          "Error al sincronizar habilidades";
+        showToast(msg, "error");
+      }
     } catch (err) {
       showToast(
         err.response?.data?.mensaje || "Error al sincronizar habilidades",
@@ -263,53 +312,54 @@ export default function SkillsEditor({
     boxSizing: "border-box",
   };
 
-  const editBtn = (label, onClick) => (
-    <button
-      onClick={onClick}
-      style={{
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        color: sub,
-        fontSize: 13,
-        padding: 0,
-      }}
-    >
-      <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
-      <span>{label}</span>
-    </button>
-  );
-
-  const addBtn = (label, onClick) => (
-    <button
-      onClick={onClick}
-      style={{
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        color: "#3B82F6",
-        fontSize: 13,
-        fontWeight: 600,
-        padding: 0,
-      }}
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-      <span>{label}</span>
-    </button>
-  );
-
   const techSkills = userData?.techSkills || [];
   const softSkills = userData?.softSkills || [];
   const proyectos = userData?.proyectos || [];
+
+  const openEditProfile = () => {
+    setBioForm({
+      nombreCompleto: userData?.nombreCompleto || "",
+      apellidoCompleto: userData?.apellidoCompleto || "",
+      titulo: userData?.titulo || "",
+      biografia: userData?.biografia || "",
+      visibilidad: userData?.visibilidad || "publico",
+      redes_sociales: userData?.redes_sociales || [],
+      telefono: userData?.telefono || "",
+    });
+    setEditBio(true);
+  };
+
+  const openAddSkills = () => setShowAddSkill(true);
+
+  const openEditSkills = () => {
+    setTechList(userData?.techSkills || []);
+    setSoftList(userData?.softSkills || []);
+    setEditHab(true);
+  };
+
+  const openAddProject = () => setShowAddProyecto(true);
+
+  useEffect(() => {
+    const handleEditProfile = () => openEditProfile();
+    const handleAddSkills = () => openAddSkills();
+    const handleEditSkills = () => openEditSkills();
+    const handleAddProject = () => openAddProject();
+    const handleToggleEditProjects = () => setIsEditingProyectos((value) => !value);
+
+    window.addEventListener("portfolio:edit-profile", handleEditProfile);
+    window.addEventListener("portfolio:add-skills", handleAddSkills);
+    window.addEventListener("portfolio:edit-skills", handleEditSkills);
+    window.addEventListener("portfolio:add-project", handleAddProject);
+    window.addEventListener("portfolio:toggle-edit-projects", handleToggleEditProjects);
+
+    return () => {
+      window.removeEventListener("portfolio:edit-profile", handleEditProfile);
+      window.removeEventListener("portfolio:add-skills", handleAddSkills);
+      window.removeEventListener("portfolio:edit-skills", handleEditSkills);
+      window.removeEventListener("portfolio:add-project", handleAddProject);
+      window.removeEventListener("portfolio:toggle-edit-projects", handleToggleEditProjects);
+    };
+  }, [userData]);
 
   const initials =
     `${(userData?.nombreCompleto || "")[0] || ""}${
@@ -561,29 +611,7 @@ export default function SkillsEditor({
         )}
       </motion.div>
 
-      {/* Editar Datos — solo visible cuando el perfil está completo */}
-      {completion >= 100 && (
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "flex-end",
-            marginBottom: 28,
-          }}
-        >
-          {editBtn("Editar Datos", () => {
-            setBioForm({
-              nombreCompleto: userData?.nombreCompleto || "",
-              apellidoCompleto: userData?.apellidoCompleto || "",
-              titulo: userData?.titulo || "",
-              biografia: userData?.biografia || "",
-              visibilidad: userData?.visibilidad || "publico",
-              redes_sociales: userData?.redes_sociales || [],
-              telefono: userData?.telefono || "",
-            });
-            setEditBio(true);
-          })}
-        </div>
-      )}
+      {/* Las acciones principales se movieron al panel izquierdo para que sean más visibles. */}
 
       {/* HABILIDADES */}
       <motion.div
@@ -592,7 +620,7 @@ export default function SkillsEditor({
         transition={{ delay: 0.15 }}
         style={{ marginBottom: 8 }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", marginBottom: 12 }}>
           <p
             style={{
               color: text,
@@ -604,14 +632,6 @@ export default function SkillsEditor({
           >
             Habilidades
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            {addBtn("Añadir Habilidades", () => setShowAddSkill(true))}
-            {editBtn("Editar Habilidades", () => {
-              setTechList(userData?.techSkills || []);
-              setSoftList(userData?.softSkills || []);
-              setEditHab(true);
-            })}
-          </div>
         </div>
 
         {/* Técnicas */}
@@ -756,15 +776,11 @@ export default function SkillsEditor({
           >
             Proyectos
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            {addBtn("Añadir Proyecto", () => setShowAddProyecto(true))}
-            {proyectos.length > 0 && (
-              <button onClick={() => setIsEditingProyectos(!isEditingProyectos)} style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
-                <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
-                <span>{isEditingProyectos ? "Hecho" : "Editar Proyectos"}</span>
-              </button>
-            )}
-          </div>
+          {isEditingProyectos && proyectos.length > 0 && (
+            <span style={{ color: "#3B82F6", fontSize: 12, fontWeight: 700 }}>
+              Modo edición activo
+            </span>
+          )}
         </div>
         <div
           style={{
@@ -900,10 +916,13 @@ export default function SkillsEditor({
                   <div
                     style={{
                       position: "absolute",
-                      top: 8,
-                      right: 8,
-                      display: "flex",
-                      gap: 4,
+                      left: 10,
+                      right: 10,
+                      bottom: 10,
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 8,
+                      zIndex: 15,
                     }}
                   >
                     <button
@@ -912,18 +931,23 @@ export default function SkillsEditor({
                         onEditProyecto(i);
                       }}
                       style={{
-                        background: "rgba(59,130,246,0.85)",
+                        background: "#3B82F6",
                         border: "none",
-                        borderRadius: 6,
-                        padding: "5px",
+                        borderRadius: 10,
+                        padding: "9px 10px",
                         cursor: "pointer",
                         color: "#fff",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        gap: 6,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        boxShadow: "0 8px 18px rgba(59,130,246,0.35)",
                       }}
                     >
-                      <img src={lapizClaro} alt="editar" style={{ width: 14, height: 14 }} />
+                      <img src={lapizClaro} alt="editar" style={{ width: 13, height: 13 }} />
+                      Editar
                     </button>
                     <button
                       onClick={(e) => {
@@ -933,17 +957,19 @@ export default function SkillsEditor({
                       }}
                       disabled={deletingProyecto === i}
                       style={{
-                        background: "rgba(239,68,68,0.85)",
+                        background: "#EF4444",
                         border: "none",
-                        borderRadius: 6,
-                        padding: "5px 7px",
-                        cursor: "pointer",
+                        borderRadius: 10,
+                        padding: "9px 10px",
+                        cursor: deletingProyecto === i ? "not-allowed" : "pointer",
                         color: "#fff",
                         fontSize: 12,
-                        fontWeight: 700,
+                        fontWeight: 800,
+                        boxShadow: "0 8px 18px rgba(239,68,68,0.30)",
+                        opacity: deletingProyecto === i ? 0.7 : 1,
                       }}
                     >
-                      {deletingProyecto === i ? "..." : "✕"}
+                      {deletingProyecto === i ? "..." : "Eliminar"}
                     </button>
                   </div>
                 )}
@@ -1043,7 +1069,7 @@ export default function SkillsEditor({
                   ) : (
                     (name === "nombreCompleto" || name === "apellidoCompleto") && (
                       <span style={{ color: sub, fontSize: 11, marginTop: 4, display: "block" }}>
-                        ⚠️ Atención: solo podrás modificar tu {label.toLowerCase()} <b>una única vez</b>.
+                        Atención: solo podrás modificar tu {label.toLowerCase()} <b>una única vez</b>.
                       </span>
                     )
                   )}
@@ -1102,7 +1128,7 @@ export default function SkillsEditor({
                     </button>
                     <span style={{ color: sub, fontSize: 11 }}>
                       JPG/PNG · Máx. 2MB
-                      {pendingPhoto && " ✓ Foto seleccionada"}
+                      {pendingPhoto && " Foto seleccionada"}
                     </span>
                   </div>
                   <input
@@ -1216,7 +1242,7 @@ export default function SkillsEditor({
                     </div>
                     {pendingCI && (
                       <span style={{ color: "#16a34a", fontSize: 11, marginTop: 4, display: "block" }}>
-                        ✓ Archivo seleccionado: {pendingCI.name}
+                        Archivo seleccionado: {pendingCI.name}
                       </span>
                     )}
                   </div>
@@ -1423,7 +1449,7 @@ export default function SkillsEditor({
                       )}
                       <div>
                         <p style={{ margin: 0, color: text, fontSize: 13, fontWeight: 600 }}>
-                          {completarPhotoPreview ? "Foto seleccionada ✓" : "Haz clic para subir una foto"}
+                          {completarPhotoPreview ? "Foto seleccionada" : "Haz clic para subir una foto"}
                         </p>
                         <p style={{ margin: "4px 0 0", color: sub, fontSize: 11 }}>JPG/PNG · Máx. 2MB</p>
                       </div>
@@ -1476,22 +1502,46 @@ export default function SkillsEditor({
                           visibilidad: userData?.visibilidad || "publico",
                           telefono: completarForm.telefono || userData?.telefono || "",
                         };
+
                         const { data } = await perfilAPI.actualizar(payload);
                         if (!data.ok) {
                           showToast(data.mensaje || "Error al guardar", "error");
-                          setSavingCompletar(false);
                           return;
                         }
+
+                        let nextFotoUrl = userData?.foto_url || userData?.preview || null;
                         if (completarPhoto) {
                           try {
                             const { data: fotoResp } = await perfilAPI.subirFoto(completarPhoto);
-                            if (!fotoResp.ok) showToast("Datos guardados, pero error al subir foto", "error");
-                          } catch { showToast("Datos guardados, pero error al subir foto", "error"); }
+                            if (fotoResp.ok) {
+                              nextFotoUrl = fotoResp.foto_url || nextFotoUrl;
+                            } else {
+                              showToast("Datos guardados, pero error al subir foto", "error");
+                            }
+                          } catch {
+                            showToast("Datos guardados, pero error al subir foto", "error");
+                          }
                           setCompletarPhoto(null);
-                          if (completarPhotoPreview) { URL.revokeObjectURL(completarPhotoPreview); setCompletarPhotoPreview(null); }
+                          if (completarPhotoPreview) {
+                            URL.revokeObjectURL(completarPhotoPreview);
+                            setCompletarPhotoPreview(null);
+                          }
                         }
+
+                        setUserData((prev) => ({
+                          ...prev,
+                          nombreCompleto: payload.nombre || prev.nombreCompleto,
+                          apellidoCompleto: payload.apellido || prev.apellidoCompleto,
+                          titulo: payload.profesion || prev.titulo,
+                          biografia: payload.biografia || prev.biografia,
+                          telefono: payload.telefono || prev.telefono,
+                          visibilidad: payload.visibilidad || prev.visibilidad,
+                          foto_url: nextFotoUrl,
+                          preview: nextFotoUrl,
+                        }));
+
                         showToast("¡Perfil actualizado correctamente!");
-                        debouncedRefresh();
+                        await refreshImmediately();
                         setShowCompletarDatos(false);
                       } catch (err) {
                         showToast(err.response?.data?.mensaje || "Error de conexión", "error");
@@ -1867,9 +1917,9 @@ export default function SkillsEditor({
                 isDark={isDark}
                 userData={userData}
                 onBack={() => setShowAddSkill(false)}
-                onSave={() => {
+                onSave={async () => {
                   setShowAddSkill(false);
-                  debouncedRefresh();
+                  await refreshImmediately();
                 }}
               />
               </div>
@@ -1934,9 +1984,9 @@ export default function SkillsEditor({
               <ProyectoForm
                 isDark={isDark}
                 onBack={() => setShowAddProyecto(false)}
-                onSave={() => {
+                onSave={async () => {
                   setShowAddProyecto(false);
-                  debouncedRefresh();
+                  await refreshImmediately();
                 }}
               />
               </div>
