@@ -12,7 +12,7 @@ import { habilidadAPI } from "../../api";
 import { useApp } from "../../context/AppContext";
 
 export default function SkillSelector({ isDark, onBack, onSave, userData }) {
-  const { debouncedRefresh } = useApp();
+  const { setUserData, refreshUserData, debouncedRefresh } = useApp();
   const [selectedTech, setSelectedTech] = useState(null);
   const [techLevel, setTechLevel] = useState(50);
   const [customTech, setCustomTech] = useState("");
@@ -94,6 +94,24 @@ export default function SkillSelector({ isDark, onBack, onSave, userData }) {
     setSelectedSoft(s);
   };
 
+  const buildSavedSkill = (resp, fallbackName, fallbackTipo, fallbackNivel = null) => {
+    const data = resp?.data || resp || {};
+    return {
+      id_habilidad: data.id_habilidad,
+      nombre: data.nombre || fallbackName,
+      tipo: data.tipo || fallbackTipo,
+      nivel: data.nivel ?? fallbackNivel,
+    };
+  };
+
+  const refreshImmediately = async () => {
+    try {
+      await refreshUserData();
+    } catch {
+      debouncedRefresh();
+    }
+  };
+
   const handleSave = async () => {
     if (!selectedTech && !selectedSoft) {
       showToast(
@@ -109,13 +127,16 @@ export default function SkillSelector({ isDark, onBack, onSave, userData }) {
       showToast("Debe escribir el nombre de la habilidad técnica", "error");
       return;
     }
+    if (selectedSoft && !softName?.trim()) {
+      showToast("Debe escribir el nombre de la habilidad blanda", "error");
+      return;
+    }
 
     setSaving(true);
     try {
-      // Ejecutar ambas llamadas en paralelo si hay ambas
-      const promises = [];
+      let savedTech = null;
+      let savedSoft = null;
 
-      // Agregar habilidad técnica
       if (techName) {
         const catalogoItem = catalogo.find(
           (c) =>
@@ -123,18 +144,17 @@ export default function SkillSelector({ isDark, onBack, onSave, userData }) {
             c.tipo === "tecnica"
         );
 
-        if (catalogoItem) {
-          promises.push(habilidadAPI.agregar(catalogoItem.id_habilidad, techLevel));
-        } else {
-          promises.push(habilidadAPI.agregarPersonalizada(
-            techName,
-            "tecnica",
-            techLevel
-          ));
+        const resp = catalogoItem
+          ? await habilidadAPI.agregar(catalogoItem.id_habilidad, techLevel)
+          : await habilidadAPI.agregarPersonalizada(techName, "tecnica", techLevel);
+
+        if (!resp.data?.ok) {
+          throw new Error(resp.data?.mensaje || "Error al guardar habilidad técnica");
         }
+
+        savedTech = buildSavedSkill(resp, techName, "tecnica", techLevel);
       }
 
-      // Agregar habilidad blanda
       if (softName) {
         const catalogoItem = catalogo.find(
           (c) =>
@@ -142,29 +162,76 @@ export default function SkillSelector({ isDark, onBack, onSave, userData }) {
             c.tipo === "blanda"
         );
 
-        if (catalogoItem) {
-          promises.push(habilidadAPI.agregar(catalogoItem.id_habilidad, null));
-        } else {
-          promises.push(habilidadAPI.agregarPersonalizada(softName, "blanda", null));
+        const resp = catalogoItem
+          ? await habilidadAPI.agregar(catalogoItem.id_habilidad, null)
+          : await habilidadAPI.agregarPersonalizada(softName, "blanda", null);
+
+        if (!resp.data?.ok) {
+          throw new Error(resp.data?.mensaje || "Error al guardar habilidad blanda");
         }
+
+        savedSoft = buildSavedSkill(resp, softName, "blanda", null);
       }
 
-      await Promise.all(promises);
+      setUserData((prev) => {
+        const nextTechSkills = [...(prev.techSkills || [])];
+        const nextSoftSkills = [...(prev.softSkills || [])];
+
+        if (savedTech?.id_habilidad) {
+          const exists = nextTechSkills.some((s) => s.id_habilidad === savedTech.id_habilidad);
+          if (!exists) {
+            nextTechSkills.push({
+              id_habilidad: savedTech.id_habilidad,
+              nombre: savedTech.nombre,
+              nivel: savedTech.nivel ?? techLevel,
+            });
+          }
+        }
+
+        if (savedSoft?.id_habilidad) {
+          const exists = nextSoftSkills.some((s) => s.id_habilidad === savedSoft.id_habilidad);
+          if (!exists) {
+            nextSoftSkills.push({
+              id_habilidad: savedSoft.id_habilidad,
+              nombre: savedSoft.nombre,
+            });
+          }
+        }
+
+        return {
+          ...prev,
+          techSkills: nextTechSkills,
+          softSkills: nextSoftSkills,
+        };
+      });
 
       showToast("Habilidades guardadas correctamente");
-      debouncedRefresh();
+      await refreshImmediately();
 
-      // Llamar onSave original para navegar
-      setTimeout(() => {
-        onSave({
-          tech: techName ? buildTechSkill(techName, techLevel) : null,
-          soft: softName ? buildSoftSkill(softName) : null,
-        });
-      }, 500);
+      onSave({
+        tech: savedTech
+          ? {
+              id_habilidad: savedTech.id_habilidad,
+              nombre: savedTech.nombre,
+              nivel: savedTech.nivel ?? techLevel,
+            }
+          : techName
+            ? buildTechSkill(techName, techLevel)
+            : null,
+        soft: savedSoft
+          ? {
+              id_habilidad: savedSoft.id_habilidad,
+              nombre: savedSoft.nombre,
+            }
+          : softName
+            ? buildSoftSkill(softName)
+            : null,
+      });
     } catch (err) {
       const msg =
         err.response?.data?.mensaje ||
         err.response?.data?.errores?.nombre?.[0] ||
+        err.message ||
         "Error al guardar habilidades";
       showToast(msg, "error");
     } finally {

@@ -5,7 +5,7 @@ import { useApp } from "../../context/AppContext";
 import DefaultAvatar from "../../components/DefaultAvatar";
 
 export default function ProfileForm({ onNext, isDark }) {
-  const { userData, debouncedRefresh } = useApp();
+  const { userData, setUserData, refreshUserData, debouncedRefresh } = useApp();
   const [step, setStep] = useState("datos");
   const [data, setData] = useState({
     nombreCompleto: "",
@@ -66,6 +66,14 @@ export default function ProfileForm({ onNext, isDark }) {
     setTimeout(() => setToast(null), 3000);
   };
 
+  const refreshImmediately = async () => {
+    try {
+      await refreshUserData();
+    } catch {
+      debouncedRefresh();
+    }
+  };
+
   const handleChange = (e) => {
     setData({ ...data, [e.target.name]: e.target.value });
     setErrors((er) => ({ ...er, [e.target.name]: undefined }));
@@ -89,9 +97,17 @@ export default function ProfileForm({ onNext, isDark }) {
         biografia: data.biografia
       });
       if (resp.ok) {
+        setUserData((prev) => ({
+          ...prev,
+          nombreCompleto: data.nombreCompleto || prev.nombreCompleto,
+          apellidoCompleto: data.apellidoCompleto || prev.apellidoCompleto,
+          titulo: data.titulo,
+          telefono: data.telefono,
+          biografia: data.biografia,
+        }));
         showToast("Perfil actualizado correctamente");
-        debouncedRefresh();
-        setTimeout(() => setStep("foto"), 800);
+        await refreshImmediately();
+        setStep("foto");
       } else {
         showToast(resp.mensaje || "Error al guardar", "error");
       }
@@ -135,8 +151,9 @@ export default function ProfileForm({ onNext, isDark }) {
         showToast("Foto actualizada correctamente");
         if (resp.foto_url) {
           setPreview(resp.foto_url);
+          setUserData((prev) => ({ ...prev, foto_url: resp.foto_url, preview: resp.foto_url }));
         }
-        debouncedRefresh();
+        await refreshImmediately();
       } else {
         showToast("Error al subir la foto", "error");
         setPreview(null);
@@ -169,7 +186,8 @@ export default function ProfileForm({ onNext, isDark }) {
       const { data: resp } = await perfilAPI.subirCI(file);
       if (resp.ok) {
         showToast("CI subido correctamente para revisión");
-        debouncedRefresh();
+        setUserData((prev) => ({ ...prev, ci_estado: "Pendiente de revisión" }));
+        await refreshImmediately();
       } else {
         showToast("Error al subir el CI", "error");
         setCiPreview(null);
@@ -183,7 +201,8 @@ export default function ProfileForm({ onNext, isDark }) {
     }
   };
 
-  const handleFinish = () => {
+  const handleFinish = async () => {
+    await refreshImmediately();
     onNext({
       ...data,
       preview: preview,

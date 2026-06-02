@@ -6,7 +6,7 @@ import { useApp } from "../../context/AppContext";
 import { motion } from "framer-motion";
 
 export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
-  const { debouncedRefresh } = useApp();
+  const { setUserData, refreshUserData, debouncedRefresh } = useApp();
 
   const [form, setForm] = useState(() => {
     if (initialData) {
@@ -79,6 +79,14 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
   const showToastMsg = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const refreshImmediately = async () => {
+    try {
+      await refreshUserData();
+    } catch {
+      debouncedRefresh();
+    }
   };
 
   const handleChange = (e) =>
@@ -211,16 +219,33 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
         }
       }
 
+      const savedProject = {
+        ...form,
+        id_proyecto: projectId,
+        titulo: form.titulo,
+        descripcion: form.descripcion,
+        link: form.link || "",
+        habilidades: form.habilidades || [],
+      };
+
+      setUserData((prev) => {
+        const proyectos = prev.proyectos || [];
+        const exists = proyectos.some((p) => p.id_proyecto === projectId);
+        return {
+          ...prev,
+          proyectos: exists
+            ? proyectos.map((p) => (p.id_proyecto === projectId ? { ...p, ...savedProject } : p))
+            : [...proyectos, savedProject],
+        };
+      });
+
       showToastMsg(
         initialData
           ? "Proyecto actualizado correctamente"
           : "Proyecto creado correctamente"
       );
-      debouncedRefresh();
-
-      setTimeout(() => {
-        onSave({ ...form, id_proyecto: projectId });
-      }, 500);
+      await refreshImmediately();
+      onSave(savedProject);
     } catch (err) {
       const resp = err.response?.data;
       if (resp?.errores) {

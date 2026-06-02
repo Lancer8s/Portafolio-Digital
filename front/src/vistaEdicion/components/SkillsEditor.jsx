@@ -1,13 +1,14 @@
-import { useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import lapizClaro from "../../assets/lapizClaro.png";
-import lapizOscuro from "../../assets/lapizOscuro.png";
 import { useApp } from "../../context/AppContext";
 import { perfilAPI, habilidadAPI, proyectoAPI } from "../../api";
 import ExperienciaList from "./ExperienciaList";
 import DefaultAvatar from "../../components/DefaultAvatar";
+import VerificationBadge from "../../components/VerificationBadge";
 import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
+import StarToggle from "../../components/StarToggle";
 
 export default function SkillsEditor({
   userData,
@@ -18,10 +19,16 @@ export default function SkillsEditor({
   onEditProyecto = () => {},
   onVerProyecto = () => {},
 }) {
-  const { setUserData, debouncedRefresh } = useApp();
+  const { setUserData, refreshUserData, debouncedRefresh } = useApp();
 
   // Modales de edición inline
   const [editBio, setEditBio] = useState(false);
+  const [showCompletarDatos, setShowCompletarDatos] = useState(false);
+  const [completarForm, setCompletarForm] = useState({ titulo: "", telefono: "", biografia: "" });
+  const [savingCompletar, setSavingCompletar] = useState(false);
+  const [completarPhoto, setCompletarPhoto] = useState(null);
+  const [completarPhotoPreview, setCompletarPhotoPreview] = useState(null);
+  const completarFotoRef = useRef(null);
   const [isEditingProyectos, setIsEditingProyectos] = useState(false);
   const [bioForm, setBioForm] = useState({
     nombreCompleto: userData?.nombreCompleto || "",
@@ -56,11 +63,35 @@ export default function SkillsEditor({
   const sub = isDark ? "#94a3b8" : "#807F81";
   const border = isDark ? "#1D283A" : "#E2E8F0";
   const box = isDark ? "#0F172A" : "#F8FAFC";
-  const lapiz = isDark ? lapizClaro : lapizOscuro;
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const normalizeTechSkills = (skills = []) =>
+    skills
+      .filter((s) => s && s.id_habilidad)
+      .map((s) => ({
+        id_habilidad: s.id_habilidad,
+        nombre: s.nombre || "",
+        nivel: Number(s.nivel ?? 50),
+      }));
+
+  const normalizeSoftSkills = (skills = []) =>
+    skills
+      .filter((s) => s && typeof s !== "string" && s.id_habilidad)
+      .map((s) => ({
+        id_habilidad: s.id_habilidad,
+        nombre: s.nombre || "",
+      }));
+
+  const refreshImmediately = async () => {
+    try {
+      await refreshUserData();
+    } catch {
+      debouncedRefresh();
+    }
   };
 
   const overlay = {
@@ -103,87 +134,101 @@ export default function SkillsEditor({
   };
 
   // Guardar biografía + foto (si hay pendiente) via API
- const saveBio = async () => {
-  // Validaciones de campos obligatorios
-  if (!bioForm.nombreCompleto.trim()) {
-    showToast("El nombre completo es obligatorio", "error");
-    return;
-  }
-  if (!bioForm.apellidoCompleto.trim()) {
-    showToast("El apellido es obligatorio", "error");
-    return;
-  }
-  if (!bioForm.titulo.trim()) {
-    showToast("El título es obligatorio", "error");
-    return;
-  }
-
-  setSavingBio(true);
-  try {
-    const { data } = await perfilAPI.actualizar({
-      nombre: bioForm.nombreCompleto,
-      apellido: bioForm.apellidoCompleto,
-      profesion: bioForm.titulo,
-      titulo_profesional: bioForm.titulo,
-      biografia: bioForm.biografia,
-      visibilidad: bioForm.visibilidad,
-      redes_sociales: bioForm.redes_sociales,
-      telefono: bioForm.telefono,
-    });
-    if (!data.ok) {
-      showToast(data.mensaje || "Error al guardar", "error");
-      setSavingBio(false);
+  const saveBio = async () => {
+    // Validaciones de campos obligatorios
+    if (!bioForm.nombreCompleto.trim()) {
+      showToast("El nombre completo es obligatorio", "error");
+      return;
+    }
+    if (!bioForm.apellidoCompleto.trim()) {
+      showToast("El apellido es obligatorio", "error");
+      return;
+    }
+    if (!bioForm.titulo.trim()) {
+      showToast("El título es obligatorio", "error");
       return;
     }
 
-    if (pendingPhoto) {
-      try {
-        const { data: fotoResp } = await perfilAPI.subirFoto(pendingPhoto);
-        if (!fotoResp.ok) {
+    setSavingBio(true);
+    try {
+      const payload = {
+        nombre: bioForm.nombreCompleto,
+        apellido: bioForm.apellidoCompleto,
+        profesion: bioForm.titulo,
+        titulo_profesional: bioForm.titulo,
+        biografia: bioForm.biografia,
+        visibilidad: bioForm.visibilidad,
+        redes_sociales: bioForm.redes_sociales,
+        telefono: bioForm.telefono,
+      };
+
+      const { data } = await perfilAPI.actualizar(payload);
+      if (!data.ok) {
+        showToast(data.mensaje || "Error al guardar", "error");
+        return;
+      }
+
+      let nextFotoUrl = userData?.foto_url || userData?.preview || null;
+      if (pendingPhoto) {
+        try {
+          const { data: fotoResp } = await perfilAPI.subirFoto(pendingPhoto);
+          if (fotoResp.ok) {
+            nextFotoUrl = fotoResp.foto_url || nextFotoUrl;
+          } else {
+            showToast("Datos guardados, pero error al subir foto", "error");
+          }
+        } catch {
           showToast("Datos guardados, pero error al subir foto", "error");
         }
-      } catch {
-        showToast("Datos guardados, pero error al subir foto", "error");
+        setPendingPhoto(null);
+        if (pendingPhotoPreview) {
+          URL.revokeObjectURL(pendingPhotoPreview);
+          setPendingPhotoPreview(null);
+        }
       }
-      setPendingPhoto(null);
-      if (pendingPhotoPreview) {
-        URL.revokeObjectURL(pendingPhotoPreview);
-        setPendingPhotoPreview(null);
-      }
-    }
 
-    showToast("Cambios guardados correctamente");
-    debouncedRefresh();
-    setEditBio(false);
-  } catch (err) {
-    showToast(
-      err.response?.data?.mensaje || "Error de conexión",
-      "error"
-    );
-  } finally {
-    setSavingBio(false);
-  }
-};
+      setUserData((prev) => ({
+        ...prev,
+        nombreCompleto: payload.nombre,
+        apellidoCompleto: payload.apellido,
+        titulo: payload.profesion,
+        biografia: payload.biografia,
+        telefono: payload.telefono || "",
+        visibilidad: payload.visibilidad || prev.visibilidad,
+        redes_sociales: payload.redes_sociales || prev.redes_sociales || [],
+        foto_url: nextFotoUrl,
+        preview: nextFotoUrl,
+      }));
+
+      showToast("Cambios guardados correctamente");
+      await refreshImmediately();
+      setEditBio(false);
+    } catch (err) {
+      showToast(
+        err.response?.data?.mensaje || "Error de conexión",
+        "error"
+      );
+    } finally {
+      setSavingBio(false);
+    }
+  };
 
   // Guardar habilidades via API (sincronizar)
   const saveHab = async () => {
     setSavingHab(true);
     try {
-      // Filtrar items con id_habilidad válido
-      const techPayload = techList
-        .filter((s) => s.id_habilidad)
-        .map((s) => ({
-          id_habilidad: s.id_habilidad,
-          nivel: s.nivel ?? 50,
-        }));
+      const nextTechSkills = normalizeTechSkills(techList);
+      const nextSoftSkills = normalizeSoftSkills(softList);
 
-      const softPayload = softList
-        .filter((s) => typeof s !== "string" && s.id_habilidad)
-        .map((s) => ({
-          id_habilidad: s.id_habilidad,
-        }));
+      const techPayload = nextTechSkills.map((s) => ({
+        id_habilidad: s.id_habilidad,
+        nivel: s.nivel ?? 50,
+      }));
 
-      // Ejecutar ambas sincronizaciones en paralelo
+      const softPayload = nextSoftSkills.map((s) => ({
+        id_habilidad: s.id_habilidad,
+      }));
+
       const [techRes, softRes] = await Promise.allSettled([
         habilidadAPI.sincronizar("tecnica", techPayload),
         habilidadAPI.sincronizar("blanda", softPayload),
@@ -192,16 +237,28 @@ export default function SkillsEditor({
       const techOk = techRes.status === "fulfilled" && techRes.value.data?.ok;
       const softOk = softRes.status === "fulfilled" && softRes.value.data?.ok;
 
-      if (techOk && softOk) {
-        showToast("Habilidades actualizadas correctamente");
-      } else if (techOk || softOk) {
-        showToast("Algunas habilidades no se sincronizaron", "error");
-      } else {
-        showToast("Error al sincronizar habilidades", "error");
+      if (techOk || softOk) {
+        setUserData((prev) => ({
+          ...prev,
+          techSkills: techOk ? nextTechSkills : prev.techSkills,
+          softSkills: softOk ? nextSoftSkills : prev.softSkills,
+        }));
       }
 
-      debouncedRefresh();
-      setEditHab(false);
+      if (techOk && softOk) {
+        showToast("Habilidades actualizadas correctamente");
+        await refreshImmediately();
+        setEditHab(false);
+      } else if (techOk || softOk) {
+        showToast("Algunas habilidades no se sincronizaron", "error");
+        await refreshImmediately();
+      } else {
+        const msg =
+          techRes.reason?.response?.data?.mensaje ||
+          softRes.reason?.response?.data?.mensaje ||
+          "Error al sincronizar habilidades";
+        showToast(msg, "error");
+      }
     } catch (err) {
       showToast(
         err.response?.data?.mensaje || "Error al sincronizar habilidades",
@@ -255,53 +312,54 @@ export default function SkillsEditor({
     boxSizing: "border-box",
   };
 
-  const editBtn = (label, onClick) => (
-    <button
-      onClick={onClick}
-      style={{
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 6,
-        color: sub,
-        fontSize: 13,
-        padding: 0,
-      }}
-    >
-      <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
-      <span>{label}</span>
-    </button>
-  );
-
-  const addBtn = (label, onClick) => (
-    <button
-      onClick={onClick}
-      style={{
-        background: "none",
-        border: "none",
-        cursor: "pointer",
-        display: "flex",
-        alignItems: "center",
-        gap: 5,
-        color: "#3B82F6",
-        fontSize: 13,
-        fontWeight: 600,
-        padding: 0,
-      }}
-    >
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <line x1="12" y1="5" x2="12" y2="19"/>
-        <line x1="5" y1="12" x2="19" y2="12"/>
-      </svg>
-      <span>{label}</span>
-    </button>
-  );
-
   const techSkills = userData?.techSkills || [];
   const softSkills = userData?.softSkills || [];
   const proyectos = userData?.proyectos || [];
+
+  const openEditProfile = () => {
+    setBioForm({
+      nombreCompleto: userData?.nombreCompleto || "",
+      apellidoCompleto: userData?.apellidoCompleto || "",
+      titulo: userData?.titulo || "",
+      biografia: userData?.biografia || "",
+      visibilidad: userData?.visibilidad || "publico",
+      redes_sociales: userData?.redes_sociales || [],
+      telefono: userData?.telefono || "",
+    });
+    setEditBio(true);
+  };
+
+  const openAddSkills = () => setShowAddSkill(true);
+
+  const openEditSkills = () => {
+    setTechList(userData?.techSkills || []);
+    setSoftList(userData?.softSkills || []);
+    setEditHab(true);
+  };
+
+  const openAddProject = () => setShowAddProyecto(true);
+
+  useEffect(() => {
+    const handleEditProfile = () => openEditProfile();
+    const handleAddSkills = () => openAddSkills();
+    const handleEditSkills = () => openEditSkills();
+    const handleAddProject = () => openAddProject();
+    const handleToggleEditProjects = () => setIsEditingProyectos((value) => !value);
+
+    window.addEventListener("portfolio:edit-profile", handleEditProfile);
+    window.addEventListener("portfolio:add-skills", handleAddSkills);
+    window.addEventListener("portfolio:edit-skills", handleEditSkills);
+    window.addEventListener("portfolio:add-project", handleAddProject);
+    window.addEventListener("portfolio:toggle-edit-projects", handleToggleEditProjects);
+
+    return () => {
+      window.removeEventListener("portfolio:edit-profile", handleEditProfile);
+      window.removeEventListener("portfolio:add-skills", handleAddSkills);
+      window.removeEventListener("portfolio:edit-skills", handleEditSkills);
+      window.removeEventListener("portfolio:add-project", handleAddProject);
+      window.removeEventListener("portfolio:toggle-edit-projects", handleToggleEditProjects);
+    };
+  }, [userData]);
 
   const initials =
     `${(userData?.nombreCompleto || "")[0] || ""}${
@@ -375,76 +433,101 @@ export default function SkillsEditor({
           initial={{ opacity: 0, y: -10 }}
           animate={{ opacity: 1, y: 0 }}
           style={{
-            background: isDark ? "linear-gradient(135deg, rgba(59,130,246,0.1), rgba(99,102,241,0.05))" : "linear-gradient(135deg, #EFF6FF, #EEF2FF)",
-            border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "#BFDBFE"}`,
+            background: isDark ? "#0F172A" : "#fff",
+            border: `1px solid ${border}`,
             borderRadius: 16,
-            padding: "20px 24px",
+            padding: 0,
             marginBottom: 24,
-            display: "flex",
-            flexDirection: "column",
-            gap: 12
+            overflow: "hidden",
+            boxShadow: isDark ? "none" : "0 1px 6px rgba(0,0,0,0.05)",
           }}
         >
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h3 style={{ margin: 0, color: text, fontSize: 16, fontWeight: 700, display: "flex", alignItems: "center", gap: 8 }}>
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-              Completar Perfil
-            </h3>
-            <span style={{ color: "#3B82F6", fontWeight: 800, fontSize: 16 }}>{completion}%</span>
-          </div>
-          
-          <div style={{ width: "100%", height: 8, background: isDark ? "#1D283A" : "#E2E8F0", borderRadius: 99, overflow: "hidden" }}>
-            <motion.div 
-              initial={{ width: 0 }} 
-              animate={{ width: `${completion}%` }} 
-              transition={{ duration: 1, ease: "easeOut" }}
-              style={{ height: "100%", background: "#3B82F6", borderRadius: 99 }}
-            />
-          </div>
+          {/* Top accent bar */}
+          <div style={{ height: 3, background: "#3B82F6", width: `${completion}%`, transition: "width 1s ease-out" }} />
 
-          <div style={{ marginTop: 4 }}>
-            <p style={{ margin: "0 0 8px 0", color: sub, fontSize: 13 }}>Te falta completar los siguientes datos:</p>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {missingData.map((item, idx) => (
-                <span key={idx} style={{ 
-                  background: isDark ? "rgba(255,255,255,0.05)" : "#fff", 
-                  border: `1px solid ${border}`,
-                  color: text, 
-                  fontSize: 12, 
-                  padding: "4px 10px", 
-                  borderRadius: 6,
-                  boxShadow: isDark ? "none" : "0 1px 2px rgba(0,0,0,0.05)"
-                }}>
-                  {item}
-                </span>
-              ))}
+          <div style={{ padding: "20px 24px", display: "flex", gap: 20, alignItems: "center" }}>
+            {/* Circular progress ring */}
+            <div style={{ position: "relative", flexShrink: 0 }}>
+              <svg width="72" height="72" viewBox="0 0 72 72">
+                <circle cx="36" cy="36" r="30" fill="none" stroke={isDark ? "#1D283A" : "#E2E8F0"} strokeWidth="6" />
+                <motion.circle
+                  cx="36" cy="36" r="30"
+                  fill="none"
+                  stroke="#3B82F6"
+                  strokeWidth="6"
+                  strokeLinecap="round"
+                  strokeDasharray={2 * Math.PI * 30}
+                  initial={{ strokeDashoffset: 2 * Math.PI * 30 }}
+                  animate={{ strokeDashoffset: 2 * Math.PI * 30 * (1 - completion / 100) }}
+                  transition={{ duration: 1.2, ease: "easeOut" }}
+                  style={{ transform: "rotate(-90deg)", transformOrigin: "center" }}
+                />
+              </svg>
+              <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <span style={{ color: "#3B82F6", fontWeight: 800, fontSize: 18 }}>{completion}%</span>
+              </div>
             </div>
-            <button
-              onClick={() => {
-                setBioForm({
-                  nombreCompleto: userData?.nombreCompleto || "",
-                  apellidoCompleto: userData?.apellidoCompleto || "",
-                  titulo: userData?.titulo || "",
-                  biografia: userData?.biografia || "",
-                  visibilidad: userData?.visibilidad || "publico",
-                  telefono: userData?.telefono || "",
-                });
-                setEditBio(true);
-              }}
-              style={{
-                marginTop: 16,
-                background: "#3B82F6",
-                color: "#fff",
-                border: "none",
-                borderRadius: 8,
-                padding: "8px 16px",
-                fontSize: 13,
-                fontWeight: 700,
-                cursor: "pointer"
-              }}
-            >
-              Completar ahora
-            </button>
+
+            {/* Right content */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <h3 style={{ margin: "0 0 4px", color: text, fontSize: 16, fontWeight: 700 }}>
+                Completar Perfil
+              </h3>
+              <p style={{ margin: "0 0 12px", color: sub, fontSize: 12, lineHeight: 1.4 }}>
+                Completa tu información para un portafolio profesional
+              </p>
+
+              {/* Checklist items */}
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {[
+                  { label: "Título o Profesión", done: !!userData?.titulo },
+                  { label: "Teléfono", done: !!userData?.telefono },
+                  { label: "Biografía", done: !!userData?.biografia },
+                  { label: "Foto de Perfil", done: !!(userData?.foto_url || userData?.preview) },
+                ].map((item, idx) => (
+                  <div key={idx} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                    {item.done ? (
+                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#16a34a" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                    ) : (
+                      <div style={{ width: 14, height: 14, borderRadius: "50%", border: `2px solid ${isDark ? "#334155" : "#CBD5E1"}` }} />
+                    )}
+                    <span style={{ fontSize: 12, color: item.done ? (isDark ? "#64748b" : "#94a3b8") : text, textDecoration: item.done ? "line-through" : "none", fontWeight: item.done ? 400 : 500 }}>
+                      {item.label}
+                    </span>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => {
+                  setCompletarForm({
+                    titulo: userData?.titulo || "",
+                    telefono: userData?.telefono || "",
+                    biografia: userData?.biografia || "",
+                  });
+                  setCompletarPhoto(null);
+                  setCompletarPhotoPreview(null);
+                  setShowCompletarDatos(true);
+                }}
+                style={{
+                  marginTop: 14,
+                  background: "#3B82F6",
+                  color: "#fff",
+                  border: "none",
+                  borderRadius: 8,
+                  padding: "8px 20px",
+                  fontSize: 13,
+                  fontWeight: 700,
+                  cursor: "pointer",
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                Completar ahora
+              </button>
+            </div>
           </div>
         </motion.div>
       )}
@@ -479,9 +562,10 @@ export default function SkillsEditor({
           <div style={{ flex: 1, minWidth: 0 }}>
             <h2 style={{
               color: text, fontSize: 20, fontWeight: 700, margin: "0 0 4px",
-              lineHeight: 1.2,
+              lineHeight: 1.2, display: "flex", alignItems: "center", gap: 6,
             }}>
-              {userData?.nombreCompleto}{userData?.apellidoCompleto ? ` ${userData?.apellidoCompleto}` : ''}
+              <span>{userData?.nombreCompleto}{userData?.apellidoCompleto ? ` ${userData?.apellidoCompleto}` : ''}</span>
+              <VerificationBadge ciEstado={userData?.ci_estado} size={20} showUnverified />
             </h2>
             {userData?.titulo && (
               <span style={{
@@ -527,27 +611,7 @@ export default function SkillsEditor({
         )}
       </motion.div>
 
-      {/* Editar Datos */}
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "flex-end",
-          marginBottom: 28,
-        }}
-      >
-        {editBtn("Editar Datos", () => {
-          setBioForm({
-            nombreCompleto: userData?.nombreCompleto || "",
-            apellidoCompleto: userData?.apellidoCompleto || "",
-            titulo: userData?.titulo || "",
-            biografia: userData?.biografia || "",
-            visibilidad: userData?.visibilidad || "publico",
-            redes_sociales: userData?.redes_sociales || [],
-            telefono: userData?.telefono || "",
-          });
-          setEditBio(true);
-        })}
-      </div>
+      {/* Las acciones principales se movieron al panel izquierdo para que sean más visibles. */}
 
       {/* HABILIDADES */}
       <motion.div
@@ -556,7 +620,7 @@ export default function SkillsEditor({
         transition={{ delay: 0.15 }}
         style={{ marginBottom: 8 }}
       >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+        <div style={{ display: "flex", justifyContent: "flex-start", alignItems: "center", marginBottom: 12 }}>
           <p
             style={{
               color: text,
@@ -568,14 +632,6 @@ export default function SkillsEditor({
           >
             Habilidades
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            {addBtn("Añadir Habilidades", () => setShowAddSkill(true))}
-            {editBtn("Editar Habilidades", () => {
-              setTechList(userData?.techSkills || []);
-              setSoftList(userData?.softSkills || []);
-              setEditHab(true);
-            })}
-          </div>
         </div>
 
         {/* Técnicas */}
@@ -720,15 +776,11 @@ export default function SkillsEditor({
           >
             Proyectos
           </p>
-          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-            {addBtn("Añadir Proyecto", () => setShowAddProyecto(true))}
-            {proyectos.length > 0 && (
-              <button onClick={() => setIsEditingProyectos(!isEditingProyectos)} style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
-                <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
-                <span>{isEditingProyectos ? "Hecho" : "Editar Proyectos"}</span>
-              </button>
-            )}
-          </div>
+          {isEditingProyectos && proyectos.length > 0 && (
+            <span style={{ color: "#3B82F6", fontSize: 12, fontWeight: 700 }}>
+              Modo edición activo
+            </span>
+          )}
         </div>
         <div
           style={{
@@ -758,6 +810,14 @@ export default function SkillsEditor({
                   position: "relative",
                 }}
               >
+                {/* Estrellita de destacado (Top Left) */}
+                <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}>
+                  <StarToggle 
+                    projectId={p.id_proyecto} 
+                    initiallyVisible={p.visible_portafolio !== false} 
+                  />
+                </div>
+
                 <div onClick={() => onVerProyecto(i)}>
                   <div
                     style={{
@@ -856,10 +916,13 @@ export default function SkillsEditor({
                   <div
                     style={{
                       position: "absolute",
-                      top: 8,
-                      right: 8,
-                      display: "flex",
-                      gap: 4,
+                      left: 10,
+                      right: 10,
+                      bottom: 10,
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr",
+                      gap: 8,
+                      zIndex: 15,
                     }}
                   >
                     <button
@@ -868,18 +931,23 @@ export default function SkillsEditor({
                         onEditProyecto(i);
                       }}
                       style={{
-                        background: "rgba(59,130,246,0.85)",
+                        background: "#3B82F6",
                         border: "none",
-                        borderRadius: 6,
-                        padding: "5px",
+                        borderRadius: 10,
+                        padding: "9px 10px",
                         cursor: "pointer",
                         color: "#fff",
                         display: "flex",
                         alignItems: "center",
                         justifyContent: "center",
+                        gap: 6,
+                        fontSize: 12,
+                        fontWeight: 800,
+                        boxShadow: "0 8px 18px rgba(59,130,246,0.35)",
                       }}
                     >
-                      <img src={lapizClaro} alt="editar" style={{ width: 14, height: 14 }} />
+                      <img src={lapizClaro} alt="editar" style={{ width: 13, height: 13 }} />
+                      Editar
                     </button>
                     <button
                       onClick={(e) => {
@@ -889,17 +957,19 @@ export default function SkillsEditor({
                       }}
                       disabled={deletingProyecto === i}
                       style={{
-                        background: "rgba(239,68,68,0.85)",
+                        background: "#EF4444",
                         border: "none",
-                        borderRadius: 6,
-                        padding: "5px 7px",
-                        cursor: "pointer",
+                        borderRadius: 10,
+                        padding: "9px 10px",
+                        cursor: deletingProyecto === i ? "not-allowed" : "pointer",
                         color: "#fff",
                         fontSize: 12,
-                        fontWeight: 700,
+                        fontWeight: 800,
+                        boxShadow: "0 8px 18px rgba(239,68,68,0.30)",
+                        opacity: deletingProyecto === i ? 0.7 : 1,
                       }}
                     >
-                      {deletingProyecto === i ? "..." : "✕"}
+                      {deletingProyecto === i ? "..." : "Eliminar"}
                     </button>
                   </div>
                 )}
@@ -929,21 +999,48 @@ export default function SkillsEditor({
             onClick={() => setEditBio(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              style={modalBox}
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 520,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
             >
-              <h3
-                style={{
-                  color: text,
-                  fontWeight: 700,
-                  marginBottom: 18,
-                }}
-              >
-                Editar Datos
-              </h3>
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setEditBio(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Editar Datos</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Modifica tu información personal y profesional
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
               {[
                 { name: "nombreCompleto", label: "Nombre Completo" },
                 { name: "apellidoCompleto", label: "Apellido Completo" },
@@ -972,7 +1069,7 @@ export default function SkillsEditor({
                   ) : (
                     (name === "nombreCompleto" || name === "apellidoCompleto") && (
                       <span style={{ color: sub, fontSize: 11, marginTop: 4, display: "block" }}>
-                        ⚠️ Atención: solo podrás modificar tu {label.toLowerCase()} <b>una única vez</b>.
+                        Atención: solo podrás modificar tu {label.toLowerCase()} <b>una única vez</b>.
                       </span>
                     )
                   )}
@@ -1017,7 +1114,7 @@ export default function SkillsEditor({
                     <button
                       onClick={() => fotoRef.current?.click()}
                       style={{
-                        background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                        background: "#3B82F6",
                         color: "#fff",
                         border: "none",
                         borderRadius: 6,
@@ -1031,7 +1128,7 @@ export default function SkillsEditor({
                     </button>
                     <span style={{ color: sub, fontSize: 11 }}>
                       JPG/PNG · Máx. 2MB
-                      {pendingPhoto && " ✓ Foto seleccionada"}
+                      {pendingPhoto && " Foto seleccionada"}
                     </span>
                   </div>
                   <input
@@ -1118,7 +1215,7 @@ export default function SkillsEditor({
                           }}
                           disabled={savingCI}
                           style={{
-                            background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                            background: "#3B82F6",
                             color: "#fff", border: "none", borderRadius: 6,
                             padding: "7px 16px", cursor: "pointer", fontWeight: 600, fontSize: 13,
                             opacity: savingCI ? 0.6 : 1,
@@ -1145,7 +1242,7 @@ export default function SkillsEditor({
                     </div>
                     {pendingCI && (
                       <span style={{ color: "#16a34a", fontSize: 11, marginTop: 4, display: "block" }}>
-                        ✓ Archivo seleccionado: {pendingCI.name}
+                        Archivo seleccionado: {pendingCI.name}
                       </span>
                     )}
                   </div>
@@ -1176,7 +1273,7 @@ export default function SkillsEditor({
                   disabled={savingBio}
                   style={{
                     background:
-                      "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                      "#3B82F6",
                     color: "#fff",
                     border: "none",
                     borderRadius: 8,
@@ -1188,6 +1285,288 @@ export default function SkillsEditor({
                 >
                   {savingBio ? "Guardando..." : "Guardar Cambios"}
                 </button>
+              </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ====== MODAL COMPLETAR DATOS (interfaz separada) ====== */}
+      <AnimatePresence>
+        {showCompletarDatos && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => setShowCompletarDatos(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${isDark ? "rgba(59,130,246,0.2)" : "#BFDBFE"}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 520,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(59,130,246,0.15)",
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setShowCompletarDatos(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Completar tu Perfil</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Completa los datos faltantes para un portafolio profesional
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
+                {/* Missing fields indicators */}
+                <div style={{ display: "flex", gap: 8, marginBottom: 24, flexWrap: "wrap" }}>
+                  {missingData.map((item, idx) => (
+                    <span key={idx} style={{
+                      display: "inline-flex", alignItems: "center", gap: 5,
+                      background: isDark ? "rgba(239,68,68,0.1)" : "#FEF2F2",
+                      color: "#EF4444",
+                      fontSize: 11, fontWeight: 600,
+                      padding: "5px 10px", borderRadius: 20,
+                      border: `1px solid ${isDark ? "rgba(239,68,68,0.2)" : "#FECACA"}`
+                    }}>
+                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+                      {item}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Título field - only if missing */}
+                {!userData?.titulo && (
+                  <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.1 }} style={{ marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: isDark ? "rgba(59,130,246,0.15)" : "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                      </div>
+                      <label style={{ color: text, fontSize: 13, fontWeight: 700 }}>Título o Profesión</label>
+                    </div>
+                    <input
+                      style={{ ...inp, borderRadius: 10, padding: "12px 16px", fontSize: 14, transition: "border-color 0.2s", borderColor: completarForm.titulo ? "#3B82F6" : border, boxShadow: completarForm.titulo ? "0 0 0 3px rgba(59,130,246,0.1)" : "none" }}
+                      value={completarForm.titulo}
+                      placeholder="Ej: Desarrollador Full Stack, Diseñador UX/UI..."
+                      onChange={(e) => setCompletarForm(f => ({ ...f, titulo: e.target.value }))}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Teléfono field - only if missing */}
+                {!userData?.telefono && (
+                  <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.15 }} style={{ marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: isDark ? "rgba(59,130,246,0.15)" : "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg>
+                      </div>
+                      <label style={{ color: text, fontSize: 13, fontWeight: 700 }}>Teléfono</label>
+                    </div>
+                    <input
+                      style={{ ...inp, borderRadius: 10, padding: "12px 16px", fontSize: 14, transition: "border-color 0.2s", borderColor: completarForm.telefono ? "#3B82F6" : border, boxShadow: completarForm.telefono ? "0 0 0 3px rgba(59,130,246,0.1)" : "none" }}
+                      value={completarForm.telefono}
+                      placeholder="Ej: +591 78945612"
+                      onChange={(e) => setCompletarForm(f => ({ ...f, telefono: e.target.value }))}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Biografía field - only if missing */}
+                {!userData?.biografia && (
+                  <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.2 }} style={{ marginBottom: 20 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: isDark ? "rgba(59,130,246,0.15)" : "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                      </div>
+                      <label style={{ color: text, fontSize: 13, fontWeight: 700 }}>Biografía</label>
+                    </div>
+                    <textarea
+                      rows={4}
+                      style={{ ...inp, borderRadius: 10, padding: "12px 16px", fontSize: 14, resize: "vertical", transition: "border-color 0.2s", borderColor: completarForm.biografia ? "#3B82F6" : border, boxShadow: completarForm.biografia ? "0 0 0 3px rgba(59,130,246,0.1)" : "none" }}
+                      value={completarForm.biografia}
+                      placeholder="Cuéntanos sobre ti, tu experiencia y lo que te apasiona..."
+                      onChange={(e) => setCompletarForm(f => ({ ...f, biografia: e.target.value }))}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Foto de perfil - only if missing */}
+                {!userData?.foto_url && !userData?.preview && (
+                  <motion.div initial={{ opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.25 }} style={{ marginBottom: 24 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 28, height: 28, borderRadius: 8, background: isDark ? "rgba(59,130,246,0.15)" : "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                      </div>
+                      <label style={{ color: text, fontSize: 13, fontWeight: 700 }}>Foto de Perfil</label>
+                      <span style={{ color: sub, fontSize: 11, fontStyle: "italic" }}>(opcional)</span>
+                    </div>
+                    <div style={{
+                      border: `2px dashed ${completarPhotoPreview ? "#3B82F6" : border}`,
+                      borderRadius: 12,
+                      padding: 20,
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 16,
+                      background: isDark ? "rgba(59,130,246,0.04)" : "#FAFAFE",
+                      cursor: "pointer",
+                      transition: "all 0.2s",
+                    }}
+                      onClick={() => completarFotoRef.current?.click()}
+                    >
+                      {completarPhotoPreview ? (
+                        <img src={completarPhotoPreview} alt="preview" style={{ width: 64, height: 64, borderRadius: 12, objectFit: "cover", border: "3px solid #3B82F6" }} />
+                      ) : (
+                        <div style={{ width: 64, height: 64, borderRadius: 12, background: isDark ? "#1D283A" : "#E2E8F0", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke={sub} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                        </div>
+                      )}
+                      <div>
+                        <p style={{ margin: 0, color: text, fontSize: 13, fontWeight: 600 }}>
+                          {completarPhotoPreview ? "Foto seleccionada" : "Haz clic para subir una foto"}
+                        </p>
+                        <p style={{ margin: "4px 0 0", color: sub, fontSize: 11 }}>JPG/PNG · Máx. 2MB</p>
+                      </div>
+                    </div>
+                    <input
+                      ref={completarFotoRef}
+                      type="file"
+                      accept="image/jpeg,image/png,image/jpg"
+                      hidden
+                      onChange={(e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+                        if (file.size > 2 * 1024 * 1024) { showToast("La imagen no puede superar 2MB", "error"); return; }
+                        if (!["image/jpeg", "image/png"].includes(file.type)) { showToast("Solo se permiten JPG/PNG", "error"); return; }
+                        if (completarPhotoPreview) URL.revokeObjectURL(completarPhotoPreview);
+                        setCompletarPhoto(file);
+                        setCompletarPhotoPreview(URL.createObjectURL(file));
+                      }}
+                    />
+                  </motion.div>
+                )}
+
+                {/* Action buttons */}
+                <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                  <button
+                    onClick={() => setShowCompletarDatos(false)}
+                    style={{
+                      background: "none",
+                      border: `1px solid ${border}`,
+                      color: text,
+                      borderRadius: 10,
+                      padding: "10px 22px",
+                      cursor: "pointer",
+                      fontSize: 13,
+                      fontWeight: 600,
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={async () => {
+                      setSavingCompletar(true);
+                      try {
+                        const payload = {
+                          nombre: userData?.nombreCompleto || "",
+                          apellido: userData?.apellidoCompleto || "",
+                          profesion: completarForm.titulo || userData?.titulo || "",
+                          titulo_profesional: completarForm.titulo || userData?.titulo || "",
+                          biografia: completarForm.biografia || userData?.biografia || "",
+                          visibilidad: userData?.visibilidad || "publico",
+                          telefono: completarForm.telefono || userData?.telefono || "",
+                        };
+
+                        const { data } = await perfilAPI.actualizar(payload);
+                        if (!data.ok) {
+                          showToast(data.mensaje || "Error al guardar", "error");
+                          return;
+                        }
+
+                        let nextFotoUrl = userData?.foto_url || userData?.preview || null;
+                        if (completarPhoto) {
+                          try {
+                            const { data: fotoResp } = await perfilAPI.subirFoto(completarPhoto);
+                            if (fotoResp.ok) {
+                              nextFotoUrl = fotoResp.foto_url || nextFotoUrl;
+                            } else {
+                              showToast("Datos guardados, pero error al subir foto", "error");
+                            }
+                          } catch {
+                            showToast("Datos guardados, pero error al subir foto", "error");
+                          }
+                          setCompletarPhoto(null);
+                          if (completarPhotoPreview) {
+                            URL.revokeObjectURL(completarPhotoPreview);
+                            setCompletarPhotoPreview(null);
+                          }
+                        }
+
+                        setUserData((prev) => ({
+                          ...prev,
+                          nombreCompleto: payload.nombre || prev.nombreCompleto,
+                          apellidoCompleto: payload.apellido || prev.apellidoCompleto,
+                          titulo: payload.profesion || prev.titulo,
+                          biografia: payload.biografia || prev.biografia,
+                          telefono: payload.telefono || prev.telefono,
+                          visibilidad: payload.visibilidad || prev.visibilidad,
+                          foto_url: nextFotoUrl,
+                          preview: nextFotoUrl,
+                        }));
+
+                        showToast("¡Perfil actualizado correctamente!");
+                        await refreshImmediately();
+                        setShowCompletarDatos(false);
+                      } catch (err) {
+                        showToast(err.response?.data?.mensaje || "Error de conexión", "error");
+                      } finally {
+                        setSavingCompletar(false);
+                      }
+                    }}
+                    disabled={savingCompletar}
+                    style={{
+                      background: "#3B82F6",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 10,
+                      padding: "10px 28px",
+                      cursor: savingCompletar ? "not-allowed" : "pointer",
+                      fontWeight: 700,
+                      fontSize: 14,
+                      opacity: savingCompletar ? 0.7 : 1,
+                      boxShadow: "0 4px 14px rgba(59,130,246,0.3)",
+                      transition: "all 0.2s",
+                    }}
+                  >
+                    {savingCompletar ? "Guardando..." : "Completar Perfil"}
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1205,21 +1584,48 @@ export default function SkillsEditor({
             onClick={() => setEditHab(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              style={modalBox}
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 520,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
             >
-              <h3
-                style={{
-                  color: text,
-                  fontWeight: 700,
-                  marginBottom: 16,
-                }}
-              >
-                Editar Habilidades
-              </h3>
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setEditHab(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Editar Habilidades</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Ajusta niveles o elimina habilidades de tu perfil
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
 
               {/* Técnicas */}
               <p style={{ color: sub, fontSize: 13, marginBottom: 10 }}>
@@ -1369,7 +1775,7 @@ export default function SkillsEditor({
                   disabled={savingHab}
                   style={{
                     background:
-                      "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                      "#3B82F6",
                     color: "#fff",
                     border: "none",
                     borderRadius: 8,
@@ -1381,6 +1787,7 @@ export default function SkillsEditor({
                 >
                   {savingHab ? "Guardando..." : "Guardar Cambios"}
                 </button>
+              </div>
               </div>
             </motion.div>
           </motion.div>
@@ -1464,21 +1871,58 @@ export default function SkillsEditor({
             onClick={() => setShowAddSkill(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              style={{ ...modalBox, maxWidth: 600, maxHeight: "85vh", overflowY: "auto" }}
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 600,
+                maxHeight: "85vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
             >
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setShowAddSkill(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Añadir Habilidades</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Selecciona habilidades técnicas y blandas para tu perfil
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
               <SkillSelector
                 isDark={isDark}
                 userData={userData}
                 onBack={() => setShowAddSkill(false)}
-                onSave={() => {
+                onSave={async () => {
                   setShowAddSkill(false);
-                  debouncedRefresh();
+                  await refreshImmediately();
                 }}
               />
+              </div>
             </motion.div>
           </motion.div>
         )}
@@ -1495,20 +1939,57 @@ export default function SkillsEditor({
             onClick={() => setShowAddProyecto(false)}
           >
             <motion.div
-              initial={{ scale: 0.92, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.92, opacity: 0 }}
-              style={{ ...modalBox, maxWidth: 620, maxHeight: "90vh", overflowY: "auto" }}
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
               onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 620,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
             >
+              {/* Header */}
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setShowAddProyecto(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Añadir Proyecto</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Agrega un nuevo proyecto a tu portafolio
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
               <ProyectoForm
                 isDark={isDark}
                 onBack={() => setShowAddProyecto(false)}
-                onSave={() => {
+                onSave={async () => {
                   setShowAddProyecto(false);
-                  debouncedRefresh();
+                  await refreshImmediately();
                 }}
               />
+              </div>
             </motion.div>
           </motion.div>
         )}

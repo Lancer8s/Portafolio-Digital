@@ -43,7 +43,12 @@ export default function AuthCallbackPage() {
         if (data.ok) {
           login(token, data.usuario);
           await refreshUserData();
-          navigate("/vista", { replace: true });
+          
+          if (data.usuario.roles?.includes('administrador')) {
+            navigate("/admin", { replace: true });
+          } else {
+            navigate("/vista", { replace: true });
+          }
         } else {
           setError("No se pudo verificar la sesión.");
         }

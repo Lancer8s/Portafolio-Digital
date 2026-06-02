@@ -4,6 +4,7 @@ import { motion } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
 import DefaultAvatar from "../components/DefaultAvatar";
+import VerificationBadge from "../components/VerificationBadge";
 
 export default function PublicPortfolioPage() {
   const { id } = useParams();
@@ -100,8 +101,9 @@ export default function PublicPortfolioPage() {
             ) : (
               <DefaultAvatar size={120} style={{ border: `4px solid ${isDark ? "#1D283A" : "#fff"}`, boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
             )}
-            <h1 style={{ color: text, fontSize: 24, fontWeight: 800, margin: "16px 0 4px" }}>
-              {data.nombre} {data.apellido}
+            <h1 style={{ color: text, fontSize: 24, fontWeight: 800, margin: "16px 0 4px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <span>{data.nombre} {data.apellido}</span>
+              <VerificationBadge ciEstado={data.ci_estado} size={22} />
             </h1>
             {data.titulo_profesional && (
               <span style={{ display: "inline-block", fontSize: 13, fontWeight: 600, color: "#3B82F6", background: isDark ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.08)", padding: "4px 12px", borderRadius: 20, marginBottom: 12 }}>

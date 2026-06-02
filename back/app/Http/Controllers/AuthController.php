@@ -107,6 +107,12 @@ class AuthController extends Controller
         $usuario = Usuario::where('id_usuario', $usr['id_usuario'])->first();
         $token   = $usuario->createToken('auth_token')->plainTextToken;
 
+        $roles = DB::table('rol_usuario')
+            ->join('rol', 'rol_usuario.id_rol', '=', 'rol.id_rol')
+            ->where('rol_usuario.id_usuario', $usr['id_usuario'])
+            ->pluck('rol.nombre')
+            ->toArray();
+
         return response()->json([
             'ok'      => true,
             'token'   => $token,
@@ -117,6 +123,7 @@ class AuthController extends Controller
                 'email'      => $usr['email'],
                 'profesion'  => $usr['profesion'],
                 'id_imagen'  => $usr['id_imagen'],
+                'roles'      => $roles,
             ],
         ]);
     }
@@ -152,6 +159,15 @@ class AuthController extends Controller
                 if (!empty($perfil['foto_url'])) {
                     $perfil['foto_url'] = asset('storage/' . $perfil['foto_url']);
                 }
+
+                $roles = DB::table('rol_usuario')
+                    ->join('rol', 'rol_usuario.id_rol', '=', 'rol.id_rol')
+                    ->where('rol_usuario.id_usuario', $id)
+                    ->pluck('rol.nombre')
+                    ->toArray();
+                
+                $perfil['roles'] = $roles;
+
                 return response()->json([
                     'ok'      => true,
                     'usuario' => $perfil,
@@ -173,6 +189,12 @@ class AuthController extends Controller
             }
         }
 
+        $roles = DB::table('rol_usuario')
+            ->join('rol', 'rol_usuario.id_rol', '=', 'rol.id_rol')
+            ->where('rol_usuario.id_usuario', $id)
+            ->pluck('rol.nombre')
+            ->toArray();
+
         return response()->json([
             'ok'      => true,
             'usuario' => [
@@ -184,6 +206,7 @@ class AuthController extends Controller
                 'biografia'  => $usuario->biografia,
                 'id_imagen'  => $usuario->id_imagen,
                 'foto_url'   => $fotoUrl,
+                'roles'      => $roles,
             ],
         ]);
     }

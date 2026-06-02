@@ -61,7 +61,12 @@ export default function LoginPage() {
       if (data.ok) {
         login(data.token, data.usuario);
         refreshUserData(); // fire-and-forget: se carga en background
-        navigate("/vista");
+        
+        if (data.usuario.roles?.includes('administrador')) {
+          navigate("/admin");
+        } else {
+          navigate("/vista");
+        }
       } else {
         setApiError(data.mensaje || "Error al iniciar sesión");
       }

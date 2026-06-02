@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { experienciaAPI } from "../../api";
 import lapizClaro from "../../assets/lapizClaro.png";
-import lapizOscuro from "../../assets/lapizOscuro.png";
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "Actualidad";
@@ -24,7 +23,6 @@ export default function ExperienciaList({ isDark }) {
   const sub = isDark ? "#94a3b8" : "#807F81";
   const border = isDark ? "#1D283A" : "#E2E8F0";
   const box = isDark ? "#0F172A" : "#fff";
-  const lapiz = isDark ? lapizClaro : lapizOscuro;
 
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
@@ -49,6 +47,19 @@ export default function ExperienciaList({ isDark }) {
   };
 
   useEffect(() => { loadData(); }, []);
+
+  useEffect(() => {
+    const handleAddExperience = () => handleAddNew();
+    const handleToggleEditExperiences = () => setIsEditing((value) => !value);
+
+    window.addEventListener("portfolio:add-experience", handleAddExperience);
+    window.addEventListener("portfolio:toggle-edit-experiences", handleToggleEditExperiences);
+
+    return () => {
+      window.removeEventListener("portfolio:add-experience", handleAddExperience);
+      window.removeEventListener("portfolio:toggle-edit-experiences", handleToggleEditExperiences);
+    };
+  }, []);
 
   const handleEdit = (exp) => {
     setForm({
@@ -131,21 +142,11 @@ export default function ExperienciaList({ isDark }) {
         <p style={{ color: text, fontWeight: 700, fontSize: 17, margin: 0, padding: 0 }}>
           Experiencia
         </p>
-        <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
-          <button onClick={handleAddNew} style={{ background: "none", border: "none", cursor: "pointer", color: "#3B82F6", fontWeight: 600, fontSize: 13, display: "flex", alignItems: "center", gap: 5, padding: 0 }}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19"/>
-              <line x1="5" y1="12" x2="19" y2="12"/>
-            </svg>
-            <span>Añadir Experiencia</span>
-          </button>
-          {experiencias.length > 0 && (
-            <button onClick={() => setIsEditing(!isEditing)} style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
-              <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
-              <span>{isEditing ? "Hecho" : "Editar Experiencias"}</span>
-            </button>
-          )}
-        </div>
+        {isEditing && experiencias.length > 0 && (
+          <span style={{ color: "#3B82F6", fontSize: 12, fontWeight: 700 }}>
+            Modo edición activo
+          </span>
+        )}
       </div>
 
       {experiencias.length === 0 ? (
@@ -202,12 +203,42 @@ export default function ExperienciaList({ isDark }) {
                     {exp.descripcion && <p style={{ color: text, fontSize: 12, margin: "6px 0 0", whiteSpace: "pre-wrap", opacity: 0.85, lineHeight: 1.5 }}>{exp.descripcion}</p>}
                   </div>
                   {isEditing && (
-                    <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: 8 }}>
-                      <button onClick={() => handleEdit(exp)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
-                        <img src={lapiz} alt="editar" style={{ width: 13, height: 13 }} />
+                    <div style={{ display: "flex", gap: 8, flexShrink: 0, marginLeft: 10, flexWrap: "wrap", justifyContent: "flex-end" }}>
+                      <button
+                        onClick={() => handleEdit(exp)}
+                        style={{
+                          background: "#3B82F6",
+                          border: "none",
+                          cursor: "pointer",
+                          padding: "8px 11px",
+                          borderRadius: 9,
+                          color: "#fff",
+                          fontSize: 12,
+                          fontWeight: 800,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 6,
+                          boxShadow: "0 8px 18px rgba(59,130,246,0.28)",
+                        }}
+                      >
+                        <img src={lapizClaro} alt="editar" style={{ width: 12, height: 12 }} />
+                        Editar
                       </button>
-                      <button onClick={() => deleteExp(exp.id_experiencia)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontWeight: "bold", fontSize: 14, padding: 4 }}>
-                        ✕
+                      <button
+                        onClick={() => deleteExp(exp.id_experiencia)}
+                        style={{
+                          background: "#EF4444",
+                          border: "none",
+                          cursor: "pointer",
+                          color: "#fff",
+                          fontWeight: 800,
+                          fontSize: 12,
+                          padding: "8px 11px",
+                          borderRadius: 9,
+                          boxShadow: "0 8px 18px rgba(239,68,68,0.24)",
+                        }}
+                      >
+                        Eliminar
                       </button>
                     </div>
                   )}
@@ -221,8 +252,46 @@ export default function ExperienciaList({ isDark }) {
       {/* Modal */}
       {modalOpen && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}>
-          <div style={{ background: isDark ? "#0F172A" : "#fff", border: `1px solid ${border}`, borderRadius: 14, padding: 24, width: "100%", maxWidth: 480 }}>
-            <h3 style={{ color: text, margin: "0 0 20px 0", fontSize: 18 }}>{form.id_experiencia ? "Editar" : "Añadir"} Experiencia</h3>
+          <div style={{
+            background: isDark ? "#0F172A" : "#fff",
+            border: `1px solid ${border}`,
+            borderRadius: 20,
+            padding: 0,
+            width: "100%",
+            maxWidth: 520,
+            maxHeight: "90vh",
+            overflowY: "auto",
+            boxSizing: "border-box",
+            boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+          }}>
+            {/* Header */}
+            <div style={{
+              background: "#3B82F6",
+              padding: "24px 28px 20px",
+              borderRadius: "20px 20px 0 0",
+              position: "relative",
+            }}>
+              <button
+                onClick={() => setModalOpen(false)}
+                style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+              >
+                ✕
+              </button>
+              <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                {form.id_experiencia ? (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                ) : (
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                )}
+                <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>{form.id_experiencia ? "Editar" : "Añadir"} Experiencia</h3>
+              </div>
+              <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                {form.id_experiencia ? "Modifica los datos de esta experiencia" : "Registra una nueva experiencia laboral o académica"}
+              </p>
+            </div>
+
+            {/* Body */}
+            <div style={{ padding: "24px 28px 28px" }}>
             <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
               <div>
                 <label style={lbl}>Tipo</label>
@@ -255,10 +324,11 @@ export default function ExperienciaList({ isDark }) {
               </div>
             </div>
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, marginTop: 20 }}>
-              <button onClick={() => setModalOpen(false)} style={{ background: "none", border: "none", color: text, cursor: "pointer", fontWeight: 600 }}>Cancelar</button>
-              <button onClick={saveExp} disabled={saving} style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "8px 20px", fontWeight: 600, cursor: saving ? "not-allowed" : "pointer" }}>
+              <button onClick={() => setModalOpen(false)} style={{ background: "none", border: `1px solid ${border}`, color: text, borderRadius: 10, padding: "10px 22px", cursor: "pointer", fontSize: 13, fontWeight: 600 }}>Cancelar</button>
+              <button onClick={saveExp} disabled={saving} style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 10, padding: "10px 28px", fontWeight: 700, fontSize: 14, cursor: saving ? "not-allowed" : "pointer", opacity: saving ? 0.7 : 1, boxShadow: "0 4px 14px rgba(59,130,246,0.3)" }}>
                 {saving ? "Guardando..." : "Guardar"}
               </button>
+            </div>
             </div>
           </div>
         </div>

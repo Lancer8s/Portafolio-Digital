@@ -128,3 +128,24 @@ export const experienciaAPI = {
   actualizar: (id, data) => api.put(`/experiencias/${id}`, data),
   eliminar: (id) => api.delete(`/experiencias/${id}`),
 };
+
+// ────────────────────────────────────────────────────────
+//  Portafolio y Admin endpoints
+// ────────────────────────────────────────────────────────
+export const portafolioAPI = {
+  obtenerPublico: async (id) => {
+    const res = await api.get(`/portafolio/${id}`);
+    return res.data;
+  },
+};
+
+export const adminAPI = {
+  getPendingCI: async () => {
+    const res = await api.get('/admin/ci-pending');
+    return res.data;
+  },
+  verifyCI: async (id, action) => {
+    const res = await api.put(`/admin/ci-verify/${id}`, { action });
+    return res.data;
+  }
+};

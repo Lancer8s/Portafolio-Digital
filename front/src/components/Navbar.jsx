@@ -53,6 +53,54 @@ export default function Navbar() {
     navigate("/");
   };
 
+  const isAdmin = userData?.roles?.includes('administrador');
+
+  if (isAdmin) {
+    return (
+      <motion.nav
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.3 }}
+        style={{
+          position: "sticky", top: 0, zIndex: 200, background: bg, borderBottom: `1px solid ${border}`,
+          display: "flex", alignItems: "center", justifyContent: "space-between", padding: "10px 24px",
+          boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)",
+        }}
+      >
+        <button
+          onClick={() => navigate("/admin")}
+          style={{ background: "none", border: "none", cursor: "pointer", display: "flex", alignItems: "center", gap: 10 }}
+        >
+          <div style={{
+            width: 30, height: 30, background: "linear-gradient(135deg, #8B5CF6 0%, #3B82F6 100%)", borderRadius: 6,
+            display: "flex", alignItems: "center", justifyContent: "center", color: "#fff", fontWeight: 800, fontSize: 13
+          }}>A</div>
+          <span style={{ color: text, fontWeight: 700, fontSize: 15 }}>Admin Panel</span>
+        </button>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <button onClick={toggleTheme} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center" }}>
+            <img src={isDark ? iconoSol : iconoLuna} alt="tema" style={{ width: 24, height: 24 }} />
+          </button>
+          <button
+            onClick={handleLogout}
+            style={{
+              background: "none", border: `1px solid ${border}`, borderRadius: 8, padding: "6px 12px",
+              cursor: "pointer", color: "#ef4444", fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6
+            }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+              <polyline points="16 17 21 12 16 7" />
+              <line x1="21" y1="12" x2="9" y2="12" />
+            </svg>
+            Salir
+          </button>
+        </div>
+      </motion.nav>
+    );
+  }
+
   return (
     <motion.nav
       initial={{ opacity: 0, y: -10 }}
@@ -245,7 +293,6 @@ export default function Navbar() {
               </div>
 
 
-              
               <button
                 onClick={() => { toggleTheme(); setShowMenu(false); }}
                 style={{ width: "100%", textAlign: "left", padding: "10px 16px", background: "none", border: "none", cursor: "pointer", color: text, fontSize: 14, display: "flex", alignItems: "center", gap: 10 }}
