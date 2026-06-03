@@ -4,6 +4,7 @@ import iconoLuna from "../../assets/iconoLuna.png";
 import { useApp } from "../../context/AppContext";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import RecruiterPortfolioAccess from "./RecruiterPortfolioAccess";
 
 export default function HeroSection({
   isDark,
@@ -459,6 +460,8 @@ export default function HeroSection({
           </motion.div>
         </motion.div>
       </div>
+
+      <RecruiterPortfolioAccess isDark={isDark} />
 
       {/* Feature cards */}
       <motion.div
