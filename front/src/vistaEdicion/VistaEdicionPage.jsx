@@ -243,7 +243,7 @@ export default function VistaEdicionPage({
               </p>
             </div>
 
-            {userData?.id_usuario && (
+            {/*userData?.id_usuario && (
               <div
                 style={{
                   border: `1px solid ${border}`,
@@ -305,7 +305,7 @@ export default function VistaEdicionPage({
                   Copiar enlace público
                 </button>
               </div>
-            )}
+            )*/}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
               {sectionTitle("Perfil")}
