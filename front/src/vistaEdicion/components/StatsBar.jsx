@@ -123,7 +123,7 @@ export default function StatsBar({ userData, isDark }) {
               Estadísticas del portafolio
             </h3>
             <p style={{ color: sub, fontSize: 12.5, margin: "4px 0 0" }}>
-              Resumen general visible en la parte superior.
+              
             </p>
           </div>
         </div>

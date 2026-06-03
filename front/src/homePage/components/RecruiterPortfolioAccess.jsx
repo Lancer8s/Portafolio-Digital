@@ -2,7 +2,7 @@ import { useState } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 
-function extractPortfolioId(value) {
+function extractPortfolioValue(value) {
   const trimmedValue = value.trim();
 
   if (!trimmedValue) return "";
@@ -14,6 +14,11 @@ function extractPortfolioId(value) {
 
   const numericMatch = trimmedValue.match(/^\d+$/);
   if (numericMatch) {
+    return trimmedValue;
+  }
+
+  const slugMatch = trimmedValue.match(/^[a-z0-9áéíóúñü]+(?:-[a-z0-9áéíóúñü]+)*-\d+$/i);
+  if (slugMatch) {
     return trimmedValue;
   }
 
@@ -34,26 +39,28 @@ export default function RecruiterPortfolioAccess({ isDark }) {
   const handleSubmit = (event) => {
     event.preventDefault();
 
-    const portfolioId = extractPortfolioId(portfolioInput);
+    const portfolioValue = extractPortfolioValue(portfolioInput);
 
-    if (!portfolioId) {
+    if (!portfolioValue) {
       setError("Ingrese un enlace válido o el ID público del portafolio.");
       return;
     }
 
     setError("");
-    navigate(`/portafolio/${portfolioId}`);
+    navigate(`/portafolio/${portfolioValue}`);
   };
 
   return (
     <motion.section
+      id="recruiter-portfolio-access"
       initial={{ opacity: 0, y: 24 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.45, duration: 0.4 }}
       style={{
         maxWidth: 1200,
         margin: "0 auto",
-        padding: "0 48px 72px",
+        padding: "10px 48px 72px",
+        scrollMarginTop: 90,
       }}
     >
       <div
@@ -107,7 +114,7 @@ export default function RecruiterPortfolioAccess({ isDark }) {
               lineHeight: 1.7,
             }}
           >
-            Ingrese el enlace compartido por el desarrollador o escriba el ID público del portafolio para visualizarlo sin iniciar sesión.
+            El visitante puede pegar el enlace compartido por el desarrollador o escribir su ID público para visualizar el portafolio sin iniciar sesión.
           </p>
         </div>
 
@@ -141,7 +148,7 @@ export default function RecruiterPortfolioAccess({ isDark }) {
               setPortfolioInput(event.target.value);
               if (error) setError("");
             }}
-            placeholder="Ejemplo: /portafolio/1"
+            placeholder="Ejemplo: /portafolio/1 o 1"
             style={{
               width: "100%",
               boxSizing: "border-box",
@@ -184,7 +191,7 @@ export default function RecruiterPortfolioAccess({ isDark }) {
               boxShadow: "0 10px 25px rgba(59,130,246,0.28)",
             }}
           >
-            Ver portafolio
+            Buscar portafolio
           </button>
         </form>
       </div>

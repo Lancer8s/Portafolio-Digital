@@ -25,6 +25,47 @@ export default function VistaEdicionPage({
     window.dispatchEvent(new CustomEvent(actionName));
   };
 
+  const getPublicPortfolioPath = () => {
+    if (!userData?.id_usuario) return "";
+
+    const nombre = (userData?.nombreCompleto || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const apellido = (userData?.apellidoCompleto || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+
+    const namePart = [nombre, apellido].filter(Boolean).join("-");
+    return namePart
+      ? `/portafolio/${namePart}-${userData.id_usuario}`
+      : `/portafolio/${userData.id_usuario}`;
+  };
+
+  const publicPortfolioPath = getPublicPortfolioPath();
+  const publicPortfolioUrl = publicPortfolioPath
+    ? `${window.location.origin}${publicPortfolioPath}`
+    : "";
+
+  const copyPublicPortfolioUrl = async () => {
+    if (!publicPortfolioUrl) return;
+
+    try {
+      await navigator.clipboard.writeText(publicPortfolioUrl);
+      alert("Enlace del portafolio copiado");
+    } catch {
+      alert(publicPortfolioUrl);
+    }
+  };
+
   const sectionTitle = (label) => (
     <div
       style={{
@@ -201,6 +242,70 @@ export default function VistaEdicionPage({
                 Opciones separadas por sección para editar y añadir contenido.
               </p>
             </div>
+
+            {userData?.id_usuario && (
+              <div
+                style={{
+                  border: `1px solid ${border}`,
+                  borderRadius: 18,
+                  padding: "15px 16px",
+                  background: cardBg,
+                  marginBottom: 14,
+                  boxShadow: isDark ? "none" : "0 8px 20px rgba(15,23,42,0.045)",
+                }}
+              >
+                <p
+                  style={{
+                    color: sub,
+                    fontSize: 11,
+                    fontWeight: 900,
+                    letterSpacing: "0.1em",
+                    textTransform: "uppercase",
+                    margin: "0 0 8px",
+                  }}
+                >
+                  Portafolio público
+                </p>
+                <p style={{ color: text, fontSize: 14, fontWeight: 800, margin: "0 0 8px" }}>
+                  Tu ID público es: {userData.id_usuario}
+                </p>
+                <p style={{ color: sub, fontSize: 12.2, lineHeight: 1.45, margin: "0 0 12px" }}>
+                  Comparte este ID o enlace con reclutadores para que puedan ver tu portafolio desde el HOME.
+                </p>
+                <div
+                  style={{
+                    background: sectionBg,
+                    border: `1px solid ${border}`,
+                    borderRadius: 12,
+                    color: sub,
+                    fontSize: 11.5,
+                    lineHeight: 1.4,
+                    padding: "9px 10px",
+                    wordBreak: "break-all",
+                    marginBottom: 10,
+                  }}
+                >
+                  {publicPortfolioPath}
+                </div>
+                <button
+                  type="button"
+                  onClick={copyPublicPortfolioUrl}
+                  style={{
+                    width: "100%",
+                    border: "none",
+                    borderRadius: 12,
+                    padding: "10px 12px",
+                    cursor: "pointer",
+                    background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+                    color: "#FFFFFF",
+                    fontSize: 12.5,
+                    fontWeight: 800,
+                  }}
+                >
+                  Copiar enlace público
+                </button>
+              </div>
+            )}
 
             <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
               {sectionTitle("Perfil")}

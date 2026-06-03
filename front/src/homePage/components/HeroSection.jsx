@@ -20,6 +20,13 @@ export default function HeroSection({
   const { isAuthenticated } = useApp();
   const navigate = useNavigate();
 
+  const scrollToRecruiterAccess = () => {
+    const section = document.getElementById("recruiter-portfolio-access");
+    if (section) {
+      section.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  };
+
   return (
     <div
       style={{
@@ -75,6 +82,22 @@ export default function HeroSection({
 
         {/* Nav derecha */}
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <button
+            onClick={scrollToRecruiterAccess}
+            style={{
+              background: isDark ? "rgba(59,130,246,0.12)" : "#EFF6FF",
+              border: `1px solid ${isDark ? "rgba(59,130,246,0.28)" : "#DBEAFE"}`,
+              borderRadius: 8,
+              padding: "8px 16px",
+              cursor: "pointer",
+              color: "#3B82F6",
+              fontWeight: 700,
+              fontSize: 13,
+              whiteSpace: "nowrap",
+            }}
+          >
+            Buscar portafolio
+          </button>
           {isAuthenticated ? (
             <button
               onClick={() => navigate("/vista")}

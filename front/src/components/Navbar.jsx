@@ -154,7 +154,7 @@ export default function Navbar() {
       <span style={{ color: sub, fontSize: 13, display: "none" }}>{label}</span>
 
       <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
-        {isAuthenticated && userData?.id_usuario && !isViewingOthersPortfolio && (
+        {isAuthenticated && userData?.id_usuario && !isViewingOthersPortfolio && !isOnPublicPortfolio && (
           <>
             {/* Visibilidad del portafolio - botón directo en header */}
             <button
