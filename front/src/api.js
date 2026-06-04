@@ -147,5 +147,38 @@ export const adminAPI = {
   verifyCI: async (id, action) => {
     const res = await api.put(`/admin/ci-verify/${id}`, { action });
     return res.data;
-  }
+  },
+  getEstadisticas: async () => {
+    const res = await api.get('/admin/estadisticas');
+    return res.data;
+  },
+  getBitacoras: async (tabla, filtros = {}) => {
+    const params = new URLSearchParams();
+    if (filtros.fecha_desde) params.set('fecha_desde', filtros.fecha_desde);
+    if (filtros.fecha_hasta) params.set('fecha_hasta', filtros.fecha_hasta);
+    if (filtros.accion) params.set('accion', filtros.accion);
+    if (filtros.id_usuario) params.set('id_usuario', filtros.id_usuario);
+    if (filtros.page) params.set('page', filtros.page);
+    if (filtros.per_page) params.set('per_page', filtros.per_page);
+    const res = await api.get(`/admin/bitacoras/${tabla}?${params.toString()}`);
+    return res.data;
+  },
+  exportBitacora: async (tabla, filtros = {}) => {
+    const params = new URLSearchParams();
+    if (filtros.fecha_desde) params.set('fecha_desde', filtros.fecha_desde);
+    if (filtros.fecha_hasta) params.set('fecha_hasta', filtros.fecha_hasta);
+    if (filtros.accion) params.set('accion', filtros.accion);
+    const res = await api.get(`/admin/bitacoras/${tabla}/export?${params.toString()}`, {
+      responseType: 'blob',
+    });
+    const url = window.URL.createObjectURL(new Blob([res.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `bitacora_${tabla}_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  },
 };
+

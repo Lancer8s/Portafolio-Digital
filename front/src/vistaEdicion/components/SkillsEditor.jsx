@@ -5,6 +5,7 @@ import lapizOscuro from "../../assets/lapizOscuro.png";
 import { useApp } from "../../context/AppContext";
 import { perfilAPI, habilidadAPI, proyectoAPI } from "../../api";
 import ExperienciaList from "./ExperienciaList";
+import UserHomeStats from "./UserHomeStats";
 import DefaultAvatar from "../../components/DefaultAvatar";
 import VerificationBadge from "../../components/VerificationBadge";
 import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
@@ -14,6 +15,7 @@ import StarToggle from "../../components/StarToggle";
 export default function SkillsEditor({
   userData,
   isDark,
+  activeSection = "inicio",
   onGoToHabilidad = () => {},
   onGoToProyecto = () => {},
   onBack = () => {},
@@ -377,6 +379,13 @@ export default function SkillsEditor({
         </div>
       )}
 
+      {/* === SECTION: INICIO === */}
+      {activeSection === "inicio" && (
+        <UserHomeStats userData={userData} isDark={isDark} />
+      )}
+
+      {/* === SECTION: PERFIL === */}
+      {activeSection === "perfil" && (<>
       {/* Completar Datos Widget */}
       {completion < 100 && (
         <motion.div
@@ -584,7 +593,10 @@ export default function SkillsEditor({
           })}
         </div>
       )}
+      </>)}
 
+      {/* === SECTION: HABILIDADES === */}
+      {activeSection === "habilidades" && (<>
       {/* HABILIDADES */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -735,9 +747,11 @@ export default function SkillsEditor({
         </div>
       </motion.div>
 
+      </>)}
 
-
-      {/* PROYECTOS — moved before timeline */}
+      {/* === SECTION: PROYECTOS === */}
+      {activeSection === "proyectos" && (<>
+      {/* PROYECTOS */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -952,8 +966,10 @@ export default function SkillsEditor({
           )}
         </div>
       </motion.div>
+      </>)}
 
-      {/* EXPERIENCIA / TIMELINE — after projects */}
+      {/* === SECTION: EXPERIENCIA === */}
+      {activeSection === "experiencia" && (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -961,6 +977,7 @@ export default function SkillsEditor({
       >
         <ExperienciaList isDark={isDark} />
       </motion.div>
+      )}
 
       {/* ====== MODAL EDITAR DATOS / BIOGRAFÍA ====== */}
       <AnimatePresence>

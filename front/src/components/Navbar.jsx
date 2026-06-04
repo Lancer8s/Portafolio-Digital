@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import { useApp } from "../context/AppContext";
-import { perfilAPI, proyectoAPI } from "../api";
+import { perfilAPI, proyectoAPI, adminAPI } from "../api";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
 import DefaultAvatar from "./DefaultAvatar";
@@ -24,6 +24,15 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
+  const [ciPendingCount, setCiPendingCount] = useState(0);
+
+  const isAdmin = userData?.roles?.includes('administrador');
+
+  useEffect(() => {
+    if (isAdmin) {
+      adminAPI.getPendingCI().then(r => { if (r.ok) setCiPendingCount(r.usuarios.length); }).catch(() => {});
+    }
+  }, [isAdmin, location.pathname]);
 
   if (HIDDEN_ON.includes(location.pathname)) return null;
 
@@ -53,8 +62,6 @@ export default function Navbar() {
     navigate("/");
   };
 
-  const isAdmin = userData?.roles?.includes('administrador');
-
   if (isAdmin) {
     return (
       <motion.nav
@@ -79,6 +86,21 @@ export default function Navbar() {
         </button>
 
         <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          {/* Notification Bell */}
+          <button
+            onClick={() => navigate("/admin")}
+            title={`${ciPendingCount} solicitudes CI pendientes`}
+            style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center", position: "relative" }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke={text} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            {ciPendingCount > 0 && (
+              <span style={{ position: "absolute", top: -2, right: -4, background: "#EF4444", color: "#fff", fontSize: 10, fontWeight: 800, borderRadius: 10, padding: "1px 5px", minWidth: 16, textAlign: "center", lineHeight: "16px" }}>
+                {ciPendingCount}
+              </span>
+            )}
+          </button>
           <button onClick={toggleTheme} style={{ background: "none", border: "none", cursor: "pointer", padding: 4, display: "flex", alignItems: "center" }}>
             <img src={isDark ? iconoSol : iconoLuna} alt="tema" style={{ width: 24, height: 24 }} />
           </button>

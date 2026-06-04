@@ -1,12 +1,6 @@
 -- ============================================================
 --  BASE DE DATOS: Sistema Generador de Portafolios Digitales
---  Motor       : PostgreSQL 12+
---  Backend     : Laravel 8 (API REST)
---  Frontend    : React + Vite (React Router, Framer Motion)
---
---  NOTA: La base de datos "portafolio_digital" es creada
---  automáticamente por Docker vía la variable POSTGRES_DB.
---  Este script solo crea tablas, triggers, vistas e índices.
+
 -- ============================================================
 
 -- ============================================================
