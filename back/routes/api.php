@@ -66,6 +66,9 @@ Route::get('habilidades/catalogo', [HabilidadController::class, 'catalogo']);
 // Portafolio público (acepta auth opcional para detectar si es el dueño)
 Route::get('portafolio/{id}', [UsuarioController::class, 'perfilPublico']);
 
+// Búsqueda pública de portafolios (no requiere auth)
+Route::get('portafolios/buscar', [UsuarioController::class, 'buscarPortafolios']);
+
 // ── Rutas para Servir Archivos (Soluciona problema de symlinks en Windows/Docker) ──
 Route::get('media/{path}', function ($path) {
     if (!\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {

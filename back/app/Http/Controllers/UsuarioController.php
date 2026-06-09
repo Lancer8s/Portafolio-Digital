@@ -233,6 +233,88 @@ class UsuarioController extends Controller
     }
 
     /**
+     * GET /api/portafolios/buscar?q=...
+     * Búsqueda pública de portafolios por nombre, profesión o habilidades.
+     * No modifica tablas — solo consultas SELECT sobre las tablas existentes.
+     */
+    public function buscarPortafolios(Request $request)
+    {
+        $q = trim($request->query('q', ''));
+
+        if (strlen($q) < 2) {
+            return response()->json([
+                'ok' => true,
+                'resultados' => [],
+                'total' => 0,
+                'mensaje' => 'Ingresa al menos 2 caracteres para buscar',
+            ]);
+        }
+
+        $termino = '%' . mb_strtolower($q) . '%';
+
+        // Buscar usuarios públicos cuyo nombre, apellido, profesión, título profesional
+        // o habilidades coincidan con el término de búsqueda.
+        // Usamos DISTINCT para evitar duplicados por múltiples habilidades coincidentes.
+        $usuarios = DB::select("
+            SELECT DISTINCT u.id_usuario,
+                   u.nombre,
+                   u.apellido,
+                   u.profesion,
+                   u.titulo_profesional,
+                   u.biografia,
+                   u.ci_estado,
+                   i.ruta AS foto_ruta
+            FROM usuario u
+            LEFT JOIN imagen i ON i.id_imagen = u.id_imagen
+            LEFT JOIN usuario_habilidad uh ON uh.id_usuario = u.id_usuario
+            LEFT JOIN habilidad h ON h.id_habilidad = uh.id_habilidad
+            WHERE u.activo = true
+              AND u.visibilidad = 'publico'
+              AND (
+                    LOWER(u.nombre) LIKE ?
+                 OR LOWER(u.apellido) LIKE ?
+                 OR LOWER(CONCAT(u.nombre, ' ', u.apellido)) LIKE ?
+                 OR LOWER(COALESCE(u.profesion, '')) LIKE ?
+                 OR LOWER(COALESCE(u.titulo_profesional, '')) LIKE ?
+                 OR LOWER(COALESCE(h.nombre, '')) LIKE ?
+              )
+            ORDER BY u.nombre ASC
+            LIMIT 20
+        ", [$termino, $termino, $termino, $termino, $termino, $termino]);
+
+        // Para cada usuario, obtener sus habilidades (máximo 6 para la vista previa)
+        $resultados = [];
+        foreach ($usuarios as $u) {
+            $habilidades = DB::select("
+                SELECT h.nombre, h.tipo
+                FROM usuario_habilidad uh
+                JOIN habilidad h ON h.id_habilidad = uh.id_habilidad
+                WHERE uh.id_usuario = ?
+                ORDER BY h.tipo ASC, h.nombre ASC
+                LIMIT 6
+            ", [$u->id_usuario]);
+
+            $resultados[] = [
+                'id_usuario' => $u->id_usuario,
+                'nombre' => $u->nombre,
+                'apellido' => $u->apellido,
+                'profesion' => $u->profesion,
+                'titulo_profesional' => $u->titulo_profesional,
+                'biografia' => $u->biografia ? mb_substr($u->biografia, 0, 120) . (mb_strlen($u->biografia) > 120 ? '...' : '') : null,
+                'ci_estado' => $u->ci_estado,
+                'foto_url' => $u->foto_ruta ? '/api/media/' . $u->foto_ruta : null,
+                'habilidades' => array_map(fn($h) => ['nombre' => $h->nombre, 'tipo' => $h->tipo], $habilidades),
+            ];
+        }
+
+        return response()->json([
+            'ok' => true,
+            'resultados' => $resultados,
+            'total' => count($resultados),
+        ]);
+    }
+
+    /**
      * GET /api/portafolio/{id}
      * Obtiene el perfil completo (proyectos, habilidades, etc) para vista pública.
      * Si visibilidad = 'privado', no lo permite.

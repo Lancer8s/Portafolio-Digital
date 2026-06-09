@@ -137,6 +137,10 @@ export const portafolioAPI = {
     const res = await api.get(`/portafolio/${id}`);
     return res.data;
   },
+  buscar: async (q) => {
+    const res = await api.get('/portafolios/buscar', { params: { q } });
+    return res.data;
+  },
 };
 
 export const adminAPI = {
