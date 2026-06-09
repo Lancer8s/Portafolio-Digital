@@ -233,7 +233,7 @@ export default function Navbar() {
                   const a = (userData?.apellidoCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
                   const namePart = [n, a].filter(Boolean).join('-');
                   const slug = namePart ? `${namePart}-${userData.id_usuario}` : userData.id_usuario;
-                  window.open(`/portafolio/${slug}`, "_blank");
+                  navigate(`/portafolio/${slug}`);
                 }}
                 style={{
                   background: "#3B82F6",
@@ -361,8 +361,6 @@ export default function Navbar() {
                     const val = e.target.value;
                     setUserData({ ...userData, visibilidad: val });
                     await perfilAPI.actualizar({
-                      nombre: userData.nombreCompleto,
-                      apellido: userData.apellidoCompleto,
                       visibilidad: val
                     });
                   }}

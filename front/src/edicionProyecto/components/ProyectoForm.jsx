@@ -5,6 +5,17 @@ import { proyectoAPI, habilidadAPI } from "../../api";
 import { useApp } from "../../context/AppContext";
 import { motion } from "framer-motion";
 
+const API_HOST = "http://localhost:8000";
+
+const resolveMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("blob:")) return url;
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("/api/media")) return `${API_HOST}${url}`;
+  if (url.startsWith("/")) return `${API_HOST}${url}`;
+  return `${API_HOST}/api/media/${url}`;
+};
+
 export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
   const { debouncedRefresh } = useApp();
 
@@ -12,8 +23,12 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
     if (initialData) {
       return {
         ...initialData,
-        // Keep existing images info
-        imagenes: initialData.imagenes || [],
+        // Mantener imágenes existentes aunque el listado solo traiga portada
+        imagenes: initialData.imagenes?.length
+          ? initialData.imagenes
+          : initialData.imagen_portada_url
+            ? [{ url: initialData.imagen_portada_url }]
+            : [],
         habilidades: (initialData.habilidades || []).map((h) =>
           typeof h === "string" ? h : h.nombre
         ),
@@ -52,6 +67,40 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
     };
     loadCatalogo();
   }, []);
+
+  // Al editar, cargar el detalle real para traer todas las imágenes guardadas.
+  useEffect(() => {
+    let alive = true;
+
+    const loadProyectoDetalle = async () => {
+      if (!initialData?.id_proyecto) return;
+
+      try {
+        const { data } = await proyectoAPI.obtener(initialData.id_proyecto);
+        if (!alive || !data?.ok || !data.proyecto) return;
+
+        const detalle = data.proyecto;
+        setForm((prev) => ({
+          ...prev,
+          ...detalle,
+          imagenes: detalle.imagenes?.length
+            ? detalle.imagenes
+            : prev.imagenes,
+          habilidades: (detalle.habilidades || prev.habilidades || []).map((h) =>
+            typeof h === "string" ? h : h.nombre
+          ),
+        }));
+      } catch {
+        // Si el detalle falla, se mantienen los datos que ya llegaron en initialData.
+      }
+    };
+
+    loadProyectoDetalle();
+
+    return () => {
+      alive = false;
+    };
+  }, [initialData?.id_proyecto]);
 
   const text = isDark ? "#fff" : "#111";
   const sub = isDark ? "#94a3b8" : "#807F81";
@@ -132,14 +181,17 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
   const handleSave = async () => {
     // Validate: count real images
     const imageCount = form.imagenes.filter(Boolean).length;
-    const errs = validateProyecto({
-      ...form,
-      imagenes: form.imagenes.map((img) => {
-        if (!img) return null;
-        if (typeof img === "string") return img;
-        return img.preview || img.url || img;
-      }),
-    });
+    const errs = validateProyecto(
+      {
+        ...form,
+        imagenes: form.imagenes.map((img) => {
+          if (!img) return null;
+          if (typeof img === "string") return img;
+          return img.preview || img.url || img.ruta || img;
+        }),
+      },
+      { requireImages: !initialData?.id_proyecto }
+    );
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
@@ -177,19 +229,19 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
           setSaving(false);
           return;
         }
-        projectId = data.id_proyecto;
+        projectId = data.id_proyecto || data.proyecto?.id_proyecto;
+        if (!projectId) throw new Error("No se recibió el ID del proyecto creado");
       }
 
-      // Upload new images (en paralelo)
-      const imagePromises = Object.entries(newImageFiles)
-        .filter(([, file]) => file)
-        .map(([idx, file]) =>
-          proyectoAPI.agregarImagen(projectId, file).catch((imgErr) => {
-            console.error(`Error subiendo imagen ${idx}:`, imgErr);
-          })
-        );
-      if (imagePromises.length > 0) {
-        await Promise.all(imagePromises);
+      // Subir imágenes nuevas una por una para evitar que alguna se pierda.
+      for (const [idx, file] of Object.entries(newImageFiles)) {
+        if (!file) continue;
+        try {
+          await proyectoAPI.agregarImagen(projectId, file);
+        } catch (imgErr) {
+          console.error(`Error subiendo imagen ${idx}:`, imgErr);
+          throw new Error("No se pudieron guardar todas las imágenes del proyecto");
+        }
       }
 
       // Sincronizar habilidades del proyecto
@@ -232,7 +284,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
         setErrors(backendErrors);
       } else {
         showToastMsg(
-          resp?.mensaje || "Error de conexión con el servidor",
+          err.message || resp?.mensaje || "Error de conexión con el servidor",
           "error"
         );
       }
@@ -250,8 +302,8 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
   // Helper to get preview URL from image item
   const getImageUrl = (img) => {
     if (!img) return null;
-    if (typeof img === "string") return img;
-    return img.preview || img.url || null;
+    if (typeof img === "string") return resolveMediaUrl(img);
+    return resolveMediaUrl(img.preview || img.url || img.ruta || img.imagen_portada_url || null);
   };
 
   return (

@@ -127,6 +127,7 @@ export const AppProvider = ({ children }) => {
         link: p.link || p.url_repositorio || "",
         fecha: p.fecha_creacion || "",
         imagen_portada_url: p.imagen_portada_url || null,
+        visible_portafolio: p.visible_portafolio !== false,
         habilidades: p.habilidades || [],
         imagenes: p.imagenes || [],
       }));

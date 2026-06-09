@@ -4,7 +4,7 @@ import RegisterModule from "./modules/RegisterModule";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
 
-export default function RegistroUsuarioPage() {
+export default function RegistroUsuarioPage({ modal = false, onSwitchToLogin } = {}) {
   const { isDark, toggleTheme } = useTheme();
 
   const bg = isDark ? "#020617" : "#D9D9D9";
@@ -13,11 +13,11 @@ export default function RegistroUsuarioPage() {
 
   return (
     <div style={{
-      minHeight: "100vh", background: bg,
+      minHeight: modal ? "auto" : "100vh", background: modal ? "transparent" : bg,
       display: "flex", alignItems: "center", justifyContent: "center",
-      padding: 20, position: "relative",
+      padding: modal ? 0 : 20, position: "relative",
     }}>
-      <button
+      {!modal && <button
         onClick={toggleTheme}
         style={{
           position: "fixed", top: 16, right: 16,
@@ -31,7 +31,7 @@ export default function RegistroUsuarioPage() {
           alt="Toggle Theme"
           style={{ width: 40, height: 40, display: "block" }}
         />
-      </button>
+      </button>}
 
       <div className="reg-card" style={{
         background: card,
@@ -54,7 +54,7 @@ export default function RegistroUsuarioPage() {
         <p style={{ color: sub, textAlign: "center", marginBottom: 20 }}>
           Regístrate para continuar
         </p>
-        <RegisterModule isDark={isDark} />
+        <RegisterModule isDark={isDark} onSwitchToLogin={onSwitchToLogin} />
       </div>
     </div>
   );

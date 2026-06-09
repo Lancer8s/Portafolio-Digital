@@ -1,20 +1,72 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
+import { proyectoAPI } from "../api";
 import DefaultAvatar from "../components/DefaultAvatar";
 import VerificationBadge from "../components/VerificationBadge";
+
+const API_HOST = "http://localhost:8000";
+
+const mediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("blob:")) return url;
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("/api/media")) return `${API_HOST}${url}`;
+  if (url.startsWith("/")) return `${API_HOST}${url}`;
+  return `${API_HOST}/api/media/${url}`;
+};
+
+const getProjectImages = (project) => {
+  const images = [];
+  const add = (url) => {
+    const full = mediaUrl(url);
+    if (full && !images.includes(full)) images.push(full);
+  };
+
+  add(project?.imagen_portada_url);
+  add(project?.imagen_url);
+  add(project?.portada_url);
+
+  (project?.imagenes || []).forEach((img) => {
+    if (typeof img === "string") {
+      add(img);
+      return;
+    }
+    add(img?.url || img?.ruta || img?.preview || img?.imagen_url || img?.imagen_portada_url);
+  });
+
+  return images;
+};
+
+const projectImage = (project) => getProjectImages(project)?.[0] || null;
+
+const formatDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("es-BO", { year: "numeric", month: "short" });
+};
+
+const esc = (value) =>
+  String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
 
 export default function PublicPortfolioPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
-  
+
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isOwner, setIsOwner] = useState(false);
+  const [selectedProject, setSelectedProject] = useState(null);
+  const [modalLoading, setModalLoading] = useState(false);
 
   const bg = isDark ? "#020617" : "#F1F5F9";
   const text = isDark ? "#fff" : "#111";
@@ -24,16 +76,30 @@ export default function PublicPortfolioPage() {
 
   useEffect(() => {
     const fetchPortfolio = async () => {
-      const actualId = id.split('-').pop();
+      const actualId = id.split("-").pop();
       try {
         const headers = {};
         const token = localStorage.getItem("auth_token");
-        if (token) {
-          headers.Authorization = `Bearer ${token}`;
+        if (token) headers.Authorization = `Bearer ${token}`;
+
+        const resp = await axios.get(`${API_HOST}/api/portafolio/${actualId}`, { headers });
+        const perfil = resp.data.perfil || {};
+        let proyectos = perfil.proyectos || [];
+
+        // Sin tocar backend: si el dueño abre su portafolio desde "Compartir",
+        // pedimos sus proyectos privados/visibles con el endpoint ya existente.
+        if (perfil.is_owner && token) {
+          try {
+            const proyResp = await proyectoAPI.listar();
+            if (proyResp.data?.ok) {
+              proyectos = proyResp.data.proyectos || proyectos;
+            }
+          } catch {
+            // Si falla, se mantiene lo que ya devolvió el portafolio público.
+          }
         }
-        const resp = await axios.get(`http://localhost:8000/api/portafolio/${actualId}`, { headers });
-        setData(resp.data.perfil);
-        setIsOwner(resp.data.perfil?.is_owner || false);
+
+        setData({ ...perfil, proyectos });
       } catch (err) {
         if (err.response?.status === 403) {
           setError("Este portafolio es privado.");
@@ -70,14 +136,134 @@ export default function PublicPortfolioPage() {
 
   if (!data) return null;
 
+  const proyectos = data.proyectos || [];
+  const fotoPerfil = data.foto_url
+    ? mediaUrl(data.foto_url.startsWith("/api/media") ? data.foto_url : `/api/media/${data.foto_url}`)
+    : null;
+  const proyectosDestacados = proyectos.filter((p) => p.visible_portafolio !== false);
+  const proyectosGenerales = proyectos.filter((p) => p.visible_portafolio === false);
+
+  const waitForImages = (doc) => {
+    const images = Array.from(doc.images || []);
+    if (!images.length) return Promise.resolve();
+
+    return Promise.all(
+      images.map((img) => {
+        if (img.complete) return Promise.resolve();
+        return new Promise((resolve) => {
+          img.onload = resolve;
+          img.onerror = resolve;
+        });
+      })
+    );
+  };
+
+  const openCV = async () => {
+    const html = buildCvHtml(data, proyectos);
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "0";
+    iframe.setAttribute("aria-hidden", "true");
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow.document;
+    doc.open();
+    doc.write(html);
+    doc.close();
+
+    await waitForImages(doc);
+
+    setTimeout(() => {
+      iframe.contentWindow.focus();
+      iframe.contentWindow.print();
+      setTimeout(() => document.body.removeChild(iframe), 1200);
+    }, 250);
+  };
+
+  const openProjectModal = async (project) => {
+    setSelectedProject(project);
+
+    const projectId = project?.id_proyecto || project?.id;
+    if (!projectId) return;
+
+    setModalLoading(true);
+    try {
+      const { data: resp } = await proyectoAPI.obtener(projectId);
+      if (resp?.ok && resp.proyecto) {
+        setSelectedProject({ ...project, ...resp.proyecto });
+      }
+    } catch {
+      // Si no se puede pedir el detalle, se muestra la información ya cargada.
+    } finally {
+      setModalLoading(false);
+    }
+  };
+
+  const renderProjectGrid = (items) => (
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+      {items.map((p, i) => {
+        const img = projectImage(p);
+        return (
+          <motion.div
+            key={p.id_proyecto || `${p.titulo}-${i}`}
+            whileHover={{ y: -4 }}
+            onClick={() => openProjectModal(p)}
+            style={{
+              background: cardBg,
+              border: `1px solid ${border}`,
+              borderRadius: 14,
+              overflow: "hidden",
+              boxShadow: isDark ? "none" : "0 4px 12px rgba(0,0,0,0.05)",
+              cursor: "pointer",
+            }}
+          >
+            <div style={{ width: "100%", height: 160, background: isDark ? "#1D283A" : "#E2E8F0" }}>
+              {img ? (
+                <img src={img} alt="portada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: sub }}>Sin imagen</div>
+              )}
+            </div>
+            <div style={{ padding: 20 }}>
+              <h4 style={{ margin: "0 0 8px", color: text, fontSize: 16 }}>{p.titulo || p.nombre || "Proyecto"}</h4>
+              <p style={{ margin: "0 0 16px", color: sub, fontSize: 13, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+                {p.descripcion || "Sin descripción."}
+              </p>
+              <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
+                <button
+                  onClick={(e) => { e.stopPropagation(); openProjectModal(p); }}
+                  style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "8px 12px", fontSize: 13, fontWeight: 700, cursor: "pointer" }}
+                >
+                  Ver Portafolio
+                </button>
+                {p.link && (
+                  <a
+                    href={p.link}
+                    onClick={(e) => e.stopPropagation()}
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{ color: "#3B82F6", textDecoration: "none", fontSize: 13, fontWeight: 700 }}
+                  >
+                    Abrir enlace →
+                  </a>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div style={{ background: bg, minHeight: "100vh", width: "100%", paddingBottom: 80 }}>
-      {/* Responsive styles */}
       <style>{`
         @media (max-width: 768px) {
-          .portfolio-layout {
-            flex-direction: column !important;
-          }
+          .portfolio-layout { flex-direction: column !important; }
           .portfolio-sidebar {
             width: 100% !important;
             border-right: none !important;
@@ -85,19 +271,15 @@ export default function PublicPortfolioPage() {
             position: relative !important;
             height: auto !important;
           }
-          .portfolio-main {
-            padding-left: 0 !important;
-          }
+          .portfolio-main { padding-left: 0 !important; }
         }
       `}</style>
+
       <div className="portfolio-layout" style={{ display: "flex", maxWidth: 1200, margin: "0 auto", position: "relative" }}>
-        
-        {/* SIDEBAR */}
         <div className="portfolio-sidebar" style={{ width: 320, borderRight: `1px solid ${border}`, padding: "32px 24px", height: "calc(100vh - 60px)", position: "sticky", top: 60, overflowY: "auto", boxSizing: "border-box" }}>
-          
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 32 }}>
-            {data.foto_url ? (
-              <img src={`http://localhost:8000/api/media/${data.foto_url}`} alt="perfil" style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", border: `4px solid ${isDark ? "#1D283A" : "#fff"}`, boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
+          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 24 }}>
+            {fotoPerfil ? (
+              <img src={fotoPerfil} alt="perfil" style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", border: `4px solid ${isDark ? "#1D283A" : "#fff"}`, boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
             ) : (
               <DefaultAvatar size={120} style={{ border: `4px solid ${isDark ? "#1D283A" : "#fff"}`, boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
             )}
@@ -110,6 +292,25 @@ export default function PublicPortfolioPage() {
                 {data.titulo_profesional}
               </span>
             )}
+            <button
+              onClick={openCV}
+              style={{
+                marginTop: 8,
+                background: isDark ? "#1D283A" : "#FFFFFF",
+                color: "#3B82F6",
+                border: `1px solid ${border}`,
+                borderRadius: 10,
+                padding: "10px 14px",
+                cursor: "pointer",
+                fontSize: 13,
+                fontWeight: 800,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+              }}
+            >
+              📄 Descargar PDF / CV
+            </button>
           </div>
 
           <div style={{ marginBottom: 32 }}>
@@ -122,53 +323,17 @@ export default function PublicPortfolioPage() {
           <div style={{ marginBottom: 32 }}>
             <h3 style={{ color: text, fontSize: 14, fontWeight: 800, margin: "0 0 10px 4px", textTransform: "uppercase", letterSpacing: "1px" }}>Contacto & Redes</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {data.telefono && (
-                <div style={{ color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: cardBg, borderRadius: 8, border: `1px solid ${border}` }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> {data.telefono}
-                </div>
-              )}
-              {data.linkedin_url && (
-                <a href={data.linkedin_url} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: cardBg, padding: "8px 12px", borderRadius: 8, border: `1px solid ${border}` }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 8a6 6 0 0 1 6 6v7h-4v-7a2 2 0 0 0-4 0v7h-4v-7a6 6 0 0 1 6-6z"/><rect x="2" y="9" width="4" height="12"/><circle cx="4" cy="4" r="2"/></svg> LinkedIn
-                </a>
-              )}
-              {data.github_url && (
-                <a href={data.github_url} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: cardBg, padding: "8px 12px", borderRadius: 8, border: `1px solid ${border}` }}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 0 0-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0 0 20 4.77 5.07 5.07 0 0 0 19.91 1S18.73.65 16 2.48a13.38 13.38 0 0 0-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 0 0 5 4.77a5.44 5.44 0 0 0-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 0 0 9 18.13V22"/></svg> GitHub
-                </a>
-              )}
-              {(data.redes_sociales || []).map((red, i) => {
-                if (!red.url) return null;
-                const urlStr = red.url.toLowerCase();
-                const platName = (red.plataforma || "").toLowerCase();
-                let icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>;
-                
-                if (urlStr.includes("instagram") || platName.includes("instagram")) {
-                  icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="2" width="20" height="20" rx="5" ry="5"/><path d="M16 11.37A4 4 0 1 1 12.63 8 4 4 0 0 1 16 11.37z"/><line x1="17.5" y1="6.5" x2="17.51" y2="6.5"/></svg>;
-                } else if (urlStr.includes("facebook") || platName.includes("facebook")) {
-                  icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>;
-                } else if (urlStr.includes("twitter") || urlStr.includes("x.com") || platName.includes("twitter") || platName === "x") {
-                  icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M23 3a10.9 10.9 0 0 1-3.14 1.53 4.48 4.48 0 0 0-7.86 3v1A10.66 10.66 0 0 1 3 4s-4 9 5 13a11.64 11.64 0 0 1-7 2c9 5 20 0 20-11.5a4.5 4.5 0 0 0-.08-.83A7.72 7.72 0 0 0 23 3z"/></svg>;
-                } else if (urlStr.includes("youtube") || platName.includes("youtube")) {
-                  icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22.54 6.42a2.78 2.78 0 0 0-1.94-2C18.88 4 12 4 12 4s-6.88 0-8.6.46a2.78 2.78 0 0 0-1.94 2A29 29 0 0 0 1 11.75a29 29 0 0 0 .46 5.33 2.78 2.78 0 0 0 1.94 2c1.72.46 8.6.46 8.6.46s6.88 0 8.6-.46a2.78 2.78 0 0 0 1.94-2 29 29 0 0 0 .46-5.33 29 29 0 0 0-.46-5.33z"/><polygon points="9.75 15.02 15.5 11.75 9.75 8.48 9.75 15.02"/></svg>;
-                } else if (urlStr.includes("tiktok") || platName.includes("tiktok")) {
-                  icon = <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 12a4 4 0 1 0 4 4V4a5 5 0 0 0 5 5v3a8 8 0 0 1-5-1.5z"/></svg>;
-                }
-
-                return (
-                  <a key={i} href={red.url} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: cardBg, padding: "8px 12px", borderRadius: 8, border: `1px solid ${border}` }}>
-                    {icon} {red.plataforma || "Enlace"}
-                  </a>
-                );
-              })}
+              {data.telefono && <InfoPill text={data.telefono} sub={sub} cardBg={cardBg} border={border} icon="☎" />}
+              {data.linkedin_url && <LinkPill href={data.linkedin_url} label="LinkedIn" border={border} cardBg={cardBg} />}
+              {data.github_url && <LinkPill href={data.github_url} label="GitHub" border={border} cardBg={cardBg} />}
+              {(data.redes_sociales || []).map((red, i) => red.url ? (
+                <LinkPill key={i} href={red.url} label={red.plataforma || "Enlace"} border={border} cardBg={cardBg} />
+              ) : null)}
             </div>
           </div>
         </div>
 
-        {/* MAIN CONTENT */}
         <div className="portfolio-main" style={{ flex: 1, padding: "40px 32px", boxSizing: "border-box", overflowX: "hidden" }}>
-          
-          {/* Habilidades */}
           <section style={{ marginBottom: 48 }}>
             <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
               Habilidades
@@ -184,41 +349,31 @@ export default function PublicPortfolioPage() {
                   {s.nombre}
                 </span>
               ))}
+              {(!data.techSkills?.length && !data.softSkills?.length) && <p style={{ color: sub, fontSize: 14 }}>Aún no hay habilidades registradas.</p>}
             </div>
           </section>
 
-          {/* Proyectos */}
           <section style={{ marginBottom: 48 }}>
             <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
               Proyectos Destacados
             </h2>
-            {data.proyectos?.length === 0 ? (
-              <p style={{ color: sub, fontSize: 14 }}>Aún no hay proyectos.</p>
-            ) : (
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
-                {data.proyectos?.map((p, i) => (
-                  <motion.div key={i} whileHover={{ y: -4 }} style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 14, overflow: "hidden", boxShadow: isDark ? "none" : "0 4px 12px rgba(0,0,0,0.05)" }}>
-                    <div style={{ width: "100%", height: 160, background: isDark ? "#1D283A" : "#E2E8F0" }}>
-                      {p.imagen_portada_url ? (
-                        <img src={`http://localhost:8000${p.imagen_portada_url}`} alt="portada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                      ) : (
-                        <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: sub }}>Sin imagen</div>
-                      )}
-                    </div>
-                    <div style={{ padding: 20 }}>
-                      <h4 style={{ margin: "0 0 8px", color: text, fontSize: 16 }}>{p.titulo}</h4>
-                      <p style={{ margin: "0 0 16px", color: sub, fontSize: 13, lineHeight: 1.5 }}>{p.descripcion}</p>
-                      {p.link && (
-                        <a href={p.link} target="_blank" rel="noreferrer" style={{ color: "#3B82F6", textDecoration: "none", fontSize: 13, fontWeight: 600 }}>Ver Proyecto →</a>
-                      )}
-                    </div>
-                  </motion.div>
-                ))}
-              </div>
-            )}
+            {proyectosDestacados.length === 0 ? (
+              <p style={{ color: sub, fontSize: 14 }}>Aún no hay proyectos destacados.</p>
+            ) : renderProjectGrid(proyectosDestacados)}
           </section>
 
-          {/* Experiencia (Línea de tiempo) */}
+          {proyectosGenerales.length > 0 && (
+            <section style={{ marginBottom: 48 }}>
+              <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
+                Proyectos Generales
+              </h2>
+              <p style={{ color: sub, fontSize: 13, margin: "0 0 20px" }}>
+                Se muestran aquí porque estás viendo tu propio portafolio. Para visitantes solo aparecen los destacados.
+              </p>
+              {renderProjectGrid(proyectosGenerales)}
+            </section>
+          )}
+
           <section>
             <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
               Trayectoria
@@ -232,12 +387,12 @@ export default function PublicPortfolioPage() {
                   <div key={i} style={{ position: "relative", marginBottom: 24 }}>
                     <div style={{ position: "absolute", left: -20, top: 8, width: 12, height: 12, borderRadius: "50%", background: "#3B82F6", border: `2px solid ${cardBg}`, boxShadow: "0 0 0 3px rgba(59,130,246,0.2)" }} />
                     <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 12, padding: "16px 20px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
                         <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: exp.tipo === "laboral" ? "rgba(59,130,246,0.12)" : "rgba(168,85,247,0.12)", color: exp.tipo === "laboral" ? "#3B82F6" : "#a855f7" }}>
                           {exp.tipo}
                         </span>
                         <span style={{ color: sub, fontSize: 12 }}>
-                          {new Date(exp.fecha_inicio).toLocaleDateString()} — {exp.fecha_fin ? new Date(exp.fecha_fin).toLocaleDateString() : "Actualidad"}
+                          {formatDate(exp.fecha_inicio)} — {exp.fecha_fin ? formatDate(exp.fecha_fin) : "Actualidad"}
                         </span>
                       </div>
                       <h4 style={{ color: text, fontSize: 16, margin: "0 0 4px", fontWeight: 700 }}>{exp.cargo_titulo}</h4>
@@ -249,9 +404,244 @@ export default function PublicPortfolioPage() {
               </div>
             )}
           </section>
-
         </div>
       </div>
+
+      <ProjectModal
+        project={selectedProject}
+        loading={modalLoading}
+        onClose={() => setSelectedProject(null)}
+        isDark={isDark}
+        text={text}
+        sub={sub}
+        border={border}
+        cardBg={cardBg}
+      />
     </div>
   );
+}
+
+function InfoPill({ icon, text, sub, cardBg, border }) {
+  return (
+    <div style={{ color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: cardBg, borderRadius: 8, border: `1px solid ${border}` }}>
+      <span>{icon}</span> {text}
+    </div>
+  );
+}
+
+function LinkPill({ href, label, cardBg, border }) {
+  return (
+    <a href={href} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: cardBg, padding: "8px 12px", borderRadius: 8, border: `1px solid ${border}` }}>
+      🔗 {label}
+    </a>
+  );
+}
+
+function ProjectModal({ project, loading, onClose, isDark, text, sub, border, cardBg }) {
+  const [carouselIdx, setCarouselIdx] = useState(0);
+
+  useEffect(() => {
+    setCarouselIdx(0);
+  }, [project?.id_proyecto, project?.id]);
+
+  const images = getProjectImages(project || {});
+  const total = images.length;
+  const currentImage = images[Math.min(carouselIdx, Math.max(total - 1, 0))];
+
+  return (
+    <AnimatePresence>
+      {project && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={onClose}
+          style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.62)", backdropFilter: "blur(7px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+        >
+          <motion.div
+            initial={{ opacity: 0, y: 18, scale: 0.96 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: 18, scale: 0.96 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{ width: "100%", maxWidth: 760, maxHeight: "90vh", overflowY: "auto", background: cardBg, border: `1px solid ${border}`, borderRadius: 18, boxShadow: isDark ? "0 20px 70px rgba(0,0,0,0.55)" : "0 20px 70px rgba(15,23,42,0.25)" }}
+          >
+            <div style={{ position: "relative", height: 280, background: isDark ? "#1D283A" : "#E2E8F0", borderRadius: "18px 18px 0 0", overflow: "hidden" }}>
+              {currentImage ? (
+                <img src={currentImage} alt="proyecto" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              ) : (
+                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: sub }}>
+                  {loading ? "Cargando imágenes..." : "Sin imagen"}
+                </div>
+              )}
+
+              {total > 1 && (
+                <>
+                  <button
+                    onClick={() => setCarouselIdx((i) => (i <= 0 ? total - 1 : i - 1))}
+                    style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 38, height: 38, borderRadius: "50%", border: "none", background: "rgba(15,23,42,0.72)", color: "#fff", cursor: "pointer", fontSize: 18, fontWeight: 900 }}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => setCarouselIdx((i) => (i >= total - 1 ? 0 : i + 1))}
+                    style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", width: 38, height: 38, borderRadius: "50%", border: "none", background: "rgba(15,23,42,0.72)", color: "#fff", cursor: "pointer", fontSize: 18, fontWeight: 900 }}
+                  >
+                    ›
+                  </button>
+                  <div style={{ position: "absolute", left: 0, right: 0, bottom: 12, display: "flex", justifyContent: "center", gap: 6 }}>
+                    {images.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCarouselIdx(i)}
+                        style={{ width: i === carouselIdx ? 20 : 8, height: 8, borderRadius: 999, border: "none", background: i === carouselIdx ? "#3B82F6" : "rgba(255,255,255,0.75)", cursor: "pointer", padding: 0 }}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+            </div>
+
+            <div style={{ padding: 26 }}>
+              <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", marginBottom: 12 }}>
+                <div>
+                  <p style={{ color: "#3B82F6", fontSize: 12, fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase", margin: "0 0 8px" }}>Vista de solo lectura</p>
+                  <h2 style={{ color: text, fontSize: 26, margin: 0, fontWeight: 900 }}>{project.titulo || project.nombre || "Proyecto"}</h2>
+                </div>
+                <button onClick={onClose} style={{ background: isDark ? "#1D283A" : "#F1F5F9", color: text, border: `1px solid ${border}`, borderRadius: 10, width: 36, height: 36, cursor: "pointer", fontWeight: 900 }}>×</button>
+              </div>
+
+              <p style={{ color: sub, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap", margin: "0 0 18px" }}>
+                {project.descripcion || "Sin descripción."}
+              </p>
+
+              {project.fecha_creacion && (
+                <p style={{ color: sub, fontSize: 13, margin: "0 0 16px" }}>
+                  Fecha: <strong style={{ color: text }}>{formatDate(project.fecha_creacion)}</strong>
+                </p>
+              )}
+
+              {project.habilidades?.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+                  {project.habilidades.map((h, i) => (
+                    <span key={i} style={{ background: isDark ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.08)", color: "#3B82F6", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 999, padding: "5px 11px", fontSize: 12, fontWeight: 700 }}>
+                      {h.nombre || h}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {project.link && (
+                <a href={project.link} target="_blank" rel="noreferrer" style={{ color: "#fff", background: "#3B82F6", borderRadius: 10, padding: "10px 16px", display: "inline-flex", textDecoration: "none", fontWeight: 800, fontSize: 14 }}>
+                  Abrir enlace del proyecto
+                </a>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
+  );
+}
+
+function buildCvHtml(data, proyectos) {
+  const nombreCompleto = `${data.nombre || ""} ${data.apellido || ""}`.trim() || "Currículum";
+  const titulo = data.titulo_profesional || data.profesion || "Perfil profesional";
+  const tech = data.techSkills || [];
+  const soft = data.softSkills || [];
+  const exp = data.experiencias || [];
+  const foto = data.foto_url
+    ? mediaUrl(data.foto_url.startsWith("/api/media") ? data.foto_url : `/api/media/${data.foto_url}`)
+    : "";
+  const redes = [
+    data.telefono ? data.telefono : "",
+    data.email ? data.email : "",
+    data.linkedin_url ? `LinkedIn: ${data.linkedin_url}` : "",
+    data.github_url ? `GitHub: ${data.github_url}` : "",
+    ...(data.redes_sociales || []).map((r) => r.url ? `${r.plataforma || "Red"}: ${r.url}` : ""),
+  ].filter(Boolean);
+
+  const li = (items) => items.length
+    ? items.map((x) => `<li>${x}</li>`).join("")
+    : "<li>Sin datos registrados.</li>";
+
+  const techList = tech.map((s) => `${esc(s.nombre)}${s.nivel ? ` (${esc(s.nivel)}%)` : ""}`);
+  const softList = soft.map((s) => esc(s.nombre));
+  const projectList = proyectos.map((p) => `<strong>${esc(p.titulo || p.nombre || "Proyecto")}</strong>${p.descripcion ? ` — ${esc(p.descripcion)}` : ""}`);
+
+  return `<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8" />
+<title>CV - ${esc(nombreCompleto)}</title>
+<style>
+  * { box-sizing: border-box; }
+  @page { size: A4; margin: 0; }
+  body { margin: 0; font-family: Arial, Helvetica, sans-serif; color: #2f2f2f; background: #f1f5f9; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .page { width: 210mm; min-height: 297mm; margin: 0 auto; background: #fff; display: grid; grid-template-columns: 58mm 1fr; }
+  .sidebar { background: #e8e5ff; padding: 8mm 5mm; color: #2f2f2f; }
+  .photo { width: 42mm; height: 48mm; object-fit: cover; display: block; margin: 0 auto 8mm; border: 2px solid #7b72d8; }
+  .photo-placeholder { width: 42mm; height: 48mm; margin: 0 auto 8mm; border: 2px solid #7b72d8; display:flex; align-items:center; justify-content:center; font-size:11px; color:#5b5b88; }
+  .main { padding: 7mm 8mm; }
+  h1 { margin: 0 0 1mm; color: #221b82; font-size: 28px; line-height: 1.08; font-weight: 500; }
+  .title { color: #4f46e5; font-weight: 700; font-size: 9px; text-transform: uppercase; margin-bottom: 7mm; }
+  h2 { color: #221b82; font-size: 12px; margin: 0 0 3mm; text-transform: uppercase; border-bottom: 1px solid #8b85ff; padding-bottom: 1mm; }
+  .sidebar h2 { font-size: 11px; margin-top: 6mm; }
+  h3 { color: #221b82; font-size: 11px; margin: 4mm 0 1mm; }
+  p { margin: 0 0 4mm; font-size: 10.5px; line-height: 1.35; }
+  ul { margin: 0 0 4mm; padding-left: 5mm; }
+  li { font-size: 10.3px; line-height: 1.38; margin-bottom: 1mm; }
+  .contact div { font-size: 9.5px; line-height: 1.35; margin-bottom: 1mm; word-break: break-word; }
+  .item { margin-bottom: 3mm; page-break-inside: avoid; }
+  .item-title { font-weight: 800; color: #221b82; font-size: 10.5px; }
+  .muted { color: #555; font-size: 9.5px; margin: 0.5mm 0 1mm; }
+  @media print {
+    body { background: white; }
+    .page { margin: 0; width: auto; min-height: auto; }
+  }
+</style>
+</head>
+<body>
+  <main class="page">
+    <aside class="sidebar">
+      ${foto ? `<img class="photo" src="${esc(foto)}" alt="Foto de perfil" />` : `<div class="photo-placeholder">Foto de perfil</div>`}
+
+      <h2>Contacto</h2>
+      <div class="contact">${redes.length ? redes.map((r) => `<div>${esc(r)}</div>`).join("") : `<div>Sin contacto registrado.</div>`}</div>
+
+      <h2>Habilidades</h2>
+      <ul>${li(softList)}</ul>
+
+      <h2>Educación / Trayectoria</h2>
+      ${exp.length ? exp.slice(0, 4).map((e) => `
+        <div class="item">
+          <div class="item-title">${esc(e.institucion_empresa || e.cargo_titulo || "Experiencia")}</div>
+          <div class="muted">${esc(e.tipo || "")} ${e.fecha_inicio ? `· ${esc(formatDate(e.fecha_inicio))}` : ""}</div>
+        </div>`).join("") : `<p>Sin datos registrados.</p>`}
+    </aside>
+
+    <section class="main">
+      <h1>${esc(nombreCompleto)}</h1>
+      <div class="title">${esc(titulo)}</div>
+
+      <h2>Acerca de mí</h2>
+      <p>${esc(data.biografia || "Sin biografía registrada.")}</p>
+
+      <h2>Competencia técnica</h2>
+      <h3>Lenguajes, herramientas y tecnologías</h3>
+      <ul>${li(techList)}</ul>
+
+      <h2>Actividades y proyectos</h2>
+      <ul>${li(projectList)}</ul>
+
+      <h2>Experiencia / Formación</h2>
+      ${exp.length ? exp.map((e) => `
+        <div class="item">
+          <div class="item-title">${esc(e.cargo_titulo || "Experiencia")}</div>
+          <div class="muted">${esc(e.institucion_empresa || "")} · ${esc(formatDate(e.fecha_inicio))} - ${esc(e.fecha_fin ? formatDate(e.fecha_fin) : "Actualidad")}</div>
+          <p>${esc(e.descripcion || "")}</p>
+        </div>`).join("") : `<p>Sin experiencia registrada.</p>`}
+    </section>
+  </main>
+</body>
+</html>`;
 }

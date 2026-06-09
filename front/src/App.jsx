@@ -24,16 +24,14 @@ import PublicPortfolioPage from "./publicPortfolio/PublicPortfolioPage";
 import AdminDashboardPage from "./adminDashboard/AdminDashboardPage";
 
 const pageVariants = {
-  initial: { opacity: 0, backgroundColor: "#000" },
+  initial: { opacity: 0 },
   animate: {
     opacity: 1,
-    backgroundColor: "transparent",
-    transition: { duration: 0.35, ease: "easeOut" },
+    transition: { duration: 0.08, ease: "easeOut" },
   },
   exit: {
     opacity: 0,
-    backgroundColor: "#000",
-    transition: { duration: 0.2, ease: "easeIn" },
+    transition: { duration: 0.05, ease: "easeIn" },
   },
 };
 
@@ -92,7 +90,7 @@ function AnimatedRoutes() {
   const [editProyectoIdx, setEditProyectoIdx] = useState(null);
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="sync">
       <motion.div
         key={location.pathname}
         variants={pageVariants}

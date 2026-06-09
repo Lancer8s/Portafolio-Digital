@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
 
-export default function LoginPage() {
+export default function LoginPage({ modal = false, onSwitchToRegister } = {}) {
   const { isDark, toggleTheme } = useTheme();
   const { login, refreshUserData } = useApp();
   const navigate = useNavigate();
@@ -88,16 +88,16 @@ export default function LoginPage() {
   return (
     <div
       style={{
-        minHeight: "100vh",
-        background: bg,
+        minHeight: modal ? "auto" : "100vh",
+        background: modal ? "transparent" : bg,
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        padding: 20,
+        padding: modal ? 0 : 20,
         position: "relative",
       }}
     >
-      <button
+      {!modal && <button
         onClick={toggleTheme}
         style={{
           position: "fixed",
@@ -114,7 +114,7 @@ export default function LoginPage() {
           alt="Toggle Theme"
           style={{ width: 40, height: 40, display: "block" }}
         />
-      </button>
+      </button>}
 
       <motion.div
         initial={{ opacity: 0, y: 30 }}
@@ -288,7 +288,7 @@ export default function LoginPage() {
           >
             ¿No tienes cuenta?{" "}
             <button
-              onClick={() => navigate("/registro")}
+              onClick={() => modal && onSwitchToRegister ? onSwitchToRegister() : navigate("/registro")}
               style={{
                 background: "none",
                 border: "none",

@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
@@ -11,6 +11,47 @@ import VerificationBadge from "../../components/VerificationBadge";
 import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
 import StarToggle from "../../components/StarToggle";
+
+const API_HOST = "http://localhost:8000";
+
+const mediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("/api/media")) return `${API_HOST}${url}`;
+  if (url.startsWith("/")) return `${API_HOST}${url}`;
+  return `${API_HOST}/api/media/${url}`;
+};
+
+const getProjectImages = (project) => {
+  const images = [];
+  const add = (url) => {
+    const full = mediaUrl(url);
+    if (full && !images.includes(full)) images.push(full);
+  };
+
+  add(project?.imagen_portada_url);
+  add(project?.imagen_url);
+  add(project?.portada_url);
+
+  (project?.imagenes || []).forEach((img) => {
+    if (typeof img === "string") {
+      add(img);
+      return;
+    }
+    add(img?.url || img?.ruta || img?.preview || img?.imagen_url || img?.imagen_portada_url);
+  });
+
+  return images;
+};
+
+const projectImage = (project) => getProjectImages(project)?.[0] || null;
+
+const formatDate = (value) => {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value);
+  return date.toLocaleDateString("es-BO", { year: "numeric", month: "short" });
+};
 
 export default function SkillsEditor({
   userData,
@@ -52,6 +93,8 @@ export default function SkillsEditor({
   const [deletingProyecto, setDeletingProyecto] = useState(null);
   const [showAddSkill, setShowAddSkill] = useState(false);
   const [showAddProyecto, setShowAddProyecto] = useState(false);
+  const [viewProjectModal, setViewProjectModal] = useState(null);
+  const [editProjectModal, setEditProjectModal] = useState(null);
   const [deleteConfirmModal, setDeleteConfirmModal] = useState(null); // { proyecto, idx }
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
   const [pendingPhoto, setPendingPhoto] = useState(null);      // File object
@@ -263,6 +306,22 @@ export default function SkillsEditor({
     background: box,
     width: "100%",
     boxSizing: "border-box",
+  };
+
+  const openViewProjectModal = async (project) => {
+    setViewProjectModal(project);
+
+    const projectId = project?.id_proyecto || project?.id;
+    if (!projectId) return;
+
+    try {
+      const { data } = await proyectoAPI.obtener(projectId);
+      if (data?.ok && data.proyecto) {
+        setViewProjectModal({ ...project, ...data.proyecto });
+      }
+    } catch {
+      // Mantener la información que ya estaba cargada.
+    }
   };
 
   const editBtn = (label, onClick) => (
@@ -816,7 +875,7 @@ export default function SkillsEditor({
                   />
                 </div>
 
-                <div onClick={() => onVerProyecto(i)}>
+                <div onClick={() => openViewProjectModal(p)}>
                   <div
                     style={{
                       width: "100%",
@@ -828,11 +887,9 @@ export default function SkillsEditor({
                       justifyContent: "center",
                     }}
                   >
-                    {p.imagen_portada_url || p.imagenes?.[0]?.url ? (
+                    {projectImage(p) ? (
                       <img
-                        src={
-                          p.imagen_portada_url || p.imagenes[0].url
-                        }
+                        src={projectImage(p)}
                         alt="proyecto"
                         style={{
                           width: "100%",
@@ -923,7 +980,7 @@ export default function SkillsEditor({
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onEditProyecto(i);
+                        setEditProjectModal(p);
                       }}
                       style={{
                         background: "rgba(59,130,246,0.85)",
@@ -1485,14 +1542,16 @@ export default function SkillsEditor({
                       setSavingCompletar(true);
                       try {
                         const payload = {
-                          nombre: userData?.nombreCompleto || "",
-                          apellido: userData?.apellidoCompleto || "",
                           profesion: completarForm.titulo || userData?.titulo || "",
                           titulo_profesional: completarForm.titulo || userData?.titulo || "",
                           biografia: completarForm.biografia || userData?.biografia || "",
                           visibilidad: userData?.visibilidad || "publico",
                           telefono: completarForm.telefono || userData?.telefono || "",
                         };
+                        const nombreSeguro = (userData?.nombreCompleto || "").trim();
+                        const apellidoSeguro = (userData?.apellidoCompleto || "").trim();
+                        if (nombreSeguro) payload.nombre = nombreSeguro;
+                        if (apellidoSeguro) payload.apellido = apellidoSeguro;
                         const { data } = await perfilAPI.actualizar(payload);
                         if (!data.ok) {
                           showToast(data.mensaje || "Error al guardar", "error");
@@ -1961,6 +2020,221 @@ export default function SkillsEditor({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* ====== MODAL VER PROYECTO: solo lectura ====== */}
+      <ProjectReadOnlyModal
+        project={viewProjectModal}
+        onClose={() => setViewProjectModal(null)}
+        isDark={isDark}
+        text={text}
+        sub={sub}
+        border={border}
+      />
+
+      {/* ====== MODAL EDITAR PROYECTO ====== */}
+      <AnimatePresence>
+        {editProjectModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => setEditProjectModal(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 620,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
+            >
+              <div style={{
+                background: "#3B82F6",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setEditProjectModal(null)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <img src={lapizClaro} alt="editar" style={{ width: 20, height: 20 }} />
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Editar Proyecto</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Modifica los datos del proyecto sin salir de esta pantalla
+                </p>
+              </div>
+
+              <div style={{ padding: "24px 28px 28px" }}>
+                <ProyectoForm
+                  isDark={isDark}
+                  initialData={editProjectModal}
+                  onBack={() => setEditProjectModal(null)}
+                  onSave={() => {
+                    setEditProjectModal(null);
+                    debouncedRefresh();
+                  }}
+                />
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
+  );
+}
+
+function ProjectReadOnlyModal({ project, onClose, isDark, text, sub, border }) {
+  const [carouselIdx, setCarouselIdx] = useState(0);
+  const cardBg = isDark ? "#0F172A" : "#fff";
+  const boxBg = isDark ? "#1D283A" : "#F8FAFC";
+  const images = getProjectImages(project || {});
+  const total = images.length;
+  const currentImage = images[Math.min(carouselIdx, Math.max(total - 1, 0))];
+
+  useEffect(() => {
+    setCarouselIdx(0);
+  }, [project?.id_proyecto, project?.id]);
+
+  return (
+    <AnimatePresence>
+      {project && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.6)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            zIndex: 350,
+            padding: 20,
+          }}
+          onClick={onClose}
+        >
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0, y: 24 }}
+            animate={{ scale: 1, opacity: 1, y: 0 }}
+            exit={{ scale: 0.9, opacity: 0, y: 24 }}
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: cardBg,
+              border: `1px solid ${border}`,
+              borderRadius: 20,
+              width: "100%",
+              maxWidth: 680,
+              maxHeight: "90vh",
+              overflowY: "auto",
+              boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.18)",
+            }}
+          >
+            <div style={{ position: "relative", height: 240, background: boxBg, overflow: "hidden", borderRadius: "20px 20px 0 0" }}>
+              {currentImage ? (
+                <img src={currentImage} alt="proyecto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+              ) : (
+                <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: sub }}>Sin imagen</div>
+              )}
+
+              {total > 1 && (
+                <>
+                  <button
+                    onClick={() => setCarouselIdx((i) => (i <= 0 ? total - 1 : i - 1))}
+                    style={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, borderRadius: "50%", border: "none", background: "rgba(15,23,42,0.72)", color: "#fff", cursor: "pointer", fontSize: 18, fontWeight: 900 }}
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={() => setCarouselIdx((i) => (i >= total - 1 ? 0 : i + 1))}
+                    style={{ position: "absolute", right: 14, top: "50%", transform: "translateY(-50%)", width: 36, height: 36, borderRadius: "50%", border: "none", background: "rgba(15,23,42,0.72)", color: "#fff", cursor: "pointer", fontSize: 18, fontWeight: 900 }}
+                  >
+                    ›
+                  </button>
+                  <div style={{ position: "absolute", left: 0, right: 0, bottom: 12, display: "flex", justifyContent: "center", gap: 6 }}>
+                    {images.map((_, i) => (
+                      <button
+                        key={i}
+                        onClick={() => setCarouselIdx(i)}
+                        style={{ width: i === carouselIdx ? 20 : 8, height: 8, borderRadius: 999, border: "none", background: i === carouselIdx ? "#3B82F6" : "rgba(255,255,255,0.75)", cursor: "pointer", padding: 0 }}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
+
+              <button
+                onClick={onClose}
+                style={{ position: "absolute", top: 14, right: 14, background: "rgba(15,23,42,0.72)", border: "none", borderRadius: 10, width: 34, height: 34, cursor: "pointer", color: "#fff", fontSize: 18 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: "24px 28px" }}>
+              <h2 style={{ margin: "0 0 10px", color: text, fontSize: 24, fontWeight: 800 }}>
+                {project.titulo || project.nombre || "Proyecto"}
+              </h2>
+              <p style={{ color: sub, fontSize: 14, lineHeight: 1.7, margin: "0 0 18px", whiteSpace: "pre-wrap" }}>
+                {project.descripcion || "Sin descripción."}
+              </p>
+
+              {project.habilidades?.length > 0 && (
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 18 }}>
+                  {project.habilidades.map((h, i) => (
+                    <span key={i} style={{ background: "rgba(59,130,246,0.12)", color: "#3B82F6", border: "1px solid rgba(59,130,246,0.25)", borderRadius: 999, padding: "6px 12px", fontSize: 12, fontWeight: 700 }}>
+                      {typeof h === "string" ? h : h.nombre}
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: 12, marginBottom: 18 }}>
+                {project.fecha_inicio && (
+                  <div style={{ background: boxBg, border: `1px solid ${border}`, borderRadius: 10, padding: 12 }}>
+                    <div style={{ color: sub, fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>Inicio</div>
+                    <div style={{ color: text, fontSize: 13, marginTop: 4 }}>{formatDate(project.fecha_inicio)}</div>
+                  </div>
+                )}
+                {project.fecha_fin && (
+                  <div style={{ background: boxBg, border: `1px solid ${border}`, borderRadius: 10, padding: 12 }}>
+                    <div style={{ color: sub, fontSize: 11, fontWeight: 800, textTransform: "uppercase" }}>Fin</div>
+                    <div style={{ color: text, fontSize: 13, marginTop: 4 }}>{formatDate(project.fecha_fin)}</div>
+                  </div>
+                )}
+              </div>
+
+              {project.link && (
+                <a
+                  href={project.link}
+                  target="_blank"
+                  rel="noreferrer"
+                  style={{ display: "inline-flex", alignItems: "center", background: "#3B82F6", color: "#fff", textDecoration: "none", borderRadius: 10, padding: "10px 14px", fontSize: 13, fontWeight: 800 }}
+                >
+                  Abrir enlace del proyecto
+                </a>
+              )}
+            </div>
+          </motion.div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

@@ -4,6 +4,17 @@ import { useParams, useNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
 import { proyectoAPI } from "../../api";
 
+const API_HOST = "http://localhost:8000";
+
+const resolveMediaUrl = (url) => {
+  if (!url) return null;
+  if (url.startsWith("blob:")) return url;
+  if (url.startsWith("http")) return url;
+  if (url.startsWith("/api/media")) return `${API_HOST}${url}`;
+  if (url.startsWith("/")) return `${API_HOST}${url}`;
+  return `${API_HOST}/api/media/${url}`;
+};
+
 export default function ProyectoDetalle({ isDark }) {
   const { idx } = useParams();
   const navigate = useNavigate();
@@ -90,12 +101,23 @@ export default function ProyectoDetalle({ isDark }) {
     );
 
   // Build images array from API response
-  const imagenes = (proyecto.imagenes || [])
-    .map((img) => {
-      if (typeof img === "string") return img;
-      return img.url || img.preview || null;
-    })
-    .filter(Boolean);
+  const imagenes = [];
+  const addImage = (url) => {
+    const full = resolveMediaUrl(url);
+    if (full && !imagenes.includes(full)) imagenes.push(full);
+  };
+
+  addImage(proyecto.imagen_portada_url);
+  addImage(proyecto.imagen_url);
+  addImage(proyecto.portada_url);
+
+  (proyecto.imagenes || []).forEach((img) => {
+    if (typeof img === "string") {
+      addImage(img);
+      return;
+    }
+    addImage(img?.url || img?.ruta || img?.preview || img?.imagen_url || img?.imagen_portada_url);
+  });
   const total = imagenes.length;
 
   // Get habilidades names

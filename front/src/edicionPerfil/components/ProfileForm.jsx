@@ -5,7 +5,7 @@ import { useApp } from "../../context/AppContext";
 import DefaultAvatar from "../../components/DefaultAvatar";
 
 export default function ProfileForm({ onNext, isDark }) {
-  const { userData, debouncedRefresh } = useApp();
+  const { userData, user, debouncedRefresh } = useApp();
   const [step, setStep] = useState("datos");
   const [data, setData] = useState({
     nombreCompleto: "",
@@ -26,24 +26,24 @@ export default function ProfileForm({ onNext, isDark }) {
 
   const hasLoaded = React.useRef(false);
 
-  // Cargar datos existentes del contexto
+  // Cargar datos existentes del contexto sin pisar nombre/apellido con vacío
   useEffect(() => {
-    if (userData && !hasLoaded.current) {
+    if ((userData || user) && !hasLoaded.current) {
       setData({
-        nombreCompleto: userData.nombreCompleto || "",
-        apellidoCompleto: userData.apellidoCompleto || "",
-        titulo: userData.titulo || userData.titulo_profesional || "",
-        telefono: userData.telefono || "",
-        biografia: userData.biografia || "",
+        nombreCompleto: userData?.nombreCompleto || user?.nombre || "",
+        apellidoCompleto: userData?.apellidoCompleto || user?.apellido || "",
+        titulo: userData?.titulo || userData?.titulo_profesional || "",
+        telefono: userData?.telefono || "",
+        biografia: userData?.biografia || "",
         foto: null,
         ci: null,
       });
-      if (userData.foto_url || userData.preview) {
+      if (userData?.foto_url || userData?.preview) {
         setPreview(userData.foto_url || userData.preview);
       }
       hasLoaded.current = true;
     }
-  }, [userData]);
+  }, [userData, user]);
 
   const border = isDark ? "#1D283A" : "#E2E8F0";
   const text = isDark ? "#fff" : "#111";
@@ -80,14 +80,18 @@ export default function ProfileForm({ onNext, isDark }) {
 
     setSaving(true);
     try {
-      const { data: resp } = await perfilAPI.actualizar({
-        nombre: data.nombreCompleto,
-        apellido: data.apellidoCompleto,
+      const payload = {
         profesion: data.titulo,
         titulo_profesional: data.titulo,
         telefono: data.telefono,
         biografia: data.biografia
-      });
+      };
+      const nombreSeguro = data.nombreCompleto.trim();
+      const apellidoSeguro = data.apellidoCompleto.trim();
+      if (nombreSeguro) payload.nombre = nombreSeguro;
+      if (apellidoSeguro) payload.apellido = apellidoSeguro;
+
+      const { data: resp } = await perfilAPI.actualizar(payload);
       if (resp.ok) {
         showToast("Perfil actualizado correctamente");
         debouncedRefresh();

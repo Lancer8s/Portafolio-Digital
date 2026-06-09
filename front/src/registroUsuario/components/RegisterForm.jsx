@@ -6,7 +6,7 @@ import { authAPI } from "../../api";
 import { useApp } from "../../context/AppContext";
 import { motion } from "framer-motion";
 
-export default function RegisterForm({ isDark }) {
+export default function RegisterForm({ isDark, onSwitchToLogin }) {
   const [form, setForm] = useState(defaultRegisterForm);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState("");
@@ -270,7 +270,7 @@ export default function RegisterForm({ isDark }) {
       >
         ¿Ya tienes cuenta?{" "}
         <button
-          onClick={() => navigate("/login")}
+          onClick={() => onSwitchToLogin ? onSwitchToLogin() : navigate("/login")}
           style={{
             background: "none",
             border: "none",
