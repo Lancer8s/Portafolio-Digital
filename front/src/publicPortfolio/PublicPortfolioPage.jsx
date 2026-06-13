@@ -6,6 +6,7 @@ import axios from "axios";
 import { proyectoAPI } from "../api";
 import DefaultAvatar from "../components/DefaultAvatar";
 import VerificationBadge from "../components/VerificationBadge";
+import { useApp } from "../context/AppContext";
 
 const API_HOST = "http://localhost:8000";
 
@@ -18,6 +19,50 @@ const mediaUrl = (url) => {
   return `${API_HOST}/api/media/${url}`;
 };
 
+const parseImageList = (value) => {
+  if (!value) return [];
+  if (Array.isArray(value)) return value;
+
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return [];
+
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed;
+      if (parsed && typeof parsed === "object") return [parsed];
+    } catch {
+      // Puede venir como una URL simple o como varias rutas separadas por coma.
+    }
+
+    return trimmed
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean);
+  }
+
+  if (typeof value === "object") return [value];
+  return [];
+};
+
+const getImagePathFromObject = (img) => {
+  if (!img || typeof img !== "object") return img;
+
+  return (
+    img.url ||
+    img.ruta ||
+    img.path ||
+    img.preview ||
+    img.imagen_url ||
+    img.imagen ||
+    img.imagen_portada ||
+    img.imagen_portada_url ||
+    img.portada_url ||
+    img.ruta_imagen ||
+    img.url_imagen
+  );
+};
+
 const getProjectImages = (project) => {
   const images = [];
   const add = (url) => {
@@ -25,16 +70,28 @@ const getProjectImages = (project) => {
     if (full && !images.includes(full)) images.push(full);
   };
 
-  add(project?.imagen_portada_url);
-  add(project?.imagen_url);
-  add(project?.portada_url);
+  [
+    project?.imagen_portada_url,
+    project?.imagen_portada,
+    project?.imagen_url,
+    project?.url_imagen,
+    project?.ruta_imagen,
+    project?.portada_url,
+    project?.portada,
+  ].forEach(add);
 
-  (project?.imagenes || []).forEach((img) => {
-    if (typeof img === "string") {
-      add(img);
-      return;
-    }
-    add(img?.url || img?.ruta || img?.preview || img?.imagen_url || img?.imagen_portada_url);
+  [
+    project?.imagenes,
+    project?.imagenes_urls,
+    project?.imagenes_url,
+    project?.galeria,
+    project?.capturas,
+    project?.screenshots,
+    project?.fotos,
+    project?.images,
+    project?.proyecto_imagenes,
+  ].forEach((list) => {
+    parseImageList(list).forEach((img) => add(getImagePathFromObject(img)));
   });
 
   return images;
@@ -61,6 +118,7 @@ export default function PublicPortfolioPage() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { isDark } = useTheme();
+  const { userData, isAuthenticated } = useApp();
 
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -137,6 +195,9 @@ export default function PublicPortfolioPage() {
   if (!data) return null;
 
   const proyectos = data.proyectos || [];
+  const routeUserId = String(id?.split("-").pop() || "");
+  const portfolioUserId = data.id_usuario || routeUserId;
+  const isOwnerView = Boolean(data.is_owner) || (isAuthenticated && String(userData?.id_usuario || "") === String(portfolioUserId || ""));
   const fotoPerfil = data.foto_url
     ? mediaUrl(data.foto_url.startsWith("/api/media") ? data.foto_url : `/api/media/${data.foto_url}`)
     : null;
@@ -188,7 +249,11 @@ export default function PublicPortfolioPage() {
     setSelectedProject(project);
 
     const projectId = project?.id_proyecto || project?.id;
-    if (!projectId) return;
+    const token = localStorage.getItem("auth_token");
+
+    // Visitantes: no llamar endpoints protegidos de /proyectos.
+    // Así pueden abrir el modal de solo lectura sin que el sistema los mande al login.
+    if (!projectId || !token || !isOwnerView) return;
 
     setModalLoading(true);
     try {
@@ -311,6 +376,48 @@ export default function PublicPortfolioPage() {
             >
               📄 Descargar PDF / CV
             </button>
+
+            {isOwnerView && portfolioUserId && (
+              <div
+                style={{
+                  width: "100%",
+                  marginTop: 12,
+                  background: isDark ? "#1D283A" : "#FFFFFF",
+                  border: `1px solid ${border}`,
+                  borderRadius: 12,
+                  padding: "12px 14px",
+                  boxSizing: "border-box",
+                  textAlign: "left",
+                }}
+              >
+                <p style={{ margin: "0 0 4px", color: sub, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em" }}>ID del portafolio</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
+                  <strong style={{ color: "#3B82F6", fontSize: 20 }}>{portfolioUserId}</strong>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(String(portfolioUserId));
+                      alert("ID copiado al portapapeles");
+                    }}
+                    style={{
+                      background: isDark ? "#0F172A" : "#F8FAFC",
+                      color: "#3B82F6",
+                      border: `1px solid ${border}`,
+                      borderRadius: 8,
+                      padding: "7px 10px",
+                      cursor: "pointer",
+                      fontSize: 12,
+                      fontWeight: 800,
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    Copiar ID
+                  </button>
+                </div>
+                <p style={{ color: sub, margin: "8px 0 0", fontSize: 12, lineHeight: 1.5 }}>
+                  Comparte este número para que te encuentren desde el buscador.
+                </p>
+              </div>
+            )}
           </div>
 
           <div style={{ marginBottom: 32 }}>
@@ -324,6 +431,7 @@ export default function PublicPortfolioPage() {
             <h3 style={{ color: text, fontSize: 14, fontWeight: 800, margin: "0 0 10px 4px", textTransform: "uppercase", letterSpacing: "1px" }}>Contacto & Redes</h3>
             <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
               {data.telefono && <InfoPill text={data.telefono} sub={sub} cardBg={cardBg} border={border} icon="☎" />}
+              {data.email && <InfoPill text={data.email} sub={sub} cardBg={cardBg} border={border} icon="✉" />}
               {data.linkedin_url && <LinkPill href={data.linkedin_url} label="LinkedIn" border={border} cardBg={cardBg} />}
               {data.github_url && <LinkPill href={data.github_url} label="GitHub" border={border} cardBg={cardBg} />}
               {(data.redes_sociales || []).map((red, i) => red.url ? (

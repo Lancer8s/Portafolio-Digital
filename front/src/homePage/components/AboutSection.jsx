@@ -60,7 +60,10 @@ export default function AboutSection({ isDark }) {
         >
           {[
             { title: "Resumen del sistema", desc: "Permite crear un portafolio público, registrar habilidades, añadir proyectos con imágenes y compartir el perfil mediante una URL." },
-            { title: "Contacto", desc: "Correo: soporte.portagen@gmail.com · Cochabamba, Bolivia" },
+            {
+              title: "Contacto",
+              desc: "Razón social: AID-SOFT.SRL · E-mail: aidSoft.dev@gmail.com · Representante legal: Erick Samuel Peñaloza Lujan · Teléfono: (+591) 60794951 · Cochabamba - Bolivia",
+            },
             { title: "Objetivo", desc: "Facilitar que cada usuario muestre su trabajo de forma profesional sin depender de herramientas complejas." },
           ].map((item) => (
             <div

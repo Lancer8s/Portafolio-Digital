@@ -24,9 +24,12 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
-      localStorage.removeItem("auth_token");
       const path = window.location.pathname;
-      if (!["/", "/registro", "/login", "/auth/callback"].includes(path)) {
+      const isPublicPath = ["/", "/registro", "/login", "/auth/callback"].includes(path) || path.startsWith("/portafolio/");
+
+      // En portafolios públicos no se debe expulsar al visitante al login.
+      if (!isPublicPath) {
+        localStorage.removeItem("auth_token");
         window.location.href = "/login";
       }
     }

@@ -57,6 +57,14 @@ export default function Navbar() {
     }`.toUpperCase() || "PG";
 
   const label = LABELS[location.pathname] || "";
+  const showBackButton = !["/vista", "/admin"].includes(location.pathname);
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      navigate(-1);
+      return;
+    }
+    navigate(isAuthenticated ? "/vista" : "/");
+  };
 
   const buildPortfolioSlug = () => {
     const n = (userData?.nombreCompleto || "").trim().toLowerCase().replace(/\s+/g, "-");
@@ -154,37 +162,61 @@ export default function Navbar() {
         boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
-      <button
-        onClick={() => navigate("/")}
-        style={{
-          background: "none",
-          border: "none",
-          cursor: "pointer",
-          display: "flex",
-          alignItems: "center",
-          gap: 10,
-        }}
-      >
-        <div
+      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+        {showBackButton && (
+          <button
+            onClick={handleBack}
+            style={{
+              background: isDark ? "#111827" : "#F8FAFC",
+              border: `1px solid ${border}`,
+              color: text,
+              borderRadius: 8,
+              padding: "6px 10px",
+              cursor: "pointer",
+              fontSize: 13,
+              fontWeight: 700,
+              display: "flex",
+              alignItems: "center",
+              gap: 6,
+            }}
+          >
+            ← Volver
+          </button>
+        )}
+
+        <button
+          onClick={() => navigate("/")}
           style={{
-            width: 30,
-            height: 30,
-            background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
-            borderRadius: 6,
+            background: "none",
+            border: "none",
+            cursor: "pointer",
             display: "flex",
             alignItems: "center",
-            justifyContent: "center",
-            color: "#fff",
-            fontWeight: 800,
-            fontSize: 13,
+            gap: 10,
+            padding: 0,
           }}
         >
-          P
-        </div>
-        <span style={{ color: text, fontWeight: 700, fontSize: 15 }}>
-          PortaGen
-        </span>
-      </button>
+          <div
+            style={{
+              width: 30,
+              height: 30,
+              background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
+              borderRadius: 6,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontWeight: 800,
+              fontSize: 13,
+            }}
+          >
+            P
+          </div>
+          <span style={{ color: text, fontWeight: 700, fontSize: 15 }}>
+            PortaGen
+          </span>
+        </button>
+      </div>
 
       <span style={{ color: sub, fontSize: 13, display: "none" }}>{label}</span>
 
@@ -389,6 +421,15 @@ export default function Navbar() {
                   style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 14px", cursor: "pointer", fontWeight: 700 }}
                 >
                   Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(String(userData?.id_usuario || ""));
+                    alert("ID copiado al portapapeles");
+                  }}
+                  style={{ background: isDark ? "#1D283A" : "#fff", color: "#3B82F6", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 14px", cursor: "pointer", fontWeight: 800 }}
+                >
+                  Copiar ID
                 </button>
                 <button
                   onClick={() => {
