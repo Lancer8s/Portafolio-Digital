@@ -3,7 +3,14 @@ import SearchSection from "../components/SearchSection";
 
 export default function HomeModule({ isDark, toggleTheme, onRegister, onLogin }) {
   return (
-    <>
+    <div
+      style={{
+        minHeight: "100vh",
+        background: isDark
+          ? "linear-gradient(180deg, #020617 0%, #0F172A 100%)"
+          : "#ffffff",
+      }}
+    >
       <HeroSection
         isDark={isDark}
         toggleTheme={toggleTheme}
@@ -11,6 +18,6 @@ export default function HomeModule({ isDark, toggleTheme, onRegister, onLogin })
         onLogin={onLogin}
       />
       <SearchSection isDark={isDark} />
-    </>
+    </div>
   );
 }
