@@ -2,7 +2,7 @@ import axios from "axios";
 
 // En desarrollo, Vite proxy redirige /api → http://127.0.0.1:8000/api
 // Esto elimina los preflight CORS (OPTIONS) y reduce la latencia a la mitad.
-const API_BASE = "/api";
+const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
 
 // URL base del servidor para recursos estáticos (imágenes, archivos).
 // En producción el frontend y backend están en el mismo dominio,
@@ -14,6 +14,21 @@ const api = axios.create({
   timeout: 15000,
   headers: { Accept: "application/json" },
 });
+
+export const getApiErrorMessage = (err, fallback = "Error de conexion con el servidor") => {
+  if (err.code === "ECONNABORTED") return "El servidor tardo demasiado en responder";
+  if (!err.response) return fallback;
+
+  const { status, data } = err.response;
+  if (data?.mensaje) return data.mensaje;
+  if (data?.message) return data.message;
+  if (status === 401) return "Tu sesion expiro. Inicia sesion nuevamente";
+  if (status === 403) return "No tienes permisos para realizar esta accion";
+  if (status === 404) return "No se encontro la ruta del servidor";
+  if (status === 405) return "El servidor no acepta este metodo HTTP";
+  if (status >= 500) return "Error interno del servidor. Revisa los logs de Laravel";
+  return fallback;
+};
 
 // ── Request interceptor: attach Bearer token ──
 api.interceptors.request.use((config) => {
@@ -69,7 +84,7 @@ export const authAPI = {
 // ────────────────────────────────────────────────────────
 export const perfilAPI = {
   obtener: () => api.get("/usuario/perfil"),
-  actualizar: (data) => api.put("/usuario/perfil", data),
+  actualizar: (data) => api.post("/usuario/perfil", data),
   subirFoto: (file) => {
     const fd = new FormData();
     fd.append("foto", file);

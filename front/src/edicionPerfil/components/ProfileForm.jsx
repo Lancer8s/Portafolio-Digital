@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { validateProfileData, validateProfileImage, getInitials } from "../services/profile.service";
-import { perfilAPI } from "../../api";
+import { getApiErrorMessage, perfilAPI } from "../../api";
 import { useApp } from "../../context/AppContext";
 import DefaultAvatar from "../../components/DefaultAvatar";
 
@@ -111,7 +111,7 @@ export default function ProfileForm({ onNext, isDark }) {
           backendErrors.titulo = resp.errores.profesion[0];
         setErrors(backendErrors);
       } else {
-        showToast("Error de conexión con el servidor", "error");
+        showToast(getApiErrorMessage(err), "error");
       }
     } finally {
       setSaving(false);

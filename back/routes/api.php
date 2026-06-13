@@ -90,6 +90,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('usuario')->group(function () {
         Route::get('perfil',     [UsuarioController::class, 'perfil']);
         Route::put('perfil',     [UsuarioController::class, 'actualizarPerfil']);
+        Route::post('perfil',    [UsuarioController::class, 'actualizarPerfil']);
         Route::post('foto',      [UsuarioController::class, 'actualizarFoto']);
         Route::post('ci',        [UsuarioController::class, 'actualizarCI']);
         Route::put('password',   [UsuarioController::class, 'cambiarPassword']);
