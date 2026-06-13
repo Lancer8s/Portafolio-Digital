@@ -53,6 +53,29 @@ const formatDate = (value) => {
   return date.toLocaleDateString("es-BO", { year: "numeric", month: "short" });
 };
 
+const normalizeSocialUrl = (url) => {
+  const value = String(url || "").trim();
+  if (!value) return "";
+  if (value.includes("@") && !/^https?:\/\//i.test(value) && !/^mailto:/i.test(value)) {
+    return `mailto:${value}`;
+  }
+  if (/^(https?:\/\/|mailto:)/i.test(value)) return value;
+  return `https://${value}`;
+};
+
+const detectSocialPlatform = (value) => {
+  const low = String(value || "").toLowerCase();
+  if (low.includes("instagram")) return "Instagram";
+  if (low.includes("facebook")) return "Facebook";
+  if (low.includes("linkedin")) return "LinkedIn";
+  if (low.includes("github")) return "GitHub";
+  if (low.includes("youtube")) return "YouTube";
+  if (low.includes("tiktok")) return "TikTok";
+  if (low.includes("twitter") || low.includes("x.com")) return "X (Twitter)";
+  if (low.includes("@") || low.includes("mailto:")) return "Correo";
+  return "Enlace";
+};
+
 export default function SkillsEditor({
   userData,
   isDark,
@@ -79,6 +102,7 @@ export default function SkillsEditor({
     apellidoCompleto: userData?.apellidoCompleto || "",
     titulo: userData?.titulo || "",
     biografia: userData?.biografia || "",
+    telefono: userData?.telefono || "",
     visibilidad: userData?.visibilidad || "publico",
     redes_sociales: userData?.redes_sociales || [],
   });
@@ -86,6 +110,9 @@ export default function SkillsEditor({
   const [editHab, setEditHab] = useState(false);
   const [techList, setTechList] = useState(userData?.techSkills || []);
   const [softList, setSoftList] = useState(userData?.softSkills || []);
+  const [editRedes, setEditRedes] = useState(false);
+  const [redesForm, setRedesForm] = useState(userData?.redes_sociales || []);
+  const [savingRedes, setSavingRedes] = useState(false);
 
   const [toast, setToast] = useState(null);
   const [savingBio, setSavingBio] = useState(false);
@@ -114,6 +141,44 @@ export default function SkillsEditor({
   const showToast = (msg, type = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3000);
+  };
+
+  const openRedesEditor = () => {
+    setRedesForm((userData?.redes_sociales || []).map((red) => ({
+      plataforma: red.plataforma || detectSocialPlatform(red.url),
+      url: red.url || "",
+    })));
+    setEditRedes(true);
+  };
+
+  const saveRedes = async () => {
+    const validRedes = redesForm
+      .map((red) => ({
+        plataforma: (red.plataforma || detectSocialPlatform(red.url)).trim(),
+        url: normalizeSocialUrl(red.url),
+      }))
+      .filter((red) => red.url);
+
+    setSavingRedes(true);
+    try {
+      const { data } = await perfilAPI.actualizar({
+        redes_sociales: validRedes,
+      });
+
+      if (!data.ok) {
+        showToast(data.mensaje || "Error al guardar redes sociales", "error");
+        return;
+      }
+
+      setUserData({ ...userData, redes_sociales: validRedes });
+      debouncedRefresh();
+      setEditRedes(false);
+      showToast("Redes sociales actualizadas correctamente");
+    } catch (err) {
+      showToast(err.response?.data?.mensaje || "Error al guardar redes sociales", "error");
+    } finally {
+      setSavingRedes(false);
+    }
   };
 
   const overlay = {
@@ -1025,6 +1090,53 @@ export default function SkillsEditor({
       </motion.div>
       </>)}
 
+      {/* === SECTION: REDES SOCIALES === */}
+      {activeSection === "redes" && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+          style={{ marginBottom: 10 }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12, gap: 12, flexWrap: "wrap" }}>
+            <div>
+              <p style={{ color: text, fontWeight: 700, fontSize: 17, margin: 0 }}>Redes Sociales</p>
+              <p style={{ color: sub, fontSize: 13, margin: "4px 0 0" }}>Añade enlaces para que las personas puedan contactarte o revisar tu trabajo.</p>
+            </div>
+            {addBtn("Añadir Redes Sociales", openRedesEditor)}
+          </div>
+
+          <div style={section}>
+            {((userData?.redes_sociales || []).length === 0 && !userData?.linkedin_url && !userData?.github_url) ? (
+              <p style={{ color: sub, fontSize: 13, margin: 0 }}>Aún no tienes redes sociales registradas.</p>
+            ) : (
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: 12 }}>
+                {userData?.linkedin_url && (
+                  <a href={normalizeSocialUrl(userData.linkedin_url)} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", background: isDark ? "#0F172A" : "#fff", border: `1px solid ${border}`, borderRadius: 10, padding: "12px 14px", fontWeight: 700, fontSize: 13 }}>
+                    🔗 LinkedIn
+                  </a>
+                )}
+                {userData?.github_url && (
+                  <a href={normalizeSocialUrl(userData.github_url)} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", background: isDark ? "#0F172A" : "#fff", border: `1px solid ${border}`, borderRadius: 10, padding: "12px 14px", fontWeight: 700, fontSize: 13 }}>
+                    🔗 GitHub
+                  </a>
+                )}
+                {(userData?.redes_sociales || []).map((red, i) => (
+                  <a key={i} href={normalizeSocialUrl(red.url)} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", background: isDark ? "#0F172A" : "#fff", border: `1px solid ${border}`, borderRadius: 10, padding: "12px 14px", fontWeight: 700, fontSize: 13, display: "flex", alignItems: "center", gap: 8 }}>
+                    <span>🔗</span>
+                    <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{red.plataforma || detectSocialPlatform(red.url)}</span>
+                  </a>
+                ))}
+              </div>
+            )}
+          </div>
+
+          <div style={{ marginTop: 14 }}>
+            {editBtn("Editar Redes Sociales", openRedesEditor)}
+          </div>
+        </motion.div>
+      )}
+
       {/* === SECTION: EXPERIENCIA === */}
       {activeSection === "experiencia" && (
       <motion.div
@@ -1035,6 +1147,109 @@ export default function SkillsEditor({
         <ExperienciaList isDark={isDark} />
       </motion.div>
       )}
+
+      {/* ====== MODAL REDES SOCIALES ====== */}
+      <AnimatePresence>
+        {editRedes && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => setEditRedes(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ ...modalBox, maxWidth: 520 }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 18 }}>
+                <div>
+                  <h3 style={{ color: text, fontWeight: 800, margin: "0 0 4px", fontSize: 20 }}>Redes Sociales</h3>
+                  <p style={{ color: sub, fontSize: 13, margin: 0, lineHeight: 1.5 }}>Agrega enlaces como LinkedIn, GitHub, Instagram, Facebook, YouTube, TikTok o correo.</p>
+                </div>
+                <button
+                  onClick={() => setEditRedes(false)}
+                  style={{ background: isDark ? "#1D283A" : "#F1F5F9", color: text, border: `1px solid ${border}`, borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontWeight: 800 }}
+                >
+                  ×
+                </button>
+              </div>
+
+              {redesForm.length === 0 && (
+                <div style={{ border: `1px dashed ${border}`, borderRadius: 12, padding: "18px 14px", color: sub, fontSize: 13, textAlign: "center", marginBottom: 14 }}>
+                  Todavía no agregaste ninguna red. Presiona “Añadir otra red”.
+                </div>
+              )}
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+                {redesForm.map((red, i) => (
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "130px 1fr auto", gap: 8, alignItems: "center" }}>
+                    <input
+                      placeholder="Plataforma"
+                      value={red.plataforma || ""}
+                      onChange={(e) => {
+                        const next = [...redesForm];
+                        next[i] = { ...next[i], plataforma: e.target.value };
+                        setRedesForm(next);
+                      }}
+                      style={inp}
+                    />
+                    <input
+                      placeholder="URL o correo"
+                      value={red.url || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        const next = [...redesForm];
+                        next[i] = {
+                          ...next[i],
+                          url: value,
+                          plataforma: next[i].plataforma || detectSocialPlatform(value),
+                        };
+                        setRedesForm(next);
+                      }}
+                      style={inp}
+                    />
+                    <button
+                      onClick={() => setRedesForm(redesForm.filter((_, idx) => idx !== i))}
+                      style={{ background: "transparent", color: "#ef4444", border: "none", cursor: "pointer", fontWeight: 900, fontSize: 16, padding: 6 }}
+                      title="Eliminar red"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              <button
+                onClick={() => setRedesForm([...redesForm, { plataforma: "", url: "" }])}
+                style={{ background: isDark ? "#1D283A" : "#F8FAFC", color: "#3B82F6", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 14px", cursor: "pointer", fontWeight: 800, marginBottom: 20 }}
+              >
+                + Añadir otra red
+              </button>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <button
+                  onClick={() => setEditRedes(false)}
+                  style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontWeight: 700 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={saveRedes}
+                  disabled={savingRedes}
+                  style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "9px 22px", cursor: savingRedes ? "not-allowed" : "pointer", fontWeight: 800, opacity: savingRedes ? 0.7 : 1 }}
+                >
+                  {savingRedes ? "Guardando..." : "Guardar Redes"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* ====== MODAL EDITAR DATOS / BIOGRAFÍA ====== */}
       <AnimatePresence>

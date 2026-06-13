@@ -368,7 +368,7 @@ export default function PublicPortfolioPage() {
                 Proyectos Generales
               </h2>
               <p style={{ color: sub, fontSize: 13, margin: "0 0 20px" }}>
-                Se muestran aquí porque estás viendo tu propio portafolio. Para visitantes solo aparecen los destacados.
+                Proyectos adicionales del portafolio.
               </p>
               {renderProjectGrid(proyectosGenerales)}
             </section>

@@ -24,6 +24,7 @@ export default function Navbar() {
   const navigate = useNavigate();
   const [showMenu, setShowMenu] = useState(false);
   const [showConfig, setShowConfig] = useState(false);
+  const [showShareModal, setShowShareModal] = useState(false);
   const [ciPendingCount, setCiPendingCount] = useState(0);
 
   const isAdmin = userData?.roles?.includes('administrador');
@@ -56,6 +57,18 @@ export default function Navbar() {
     }`.toUpperCase() || "PG";
 
   const label = LABELS[location.pathname] || "";
+
+  const buildPortfolioSlug = () => {
+    const n = (userData?.nombreCompleto || "").trim().toLowerCase().replace(/\s+/g, "-");
+    const a = (userData?.apellidoCompleto || "").trim().toLowerCase().replace(/\s+/g, "-");
+    const namePart = [n, a].filter(Boolean).join("-");
+    return namePart && userData?.id_usuario ? `${namePart}-${userData.id_usuario}` : userData?.id_usuario;
+  };
+
+  const buildPortfolioUrl = () => {
+    const slug = buildPortfolioSlug();
+    return slug ? `${window.location.origin}/portafolio/${slug}` : "";
+  };
 
   const handleLogout = async () => {
     await logout();
@@ -229,11 +242,8 @@ export default function Navbar() {
             ) : (
               <button
                 onClick={() => {
-                  const n = (userData?.nombreCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
-                  const a = (userData?.apellidoCompleto || "").trim().toLowerCase().replace(/\s+/g, '-');
-                  const namePart = [n, a].filter(Boolean).join('-');
-                  const slug = namePart ? `${namePart}-${userData.id_usuario}` : userData.id_usuario;
-                  navigate(`/portafolio/${slug}`);
+                  setShowShareModal(true);
+                  setShowMenu(false);
                 }}
                 style={{
                   background: "#3B82F6",
@@ -342,6 +352,69 @@ export default function Navbar() {
       </div>
         )}
     </div>
+      <AnimatePresence>
+        {showShareModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.52)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
+            onClick={() => setShowShareModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.94, opacity: 0, y: 12 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.94, opacity: 0, y: 12 }}
+              style={{ background: bg, padding: 24, borderRadius: 16, width: "100%", maxWidth: 460, border: `1px solid ${border}`, boxShadow: "0 18px 50px rgba(0,0,0,0.25)" }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h3 style={{ color: text, fontWeight: 800, margin: "0 0 8px", fontSize: 20 }}>Compartir portafolio</h3>
+              <p style={{ color: sub, fontSize: 13, lineHeight: 1.6, margin: "0 0 16px" }}>
+                Este es el identificador de tu usuario. Puedes pasarlo a otra persona para que busque tu portafolio por ID o compartir directamente la URL.
+              </p>
+
+              <div style={{ background: isDark ? "#1D283A" : "#F8FAFC", border: `1px solid ${border}`, borderRadius: 12, padding: "14px 16px", marginBottom: 12 }}>
+                <p style={{ margin: "0 0 4px", color: sub, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: ".06em" }}>Tu ID</p>
+                <p style={{ margin: 0, color: "#3B82F6", fontSize: 24, fontWeight: 900 }}>{userData?.id_usuario || "Sin ID"}</p>
+              </div>
+
+              <div style={{ background: isDark ? "#1D283A" : "#F8FAFC", border: `1px solid ${border}`, borderRadius: 12, padding: "12px 14px", marginBottom: 18 }}>
+                <p style={{ margin: "0 0 6px", color: sub, fontSize: 12, fontWeight: 700 }}>URL pública</p>
+                <p style={{ margin: 0, color: text, fontSize: 12, wordBreak: "break-all" }}>{buildPortfolioUrl()}</p>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10, flexWrap: "wrap" }}>
+                <button
+                  onClick={() => setShowShareModal(false)}
+                  style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 14px", cursor: "pointer", fontWeight: 700 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={() => {
+                    navigator.clipboard.writeText(buildPortfolioUrl());
+                    alert("URL copiada al portapapeles");
+                  }}
+                  style={{ background: isDark ? "#1D283A" : "#fff", color: "#3B82F6", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 14px", cursor: "pointer", fontWeight: 800 }}
+                >
+                  Copiar URL
+                </button>
+                <button
+                  onClick={() => {
+                    const slug = buildPortfolioSlug();
+                    setShowShareModal(false);
+                    if (slug) navigate(`/portafolio/${slug}`);
+                  }}
+                  style={{ background: "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", cursor: "pointer", fontWeight: 800 }}
+                >
+                  Abrir portafolio
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {showConfig && (
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} 

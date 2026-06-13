@@ -19,6 +19,11 @@ export default function HeroSection({
   const { isAuthenticated } = useApp();
   const navigate = useNavigate();
 
+  const scrollToSection = (sectionId) => {
+    const section = document.getElementById(sectionId);
+    if (section) section.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
   return (
     <div
       style={{
@@ -70,6 +75,35 @@ export default function HeroSection({
           <span style={{ color: text, fontWeight: 700, fontSize: 17 }}>
             PortaGen
           </span>
+        </div>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap" }}>
+          <button
+            onClick={() => scrollToSection("search-section")}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: sub,
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
+            Explorar
+          </button>
+          <button
+            onClick={() => scrollToSection("sobre-nosotros")}
+            style={{
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: sub,
+              fontWeight: 600,
+              fontSize: 14,
+            }}
+          >
+            Sobre Nosotros
+          </button>
         </div>
 
         {/* Nav derecha */}
@@ -294,6 +328,25 @@ export default function HeroSection({
               }}
             >
               → Iniciar Sesión
+            </button>
+            <button
+              onClick={() => scrollToSection("search-section")}
+              style={{
+                background: "transparent",
+                color: "#3B82F6",
+                border: "1px solid rgba(59,130,246,0.45)",
+                borderRadius: 10,
+                padding: "14px 28px",
+                cursor: "pointer",
+                fontWeight: 700,
+                fontSize: 15,
+                display: "flex",
+                alignItems: "center",
+                gap: 8,
+                transition: "background 0.2s",
+              }}
+            >
+              🔎 Explorar Portafolios
             </button>
           </motion.div>
 

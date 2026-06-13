@@ -58,6 +58,15 @@ export default function SearchSection({ isDark }) {
     navigate(`/portafolio/${slug}`);
   };
 
+  const handleSearchClick = () => {
+    const value = query.trim();
+    if (/^\d+$/.test(value)) {
+      navigate(`/portafolio/${value}`);
+      return;
+    }
+    doSearch(value);
+  };
+
   return (
     <section
       id="search-section"
@@ -187,9 +196,10 @@ export default function SearchSection({ isDark }) {
             type="text"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
+            onKeyDown={(e) => { if (e.key === "Enter") handleSearchClick(); }}
             onFocus={() => setFocused(true)}
             onBlur={() => setFocused(false)}
-            placeholder="Buscar por nombre, profesión o habilidad..."
+            placeholder="Buscar por nombre, profesión, habilidad o ID..."
             style={{
               flex: 1,
               border: "none",
@@ -255,7 +265,7 @@ export default function SearchSection({ isDark }) {
           ) : null}
 
           <button
-            onClick={() => doSearch(query)}
+            onClick={handleSearchClick}
             style={{
               background:
                 "linear-gradient(135deg, #3B82F6 0%, #6366F1 100%)",
@@ -287,6 +297,10 @@ export default function SearchSection({ isDark }) {
             Buscar
           </button>
         </div>
+
+        <p style={{ color: sub, fontSize: 12, textAlign: "center", margin: "10px 0 0" }}>
+          También puedes ingresar directamente el ID del usuario para abrir su portafolio.
+        </p>
 
         {/* Quick suggestion pills */}
         <div

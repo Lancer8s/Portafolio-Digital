@@ -1,5 +1,6 @@
 import HeroSection from "../components/HeroSection";
 import SearchSection from "../components/SearchSection";
+import AboutSection from "../components/AboutSection";
 
 export default function HomeModule({ isDark, toggleTheme, onRegister, onLogin }) {
   return (
@@ -18,6 +19,7 @@ export default function HomeModule({ isDark, toggleTheme, onRegister, onLogin })
         onLogin={onLogin}
       />
       <SearchSection isDark={isDark} />
+      <AboutSection isDark={isDark} />
     </div>
   );
 }
