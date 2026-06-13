@@ -4,6 +4,11 @@ import axios from "axios";
 // Esto elimina los preflight CORS (OPTIONS) y reduce la latencia a la mitad.
 const API_BASE = "/api";
 
+// URL base del servidor para recursos estáticos (imágenes, archivos).
+// En producción el frontend y backend están en el mismo dominio,
+// por lo que se usa una cadena vacía ("") para que las rutas sean relativas.
+export const API_HOST = import.meta.env.VITE_API_HOST ?? "";
+
 const api = axios.create({
   baseURL: API_BASE,
   timeout: 15000,

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
 import { useApp } from "../../context/AppContext";
-import { perfilAPI, habilidadAPI, proyectoAPI } from "../../api";
+import { perfilAPI, habilidadAPI, proyectoAPI, API_HOST } from "../../api";
 import ExperienciaList from "./ExperienciaList";
 import UserHomeStats from "./UserHomeStats";
 import DefaultAvatar from "../../components/DefaultAvatar";
@@ -11,8 +11,6 @@ import VerificationBadge from "../../components/VerificationBadge";
 import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
 import StarToggle from "../../components/StarToggle";
-
-const API_HOST = "http://localhost:8000";
 
 const mediaUrl = (url) => {
   if (!url) return null;

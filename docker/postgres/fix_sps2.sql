@@ -1,3 +1,5 @@
+SET search_path TO public;
+
 -- Fix sp_obtener_perfil_usuario to include telefono
 CREATE OR REPLACE FUNCTION sp_obtener_perfil_usuario(p_id_usuario INT)
 RETURNS JSONB LANGUAGE plpgsql AS $$

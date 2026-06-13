@@ -2,9 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
-import { proyectoAPI } from "../../api";
-
-const API_HOST = "http://localhost:8000";
+import { proyectoAPI, API_HOST } from "../../api";
 
 const resolveMediaUrl = (url) => {
   if (!url) return null;

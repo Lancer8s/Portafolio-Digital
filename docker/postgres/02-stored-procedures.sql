@@ -1,3 +1,5 @@
+SET search_path TO public;
+
 -- ============================================================
 --  PROCEDIMIENTOS ALMACENADOS (Stored Procedures)
 --  Sistema Generador de Portafolios Digitales

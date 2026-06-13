@@ -1,11 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { defaultProyecto, TECH_OPTIONS } from "../interfaces/proyecto.interface";
 import { validateProyecto, validateImageFile } from "../services/proyecto.service";
-import { proyectoAPI, habilidadAPI } from "../../api";
+import { proyectoAPI, habilidadAPI, API_HOST } from "../../api";
 import { useApp } from "../../context/AppContext";
 import { motion } from "framer-motion";
-
-const API_HOST = "http://localhost:8000";
 
 const resolveMediaUrl = (url) => {
   if (!url) return null;

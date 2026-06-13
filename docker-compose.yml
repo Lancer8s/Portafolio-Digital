@@ -9,7 +9,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: mundolibre
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       # Scripts SQL ejecutados automáticamente la PRIMERA vez
@@ -18,7 +18,7 @@ services:
     networks:
       - app-network
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d portafolio_digital"]
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d portafolio_digital" ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -33,7 +33,7 @@ services:
     working_dir: /var/www/html
     volumes:
       - ./back:/var/www/html
-      - backend_vendor:/var/www/html/vendor    # preservar vendor instalado en build
+      - backend_vendor:/var/www/html/vendor # preservar vendor instalado en build
     environment:
       - APP_NAME=PortafolioDigital
       - APP_ENV=local
@@ -72,7 +72,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./front:/app
-      - frontend_node_modules:/app/node_modules  # preservar node_modules del build
+      - frontend_node_modules:/app/node_modules # preservar node_modules del build
     ports:
       - "3000:3000"
     networks:

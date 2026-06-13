@@ -3,12 +3,10 @@ import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import axios from "axios";
-import { proyectoAPI } from "../api";
+import { proyectoAPI, API_HOST } from "../api";
 import DefaultAvatar from "../components/DefaultAvatar";
 import VerificationBadge from "../components/VerificationBadge";
 import { useApp } from "../context/AppContext";
-
-const API_HOST = "http://localhost:8000";
 
 const mediaUrl = (url) => {
   if (!url) return null;
