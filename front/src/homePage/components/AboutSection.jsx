@@ -9,6 +9,7 @@ export default function AboutSection({ isDark }) {
   return (
     <section
       id="sobre-nosotros"
+      className="home-about-section"
       style={{
         padding: "64px 48px 36px",
         borderTop: `1px solid ${border}`,
@@ -51,6 +52,7 @@ export default function AboutSection({ isDark }) {
         </motion.div>
 
         <div
+          className="home-about-grid"
           style={{
             display: "grid",
             gridTemplateColumns: "repeat(auto-fit, minmax(230px, 1fr))",
