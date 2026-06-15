@@ -300,8 +300,8 @@ class AuthController extends Controller
                     Storage::disk('public')->put($path, $imgContent);
 
                     $tamanioKb = (int) round(strlen($imgContent) / 1024);
-                    DB::select("SELECT sp_actualizar_foto_perfil(?,?,?,?,?) AS result", [
-                        $usuario->id_usuario, $path, $filename, 'image/jpeg', $tamanioKb,
+                    DB::select("SELECT sp_actualizar_foto_perfil(?,?,?,?,?,?) AS result", [
+                        $usuario->id_usuario, $path, $filename, 'image/jpeg', $tamanioKb, 'perfil',
                     ]);
                 }
             } catch (\Exception $e) {
