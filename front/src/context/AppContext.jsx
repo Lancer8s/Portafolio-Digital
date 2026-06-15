@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { authAPI, perfilAPI, habilidadAPI, proyectoAPI } from "../api";
+import { authAPI, perfilAPI, habilidadAPI, proyectoAPI, resolveMediaUrl } from "../api";
 
 const AppContext = createContext();
 
@@ -140,6 +140,8 @@ export const AppProvider = ({ children }) => {
         apellido = user.apellido || "";
       }
 
+      const fotoUrl = resolveMediaUrl(perfil.foto_url);
+
       setUserDataState({
         id_usuario: user?.id_usuario || perfil.id_usuario,
         nombreCompleto: nombre,
@@ -155,8 +157,8 @@ export const AppProvider = ({ children }) => {
         visibilidad: perfil.visibilidad || "publico",
         ci_estado: perfil.ci_estado || null,
         roles: perfil.roles || user?.roles || [],
-        foto_url: perfil.foto_url || null,
-        preview: perfil.foto_url || null,
+        foto_url: fotoUrl,
+        preview: fotoUrl,
         techSkills,
         softSkills,
         proyectos,

@@ -2,8 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
-import axios from "axios";
-import { proyectoAPI, API_HOST } from "../api";
+import { proyectoAPI, portafolioAPI, API_HOST } from "../api";
 import DefaultAvatar from "../components/DefaultAvatar";
 import VerificationBadge from "../components/VerificationBadge";
 import { useApp } from "../context/AppContext";
@@ -134,12 +133,9 @@ export default function PublicPortfolioPage() {
     const fetchPortfolio = async () => {
       const actualId = id.split("-").pop();
       try {
-        const headers = {};
         const token = localStorage.getItem("auth_token");
-        if (token) headers.Authorization = `Bearer ${token}`;
-
-        const resp = await axios.get(`${API_HOST}/api/portafolio/${actualId}`, { headers });
-        const perfil = resp.data.perfil || {};
+        const resp = await portafolioAPI.obtenerPublico(actualId);
+        const perfil = resp.perfil || {};
         let proyectos = perfil.proyectos || [];
 
         // Sin tocar backend: si el dueño abre su portafolio desde "Compartir",

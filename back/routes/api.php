@@ -119,6 +119,7 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::prefix('proyectos')->group(function () {
         Route::get('/',                             [ProyectoController::class, 'listar']);
         Route::post('/',                            [ProyectoController::class, 'crear']);
+        Route::put('visibilidad-multiple',          [ProyectoController::class, 'toggleVisibilidadMultiple']);
         Route::get('{idProyecto}',                  [ProyectoController::class, 'obtener']);
         Route::put('{idProyecto}',                  [ProyectoController::class, 'actualizar']);
         Route::delete('{idProyecto}',               [ProyectoController::class, 'eliminar']);
