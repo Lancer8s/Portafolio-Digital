@@ -361,11 +361,10 @@ class UsuarioController extends Controller
         $data['perfil']['softSkills'] = $habilidadesObj->getData(true)['softSkills'] ?? [];
         
         $todosProyectos = $proyectosObj->getData(true)['proyectos'] ?? [];
-        // Filtrar solo los proyectos destacados (visibles)
-        $proyectosVisibles = array_values(array_filter($todosProyectos, function($p) {
-            return isset($p['visible_portafolio']) && $p['visible_portafolio'] == true;
-        }));
-        $data['perfil']['proyectos'] = $proyectosVisibles;
+        // Enviar todos los proyectos al frontend (el frontend separa destacados vs generales)
+        // Los proyectos con visible_portafolio=true aparecen como "Destacados"
+        // y los con visible_portafolio=false aparecen como "Proyectos Generales"
+        $data['perfil']['proyectos'] = array_values($todosProyectos);
         $data['perfil']['experiencias'] = $experiencias;
         $data['perfil']['is_owner'] = $isOwner;
 
