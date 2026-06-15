@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
-import { portafolioAPI } from "../../api";
+import { portafolioAPI, resolveMediaUrl } from "../../api";
 import DefaultAvatar from "../../components/DefaultAvatar";
 import VerificationBadge from "../../components/VerificationBadge";
 
@@ -70,6 +70,7 @@ export default function SearchSection({ isDark }) {
   return (
     <section
       id="search-section"
+      className="home-search-section"
       style={{
         padding: "60px 48px 80px",
         maxWidth: 1200,
@@ -146,6 +147,7 @@ export default function SearchSection({ isDark }) {
 
       {/* Search Bar */}
       <motion.div
+        className="home-search-panel"
         initial={{ opacity: 0, y: 16 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -157,6 +159,7 @@ export default function SearchSection({ isDark }) {
         }}
       >
         <div
+          className="home-search-box"
           style={{
             display: "flex",
             alignItems: "center",
@@ -396,6 +399,7 @@ export default function SearchSection({ isDark }) {
             {/* Portfolio Cards Grid */}
             {results.length > 0 && (
               <div
+                className="home-results-grid"
                 style={{
                   display: "grid",
                   gridTemplateColumns:
@@ -466,7 +470,7 @@ export default function SearchSection({ isDark }) {
                     >
                       {user.foto_url ? (
                         <img
-                          src={`http://localhost:8000${user.foto_url}`}
+                          src={resolveMediaUrl(user.foto_url)}
                           alt={`${user.nombre} ${user.apellido}`}
                           style={{
                             width: 52,

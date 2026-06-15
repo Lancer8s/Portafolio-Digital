@@ -35,6 +35,7 @@ export default function HeroSection({
     >
       {/* NAVBAR */}
       <motion.nav
+        className="home-nav"
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.4 }}
@@ -54,7 +55,7 @@ export default function HeroSection({
         }}
       >
         {/* Logo */}
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+        <div className="home-brand" style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div
             style={{
               width: 32,
@@ -77,7 +78,7 @@ export default function HeroSection({
           </span>
         </div>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap" }}>
+        <div className="home-nav-links" style={{ display: "flex", alignItems: "center", gap: 22, flexWrap: "wrap" }}>
           <button
             onClick={() => scrollToSection("search-section")}
             style={{
@@ -107,7 +108,7 @@ export default function HeroSection({
         </div>
 
         {/* Nav derecha */}
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div className="home-nav-actions" style={{ display: "flex", alignItems: "center", gap: 16 }}>
           {isAuthenticated ? (
             <button
               onClick={() => navigate("/vista")}
@@ -180,6 +181,7 @@ export default function HeroSection({
 
       {/* HERO */}
       <div
+        className="home-hero-shell"
         style={{
           display: "flex",
           alignItems: "center",
@@ -192,7 +194,7 @@ export default function HeroSection({
         }}
       >
         {/* Texto izquierda */}
-        <div style={{ flex: "1 1 420px" }}>
+        <div className="home-hero-copy" style={{ flex: "1 1 420px" }}>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -272,6 +274,7 @@ export default function HeroSection({
           </motion.p>
 
           <motion.div
+            className="home-hero-actions"
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.35, duration: 0.4 }}
@@ -352,6 +355,7 @@ export default function HeroSection({
 
           {/* Stats */}
           <motion.div
+            className="home-hero-stats"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.6 }}
@@ -385,12 +389,14 @@ export default function HeroSection({
 
         {/* Imagen derecha */}
         <motion.div
+          className="home-hero-media"
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.2, duration: 0.5 }}
           style={{ flex: "1 1 380px", position: "relative" }}
         >
           <div
+            className="home-hero-image-card"
             style={{
               borderRadius: 16,
               overflow: "hidden",
@@ -424,6 +430,7 @@ export default function HeroSection({
 
           {/* Badge */}
           <motion.div
+            className="home-hero-status-badge"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.4 }}
@@ -482,6 +489,7 @@ export default function HeroSection({
 
           {/* Floating accent */}
           <motion.div
+            className="home-hero-floating-badge"
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.7, duration: 0.4 }}
@@ -515,6 +523,7 @@ export default function HeroSection({
 
       {/* Feature cards */}
       <motion.div
+        className="home-feature-grid"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}

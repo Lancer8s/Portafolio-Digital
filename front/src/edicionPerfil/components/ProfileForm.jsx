@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { validateProfileData, validateProfileImage, getInitials } from "../services/profile.service";
-import { getApiErrorMessage, perfilAPI } from "../../api";
+import { getApiErrorMessage, perfilAPI, resolveMediaUrl } from "../../api";
 import { useApp } from "../../context/AppContext";
 import DefaultAvatar from "../../components/DefaultAvatar";
 
@@ -39,7 +39,7 @@ export default function ProfileForm({ onNext, isDark }) {
         ci: null,
       });
       if (userData?.foto_url || userData?.preview) {
-        setPreview(userData.foto_url || userData.preview);
+        setPreview(resolveMediaUrl(userData.foto_url || userData.preview));
       }
       hasLoaded.current = true;
     }
@@ -138,7 +138,7 @@ export default function ProfileForm({ onNext, isDark }) {
       if (resp.ok) {
         showToast("Foto actualizada correctamente");
         if (resp.foto_url) {
-          setPreview(resp.foto_url);
+          setPreview(resolveMediaUrl(resp.foto_url));
         }
         debouncedRefresh();
       } else {

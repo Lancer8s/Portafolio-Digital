@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { adminAPI, API_HOST } from "../../api";
+import { adminAPI, resolveMediaUrl } from "../../api";
 
 export default function AdminCIVerification({ isDark, onCountChange }) {
   const [usuarios, setUsuarios] = useState([]);
@@ -75,7 +75,7 @@ export default function AdminCIVerification({ isDark, onCountChange }) {
                 </div>
                 <div style={{ padding: 20, flex: 1 }}>
                   <div onClick={() => setSelectedUser(u)}
-                    style={{ background: isDark ? "#1E293B" : "#F1F5F9", borderRadius: 12, height: 150, backgroundImage: `url(${API_HOST}${u.ci_url})`, backgroundSize: "cover", backgroundPosition: "center", cursor: "pointer", border: `1px solid ${border}`, position: "relative" }}>
+                    style={{ background: isDark ? "#1E293B" : "#F1F5F9", borderRadius: 12, height: 150, backgroundImage: `url(${resolveMediaUrl(u.ci_url)})`, backgroundSize: "cover", backgroundPosition: "center", cursor: "pointer", border: `1px solid ${border}`, position: "relative" }}>
                     <div style={{ position: "absolute", inset: 0, background: "rgba(0,0,0,0.25)", borderRadius: 11, display: "flex", alignItems: "center", justifyContent: "center", opacity: 0, transition: "opacity 0.2s" }} className="ci-overlay">
                       <span style={{ color: "#fff", fontWeight: 600, background: "rgba(0,0,0,0.5)", padding: "6px 14px", borderRadius: 20, backdropFilter: "blur(4px)", fontSize: 13 }}>Ver Documento</span>
                     </div>
@@ -116,7 +116,7 @@ export default function AdminCIVerification({ isDark, onCountChange }) {
                 </button>
               </div>
               <div style={{ flex: 1, overflow: "auto", borderRadius: 12, border: `1px solid ${border}`, background: isDark ? "#000" : "#F8FAFC" }}>
-                <img src={`${API_HOST}${selectedUser.ci_url}`} alt="CI" style={{ width: "100%", height: "auto", display: "block" }} />
+                <img src={resolveMediaUrl(selectedUser.ci_url)} alt="CI" style={{ width: "100%", height: "auto", display: "block" }} />
               </div>
               <div style={{ display: "flex", gap: 14, marginTop: 20, justifyContent: "flex-end" }}>
                 <button disabled={isProcessing} onClick={() => handleAction(selectedUser.id_usuario, 'reject')}

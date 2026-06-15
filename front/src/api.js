@@ -2,12 +2,35 @@ import axios from "axios";
 
 // En desarrollo, Vite proxy redirige /api → http://127.0.0.1:8000/api
 // Esto elimina los preflight CORS (OPTIONS) y reduce la latencia a la mitad.
-const API_BASE = import.meta.env.VITE_API_BASE_URL || "/api";
+const stripTrailingSlash = (value) => String(value || "").replace(/\/+$/, "");
+const API_BASE = stripTrailingSlash(import.meta.env.VITE_API_BASE_URL || "/api");
 
 // URL base del servidor para recursos estáticos (imágenes, archivos).
 // En producción el frontend y backend están en el mismo dominio,
 // por lo que se usa una cadena vacía ("") para que las rutas sean relativas.
-export const API_HOST = import.meta.env.VITE_API_HOST ?? "";
+const resolveApiHost = () => {
+  if (import.meta.env.VITE_API_HOST !== undefined) {
+    return stripTrailingSlash(import.meta.env.VITE_API_HOST);
+  }
+
+  try {
+    return new URL(API_BASE).origin;
+  } catch {
+    return "";
+  }
+};
+
+export const API_HOST = resolveApiHost();
+
+export const resolveMediaUrl = (url) => {
+  if (!url) return null;
+  const value = String(url);
+  if (value.startsWith("blob:") || value.startsWith("http")) return value;
+  if (value.startsWith("/api/media")) return `${API_HOST}${value}`;
+  if (value.startsWith("/storage/")) return `${API_HOST}${value}`;
+  if (value.startsWith("/")) return `${API_HOST}${value}`;
+  return `${API_HOST}/api/media/${value}`;
+};
 
 const api = axios.create({
   baseURL: API_BASE,
@@ -24,6 +47,7 @@ export const getApiErrorMessage = (err, fallback = "Error de conexion con el ser
   if (data?.message) return data.message;
   if (status === 401) return "Tu sesion expiro. Inicia sesion nuevamente";
   if (status === 403) return "No tienes permisos para realizar esta accion";
+  if (status === 429) return "Demasiadas solicitudes. Espera unos segundos y vuelve a intentar";
   if (status === 404) return "No se encontro la ruta del servidor";
   if (status === 405) return "El servidor no acepta este metodo HTTP";
   if (status >= 500) return "Error interno del servidor. Revisa los logs de Laravel";
@@ -44,6 +68,12 @@ api.interceptors.response.use(
   (res) => res,
   (err) => {
     if (err.response?.status === 401) {
+      const requestUrl = err.config?.url || "";
+      const isLogoutRequest = requestUrl.includes("/auth/logout");
+      if (window.__authLogoutInProgress || isLogoutRequest || !localStorage.getItem("auth_token")) {
+        return Promise.reject(err);
+      }
+
       const path = window.location.pathname;
       const isPublicPath = ["/", "/registro", "/login", "/auth/callback"].includes(path) || path.startsWith("/portafolio/");
 
@@ -140,6 +170,8 @@ export const proyectoAPI = {
     api.put(`/proyectos/${idProyecto}/habilidades`, { ids_habilidades }),
   toggleVisibilidad: (idProyecto, visible_portafolio) =>
     api.put(`/proyectos/${idProyecto}/visibilidad`, { visible_portafolio }),
+  toggleVisibilidadMultiple: (proyectos) =>
+    api.put("/proyectos/visibilidad-multiple", { proyectos }),
 };
 
 // ────────────────────────────────────────────────────────

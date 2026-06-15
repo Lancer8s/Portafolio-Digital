@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="64" height="64">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#3B82F6"/>
+      <stop offset="100%" stop-color="#6366F1"/>
+    </linearGradient>
+    <filter id="glow">
+      <feGaussianBlur stdDeviation="2" result="coloredBlur"/>
+      <feMerge>
+        <feMergeNode in="coloredBlur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+  </defs>
+  <!-- Fondo redondeado -->
+  <rect width="64" height="64" rx="14" fill="#0F172A"/>
+  <!-- Letra P estilizada -->
+  <g filter="url(#glow)">
+    <!-- Línea vertical de la P -->
+    <rect x="16" y="12" width="8" height="40" rx="4" fill="url(#g)"/>
+    <!-- Arco superior de la P -->
+    <path d="M24 12 Q46 12 46 26 Q46 40 24 40" stroke="url(#g)" stroke-width="8" fill="none" stroke-linecap="round"/>
+    <!-- Punto de acento (arrow up hint) -->
+    <circle cx="48" cy="52" r="4" fill="#6366F1" opacity="0.8"/>
+    <circle cx="54" cy="46" r="2.5" fill="#3B82F6" opacity="0.6"/>
+  </g>
+</svg>

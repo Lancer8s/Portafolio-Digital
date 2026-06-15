@@ -86,6 +86,7 @@ export default function Navbar() {
   if (isAdmin) {
     return (
       <motion.nav
+        className="app-navbar app-navbar-admin"
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.3 }}
@@ -106,7 +107,7 @@ export default function Navbar() {
           <span style={{ color: text, fontWeight: 700, fontSize: 15 }}>Admin Panel</span>
         </button>
 
-        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+        <div className="app-navbar-actions" style={{ display: "flex", alignItems: "center", gap: 16 }}>
           {/* Notification Bell */}
           <button
             onClick={() => navigate("/admin")}
@@ -146,6 +147,7 @@ export default function Navbar() {
 
   return (
     <motion.nav
+      className="app-navbar"
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
@@ -162,9 +164,10 @@ export default function Navbar() {
         boxShadow: isDark ? "none" : "0 2px 8px rgba(0,0,0,0.06)",
       }}
     >
-      <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+      <div className="app-navbar-left" style={{ display: "flex", alignItems: "center", gap: 12 }}>
         {showBackButton && (
           <button
+            className="app-back-btn"
             onClick={handleBack}
             style={{
               background: isDark ? "#111827" : "#F8FAFC",
@@ -212,7 +215,7 @@ export default function Navbar() {
           >
             P
           </div>
-          <span style={{ color: text, fontWeight: 700, fontSize: 15 }}>
+          <span className="app-brand-text" style={{ color: text, fontWeight: 700, fontSize: 15 }}>
             PortaGen
           </span>
         </button>
@@ -220,11 +223,12 @@ export default function Navbar() {
 
       <span style={{ color: sub, fontSize: 13, display: "none" }}>{label}</span>
 
-      <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+      <div className="app-navbar-actions" style={{ display: "flex", alignItems: "center", gap: 16 }}>
         {isAuthenticated && userData?.id_usuario && !isViewingOthersPortfolio && (
           <>
             {/* Visibilidad del portafolio - botón directo en header */}
             <button
+              className="app-nav-action app-nav-visibility"
               onClick={() => { setShowConfig(true); setShowMenu(false); }}
               title="Visibilidad del portafolio"
               style={{
@@ -245,11 +249,12 @@ export default function Navbar() {
                 <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                 <circle cx="12" cy="12" r="3"/>
               </svg>
-              Visibilidad
+              <span className="app-nav-action-text">Visibilidad</span>
             </button>
 
             {isOnPublicPortfolio ? (
               <button
+                className="app-nav-action app-nav-share"
                 onClick={() => {
                   navigator.clipboard.writeText(window.location.href);
                   alert("URL copiada al portapapeles");
@@ -269,10 +274,11 @@ export default function Navbar() {
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
-                Copiar URL
+                <span className="app-nav-action-text">Copiar URL</span>
               </button>
             ) : (
               <button
+                className="app-nav-action app-nav-share"
                 onClick={() => {
                   setShowShareModal(true);
                   setShowMenu(false);
@@ -292,7 +298,7 @@ export default function Navbar() {
                 }}
               >
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12v8a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-8"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-                Compartir
+                <span className="app-nav-action-text">Compartir</span>
               </button>
             )}
           </>
