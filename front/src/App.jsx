@@ -67,7 +67,7 @@ function ProtectedRoute({ children, requireAdmin = false }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
 
   const isAdmin = userData?.roles?.includes('administrador');
@@ -110,7 +110,7 @@ function AnimatedRoutes() {
               />
             }
           />
-          <Route path="/login" element={<LoginPage />} />
+          <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/portafolio/:id" element={<PublicPortfolioPage />} />
           <Route

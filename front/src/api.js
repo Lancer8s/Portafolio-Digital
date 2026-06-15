@@ -50,7 +50,7 @@ api.interceptors.response.use(
       // En portafolios públicos no se debe expulsar al visitante al login.
       if (!isPublicPath) {
         localStorage.removeItem("auth_token");
-        window.location.href = "/login";
+        window.location.href = "/";
       }
     }
     return Promise.reject(err);

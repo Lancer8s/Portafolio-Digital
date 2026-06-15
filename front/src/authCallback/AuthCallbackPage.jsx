@@ -119,7 +119,7 @@ export default function AuthCallbackPage() {
               {error}
             </p>
             <button
-              onClick={() => navigate("/login")}
+              onClick={() => navigate("/")}
               style={{
                 background: "#3B82F6",
                 color: "#fff",
@@ -131,7 +131,7 @@ export default function AuthCallbackPage() {
                 fontSize: 14,
               }}
             >
-              Volver al Login
+              Volver al Inicio
             </button>
           </>
         ) : (

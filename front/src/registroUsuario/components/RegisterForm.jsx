@@ -270,7 +270,7 @@ export default function RegisterForm({ isDark, onSwitchToLogin }) {
       >
         ¿Ya tienes cuenta?{" "}
         <button
-          onClick={() => onSwitchToLogin ? onSwitchToLogin() : navigate("/login")}
+          onClick={() => onSwitchToLogin ? onSwitchToLogin() : navigate("/")}
           style={{
             background: "none",
             border: "none",
