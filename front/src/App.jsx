@@ -105,7 +105,7 @@ function AnimatedRoutes() {
             path="/"
             element={
               <HomePage
-                onRegister={() => navigate("/registro")}
+                onRegister={() => navigate("/")}
                 onLogin={() => navigate("/login")}
               />
             }
@@ -113,16 +113,7 @@ function AnimatedRoutes() {
           <Route path="/login" element={<Navigate to="/" replace />} />
           <Route path="/auth/callback" element={<AuthCallbackPage />} />
           <Route path="/portafolio/:id" element={<PublicPortfolioPage />} />
-          <Route
-            path="/registro"
-            element={
-              <RegistroUsuarioPage
-                onNext={() => {
-                  navigate("/vista");
-                }}
-              />
-            }
-          />
+          <Route path="/registro" element={<Navigate to="/" replace />} />
 
           {/* Protected routes */}
           <Route

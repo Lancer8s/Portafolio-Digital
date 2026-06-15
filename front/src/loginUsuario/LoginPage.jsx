@@ -288,7 +288,7 @@ export default function LoginPage({ modal = false, onSwitchToRegister } = {}) {
           >
             ¿No tienes cuenta?{" "}
             <button
-              onClick={() => modal && onSwitchToRegister ? onSwitchToRegister() : navigate("/registro")}
+              onClick={() => modal && onSwitchToRegister ? onSwitchToRegister() : navigate("/")}
               style={{
                 background: "none",
                 border: "none",
