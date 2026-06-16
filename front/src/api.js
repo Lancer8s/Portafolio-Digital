@@ -34,7 +34,6 @@ export const resolveMediaUrl = (url) => {
 
 const api = axios.create({
   baseURL: API_BASE,
-  timeout: 15000,
   headers: { Accept: "application/json" },
 });
 
