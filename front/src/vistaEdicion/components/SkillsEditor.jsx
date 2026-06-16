@@ -98,6 +98,7 @@ export default function SkillsEditor({
   });
 
   const [editHab, setEditHab] = useState(false);
+  const [deleteHab, setDeleteHab] = useState(false);
   const [techList, setTechList] = useState(userData?.techSkills || []);
   const [softList, setSoftList] = useState(userData?.softSkills || []);
   const [editRedes, setEditRedes] = useState(false);
@@ -345,6 +346,33 @@ export default function SkillsEditor({
     }
   };
 
+  const handleDeleteSkill = async (skill) => {
+    const idHabilidad = skill.id_habilidad;
+    const nombre = typeof skill === "string" ? skill : skill.nombre;
+    
+    if (!idHabilidad) {
+      showToast("No se pudo identificar el ID de la habilidad", "error");
+      return;
+    }
+
+    const confirmDelete = window.confirm(`¿Estás seguro de que deseas eliminar la habilidad "${nombre}"?`);
+    if (!confirmDelete) return;
+
+    try {
+      const { data } = await habilidadAPI.eliminar(idHabilidad);
+      if (data.ok) {
+        showToast(`Habilidad "${nombre}" eliminada correctamente`);
+        setTechList((prev) => prev.filter((s) => s.id_habilidad !== idHabilidad));
+        setSoftList((prev) => prev.filter((s) => (typeof s === "string" ? s : s.id_habilidad) !== idHabilidad));
+        debouncedRefresh();
+      } else {
+        showToast(data.mensaje || "Error al eliminar la habilidad", "error");
+      }
+    } catch (err) {
+      showToast(err.response?.data?.mensaje || "Error al eliminar la habilidad", "error");
+    }
+  };
+
   const removeTech = (i) =>
     setTechList((l) => l.filter((_, idx) => idx !== i));
   const removeSoft = (i) =>
@@ -418,6 +446,31 @@ export default function SkillsEditor({
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <line x1="12" y1="5" x2="12" y2="19"/>
         <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <span>{label}</span>
+    </button>
+  );
+
+  const deleteBtn = (label, onClick) => (
+    <button
+      onClick={onClick}
+      style={{
+        background: "none",
+        border: "none",
+        cursor: "pointer",
+        display: "flex",
+        alignItems: "center",
+        gap: 6,
+        color: "#ef4444",
+        fontSize: 13,
+        padding: 0,
+      }}
+    >
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+        <polyline points="3 6 5 6 21 6"></polyline>
+        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+        <line x1="10" y1="11" x2="10" y2="17"></line>
+        <line x1="14" y1="11" x2="14" y2="17"></line>
       </svg>
       <span>{label}</span>
     </button>
@@ -736,6 +789,11 @@ export default function SkillsEditor({
               setTechList(userData?.techSkills || []);
               setSoftList(userData?.softSkills || []);
               setEditHab(true);
+            })}
+            {deleteBtn("Eliminar Habilidades", () => {
+              setTechList(userData?.techSkills || []);
+              setSoftList(userData?.softSkills || []);
+              setDeleteHab(true);
             })}
           </div>
         </div>
@@ -1851,7 +1909,7 @@ export default function SkillsEditor({
                   <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Editar Habilidades</h3>
                 </div>
                 <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
-                  Ajusta niveles o elimina habilidades de tu perfil
+                  Ajusta los niveles de tus habilidades en tu perfil
                 </p>
               </div>
 
@@ -1906,20 +1964,6 @@ export default function SkillsEditor({
                   >
                     {s.nivel}%
                   </span>
-                  <button
-                    onClick={() => removeTech(i)}
-                    style={{
-                      background: "#ef4444",
-                      border: "none",
-                      color: "#fff",
-                      borderRadius: 6,
-                      padding: "3px 8px",
-                      cursor: "pointer",
-                      fontSize: 13,
-                    }}
-                  >
-                    ✕
-                  </button>
                 </div>
               ))}
 
@@ -1963,20 +2007,6 @@ export default function SkillsEditor({
                     <span style={{ color: text, fontSize: 13 }}>
                       {typeof s === "string" ? s : s.nombre}
                     </span>
-                    <button
-                      onClick={() => removeSoft(i)}
-                      style={{
-                        background: "#ef4444",
-                        border: "none",
-                        color: "#fff",
-                        borderRadius: 4,
-                        padding: "1px 6px",
-                        cursor: "pointer",
-                        fontSize: 12,
-                      }}
-                    >
-                      ✕
-                    </button>
                   </div>
                 ))}
               </div>
@@ -2019,6 +2049,201 @@ export default function SkillsEditor({
                   {savingHab ? "Guardando..." : "Guardar Cambios"}
                 </button>
               </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ====== MODAL ELIMINAR HABILIDADES ====== */}
+      <AnimatePresence>
+        {deleteHab && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => setDeleteHab(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.88, opacity: 0, y: 30 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.88, opacity: 0, y: 30 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{
+                background: isDark ? "#0F172A" : "#fff",
+                border: `1px solid ${border}`,
+                borderRadius: 20,
+                padding: 0,
+                width: "100%",
+                maxWidth: 520,
+                maxHeight: "90vh",
+                overflowY: "auto",
+                boxSizing: "border-box",
+                boxShadow: isDark ? "0 25px 60px rgba(0,0,0,0.5)" : "0 25px 60px rgba(0,0,0,0.1)",
+              }}
+            >
+              {/* Header */}
+              <div style={{
+                background: "#EF4444",
+                padding: "24px 28px 20px",
+                borderRadius: "20px 20px 0 0",
+                position: "relative",
+              }}>
+                <button
+                  onClick={() => setDeleteHab(false)}
+                  style={{ position: "absolute", top: 14, right: 14, background: "rgba(255,255,255,0.15)", border: "none", borderRadius: 8, width: 32, height: 32, cursor: "pointer", color: "#fff", fontSize: 18, display: "flex", alignItems: "center", justifyContent: "center" }}
+                >
+                  ✕
+                </button>
+                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
+                  <h3 style={{ margin: 0, color: "#fff", fontSize: 19, fontWeight: 800 }}>Eliminar Habilidades</h3>
+                </div>
+                <p style={{ margin: 0, color: "rgba(255,255,255,0.75)", fontSize: 13 }}>
+                  Elimina de forma permanente habilidades de tu perfil
+                </p>
+              </div>
+
+              {/* Body */}
+              <div style={{ padding: "24px 28px 28px" }}>
+
+                {/* Técnicas */}
+                <p style={{ color: sub, fontSize: 13, marginBottom: 10, fontWeight: 700 }}>
+                  Técnicas
+                </p>
+                {techList.length === 0 && (
+                  <p style={{ color: sub, fontSize: 12, marginBottom: 10 }}>
+                    Sin habilidades técnicas.
+                  </p>
+                )}
+                {techList.map((s, i) => (
+                  <div
+                    key={s.id_habilidad || i}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      gap: 10,
+                      marginBottom: 10,
+                      background: isDark ? "#1D283A" : "#F1F5F9",
+                      borderRadius: 8,
+                      padding: "10px 12px",
+                    }}
+                  >
+                    <span style={{ color: text, fontSize: 13, fontWeight: 600 }}>
+                      {s.nombre}
+                    </span>
+                    <button
+                      onClick={() => handleDeleteSkill(s)}
+                      style={{
+                        background: "#ef4444",
+                        border: "none",
+                        color: "#fff",
+                        borderRadius: 6,
+                        padding: "6px 12px",
+                        cursor: "pointer",
+                        fontSize: 13,
+                        fontWeight: 600,
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 4,
+                      }}
+                    >
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="3 6 5 6 21 6"></polyline>
+                        <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      </svg>
+                      Eliminar
+                    </button>
+                  </div>
+                ))}
+
+                <hr style={{ borderColor: border, margin: "18px 0" }} />
+
+                {/* Blandas */}
+                <p style={{ color: sub, fontSize: 13, marginBottom: 10, fontWeight: 700 }}>
+                  Blandas
+                </p>
+                {softList.length === 0 && (
+                  <p style={{ color: sub, fontSize: 12, marginBottom: 10 }}>
+                    Sin habilidades blandas.
+                  </p>
+                )}
+                <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+                  {softList.map((s, i) => {
+                    const nombre = typeof s === "string" ? s : s.nombre;
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "space-between",
+                          gap: 10,
+                          background: isDark ? "#1D283A" : "#F1F5F9",
+                          borderRadius: 8,
+                          padding: "10px 12px",
+                        }}
+                      >
+                        <span style={{ color: text, fontSize: 13, fontWeight: 600 }}>
+                          {nombre}
+                        </span>
+                        <button
+                          onClick={() => handleDeleteSkill(s)}
+                          style={{
+                            background: "#ef4444",
+                            border: "none",
+                            color: "#fff",
+                            borderRadius: 6,
+                            padding: "6px 12px",
+                            cursor: "pointer",
+                            fontSize: 13,
+                            fontWeight: 600,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 4,
+                      }}
+                        >
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6"></polyline>
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                          </svg>
+                          Eliminar
+                        </button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div
+                  style={{
+                    display: "flex",
+                    justifyContent: "flex-end",
+                    marginTop: 24,
+                  }}
+                >
+                  <button
+                    onClick={() => setDeleteHab(false)}
+                    style={{
+                      background: isDark ? "#1D283A" : "#E2E8F0",
+                      border: "none",
+                      color: text,
+                      borderRadius: 8,
+                      padding: "10px 24px",
+                      cursor: "pointer",
+                      fontWeight: 700,
+                    }}
+                  >
+                    Cerrar
+                  </button>
+                </div>
               </div>
             </motion.div>
           </motion.div>
