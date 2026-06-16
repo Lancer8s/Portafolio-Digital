@@ -16,6 +16,7 @@ export default function ExperienciaList({ isDark }) {
   const [loading, setLoading] = useState(true);
   const [modalOpen, setModalOpen] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState({ id_experiencia: null, tipo: "laboral", institucion_empresa: "", cargo_titulo: "", fecha_inicio: "", fecha_fin: "", descripcion: "" });
   const [toast, setToast] = useState(null);
@@ -140,10 +141,43 @@ export default function ExperienciaList({ isDark }) {
             <span>Añadir Experiencia</span>
           </button>
           {experiencias.length > 0 && (
-            <button onClick={() => setIsEditing(!isEditing)} style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}>
-              <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
-              <span>{isEditing ? "Hecho" : "Editar Experiencias"}</span>
-            </button>
+            <>
+              <button
+                onClick={() => {
+                  setIsEditing(!isEditing);
+                  setIsDeleting(false);
+                }}
+                style={{ background: "none", border: "none", cursor: "pointer", color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 6, padding: 0 }}
+              >
+                <img src={lapiz} alt="editar" style={{ width: 14, height: 14 }} />
+                <span>{isEditing ? "Hecho" : "Editar Experiencias"}</span>
+              </button>
+              <button
+                onClick={() => {
+                  setIsDeleting(!isDeleting);
+                  setIsEditing(false);
+                }}
+                style={{
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  color: "#ef4444",
+                  fontSize: 13,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: 0
+                }}
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                  <line x1="10" y1="11" x2="10" y2="17"></line>
+                  <line x1="14" y1="11" x2="14" y2="17"></line>
+                </svg>
+                <span>{isDeleting ? "Hecho" : "Eliminar Experiencias"}</span>
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -206,6 +240,10 @@ export default function ExperienciaList({ isDark }) {
                       <button onClick={() => handleEdit(exp)} style={{ background: "none", border: "none", cursor: "pointer", padding: 4 }}>
                         <img src={lapiz} alt="editar" style={{ width: 13, height: 13 }} />
                       </button>
+                    </div>
+                  )}
+                  {isDeleting && (
+                    <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: 8 }}>
                       <button onClick={() => deleteExp(exp.id_experiencia)} style={{ background: "none", border: "none", cursor: "pointer", color: "#ef4444", fontWeight: "bold", fontSize: 14, padding: 4 }}>
                         ✕
                       </button>
