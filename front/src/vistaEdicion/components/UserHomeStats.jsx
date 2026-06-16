@@ -66,7 +66,13 @@ export default function UserHomeStats({ userData, isDark }) {
         {/* Profile Completion */}
         <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
           style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 14, padding: 24 }}>
-          <h3 style={{ color: text, fontSize: 15, fontWeight: 700, margin: "0 0 18px" }}>Completitud del Perfil</h3>
+          <h3 style={{ color: text, fontSize: 15, fontWeight: 700, margin: "0 0 6px" }}>Completitud del Perfil</h3>
+          {completion < 100 && (
+            <p style={{ color: "#F59E0B", fontSize: 11, fontWeight: 600, margin: "0 0 14px", display: "flex", alignItems: "center", gap: 5 }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+              Completa tu perfil para que tu portafolio sea público
+            </p>
+          )}
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             <div style={{ position: "relative", flexShrink: 0 }}>
               <svg width="90" height="90" viewBox="0 0 90 90">
@@ -139,7 +145,6 @@ export default function UserHomeStats({ userData, isDark }) {
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: 12 }}>
           {[
             { label: "Redes Sociales", value: (userData?.redes_sociales?.length || 0) + (userData?.linkedin_url ? 1 : 0) + (userData?.github_url ? 1 : 0), icon: "🔗" },
-            { label: "Visibilidad", value: userData?.visibilidad === "publico" ? "Público" : "Privado", icon: userData?.visibilidad === "publico" ? "🌐" : "🔒" },
             { label: "Verificación", value: userData?.ci_estado === "Verificado" ? "Verificado ✓" : userData?.ci_estado || "Sin solicitar", icon: "🪪" },
           ].map((item, i) => (
             <div key={i} style={{ background: isDark ? "rgba(30,41,59,0.5)" : "#F8FAFC", borderRadius: 10, padding: "14px 16px", display: "flex", alignItems: "center", gap: 12 }}>

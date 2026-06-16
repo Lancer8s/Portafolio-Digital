@@ -226,7 +226,8 @@ export default function Navbar() {
       <div className="app-navbar-actions" style={{ display: "flex", alignItems: "center", gap: 16 }}>
         {isAuthenticated && userData?.id_usuario && !isViewingOthersPortfolio && (
           <>
-            {/* Visibilidad del portafolio - botón directo en header */}
+            {/* Visibilidad del portafolio - OCULTO: ahora la visibilidad depende de la completitud del perfil */}
+            {/*
             <button
               className="app-nav-action app-nav-visibility"
               onClick={() => { setShowConfig(true); setShowMenu(false); }}
@@ -251,6 +252,7 @@ export default function Navbar() {
               </svg>
               <span className="app-nav-action-text">Visibilidad</span>
             </button>
+            */}
 
             {isOnPublicPortfolio ? (
               <button
