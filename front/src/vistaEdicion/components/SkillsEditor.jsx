@@ -103,6 +103,9 @@ export default function SkillsEditor({
   const [techList, setTechList] = useState(userData?.techSkills || []);
   const [softList, setSoftList] = useState(userData?.softSkills || []);
   const [editRedes, setEditRedes] = useState(false);
+  const [deleteRedes, setDeleteRedes] = useState(false);
+  const [showAddRed, setShowAddRed] = useState(false);
+  const [addRedForm, setAddRedForm] = useState({ plataforma: "", url: "" });
   const [redesForm, setRedesForm] = useState(userData?.redes_sociales || []);
   const [savingRedes, setSavingRedes] = useState(false);
 
@@ -371,6 +374,63 @@ export default function SkillsEditor({
       }
     } catch (err) {
       showToast(err.response?.data?.mensaje || "Error al eliminar la habilidad", "error");
+    }
+  };
+
+  const handleDeleteRed = async (idxToDelete) => {
+    const confirmDelete = window.confirm("¿Estás seguro de que deseas eliminar esta red social?");
+    if (!confirmDelete) return;
+
+    const updatedRedes = (userData?.redes_sociales || []).filter((_, idx) => idx !== idxToDelete);
+    try {
+      const { data } = await perfilAPI.actualizar({
+        redes_sociales: updatedRedes,
+      });
+
+      if (!data.ok) {
+        showToast(data.mensaje || "Error al eliminar la red social", "error");
+        return;
+      }
+
+      setUserData({ ...userData, redes_sociales: updatedRedes });
+      debouncedRefresh();
+      showToast("Red social eliminada correctamente");
+    } catch (err) {
+      showToast(err.response?.data?.mensaje || "Error al eliminar la red social", "error");
+    }
+  };
+
+  const handleAddRed = async () => {
+    if (!addRedForm.url.trim()) {
+      showToast("La URL o correo es obligatorio", "error");
+      return;
+    }
+    const plat = (addRedForm.plataforma || detectSocialPlatform(addRedForm.url)).trim();
+    const newRed = {
+      plataforma: plat,
+      url: normalizeSocialUrl(addRedForm.url),
+    };
+
+    const updatedRedes = [...(userData?.redes_sociales || []), newRed];
+    setSavingRedes(true);
+    try {
+      const { data } = await perfilAPI.actualizar({
+        redes_sociales: updatedRedes,
+      });
+
+      if (!data.ok) {
+        showToast(data.mensaje || "Error al añadir la red social", "error");
+        return;
+      }
+
+      setUserData({ ...userData, redes_sociales: updatedRedes });
+      debouncedRefresh();
+      setShowAddRed(false);
+      showToast("Red social añadida correctamente");
+    } catch (err) {
+      showToast(err.response?.data?.mensaje || "Error al añadir la red social", "error");
+    } finally {
+      setSavingRedes(false);
     }
   };
 
@@ -1197,7 +1257,14 @@ export default function SkillsEditor({
               <p style={{ color: text, fontWeight: 700, fontSize: 17, margin: 0 }}>Redes Sociales</p>
               <p style={{ color: sub, fontSize: 13, margin: "4px 0 0" }}>Añade enlaces para que las personas puedan contactarte o revisar tu trabajo.</p>
             </div>
-            {addBtn("Añadir Redes Sociales", openRedesEditor)}
+            <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+              {addBtn("Añadir Red Social", () => {
+                setAddRedForm({ plataforma: "", url: "" });
+                setShowAddRed(true);
+              })}
+              {editBtn("Editar Redes Sociales", openRedesEditor)}
+              {deleteBtn("Eliminar Redes Sociales", () => setDeleteRedes(true))}
+            </div>
           </div>
 
           <div style={section}>
@@ -1226,7 +1293,6 @@ export default function SkillsEditor({
           </div>
 
           <div style={{ marginTop: 14 }}>
-            {editBtn("Editar Redes Sociales", openRedesEditor)}
           </div>
         </motion.div>
       )}
@@ -1281,7 +1347,7 @@ export default function SkillsEditor({
 
               <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
                 {redesForm.map((red, i) => (
-                  <div key={i} style={{ display: "grid", gridTemplateColumns: "130px 1fr auto", gap: 8, alignItems: "center" }}>
+                  <div key={i} style={{ display: "grid", gridTemplateColumns: "130px 1fr", gap: 8, alignItems: "center" }}>
                     <input
                       placeholder="Plataforma"
                       value={red.plataforma || ""}
@@ -1307,23 +1373,9 @@ export default function SkillsEditor({
                       }}
                       style={inp}
                     />
-                    <button
-                      onClick={() => setRedesForm(redesForm.filter((_, idx) => idx !== i))}
-                      style={{ background: "transparent", color: "#ef4444", border: "none", cursor: "pointer", fontWeight: 900, fontSize: 16, padding: 6 }}
-                      title="Eliminar red"
-                    >
-                      ✕
-                    </button>
                   </div>
                 ))}
               </div>
-
-              <button
-                onClick={() => setRedesForm([...redesForm, { plataforma: "", url: "" }])}
-                style={{ background: isDark ? "#1D283A" : "#F8FAFC", color: "#3B82F6", border: `1px solid ${border}`, borderRadius: 8, padding: "9px 14px", cursor: "pointer", fontWeight: 800, marginBottom: 20 }}
-              >
-                + Añadir otra red
-              </button>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
                 <button
@@ -1338,6 +1390,192 @@ export default function SkillsEditor({
                   style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "9px 22px", cursor: savingRedes ? "not-allowed" : "pointer", fontWeight: 800, opacity: savingRedes ? 0.7 : 1 }}
                 >
                   {savingRedes ? "Guardando..." : "Guardar Redes"}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ====== MODAL ELIMINAR REDES SOCIALES ====== */}
+      <AnimatePresence>
+        {deleteRedes && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => setDeleteRedes(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ ...modalBox, maxWidth: 520 }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 18 }}>
+                <div>
+                  <h3 style={{ color: "#EF4444", fontWeight: 800, margin: "0 0 4px", fontSize: 20 }}>Eliminar Redes Sociales</h3>
+                  <p style={{ color: sub, fontSize: 13, margin: 0, lineHeight: 1.5 }}>Elimina de forma permanente redes sociales de tu perfil.</p>
+                </div>
+                <button
+                  onClick={() => setDeleteRedes(false)}
+                  style={{ background: isDark ? "#1D283A" : "#F1F5F9", color: text, border: `1px solid ${border}`, borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontWeight: 800 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              {(!userData?.redes_sociales || userData.redes_sociales.length === 0) ? (
+                <div style={{ border: `1px dashed ${border}`, borderRadius: 12, padding: "18px 14px", color: sub, fontSize: 13, textAlign: "center", marginBottom: 14 }}>
+                  No tienes redes sociales registradas para eliminar.
+                </div>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 16 }}>
+                  {userData.redes_sociales.map((red, i) => (
+                    <div
+                      key={i}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "space-between",
+                        gap: 10,
+                        background: isDark ? "#1D283A" : "#F1F5F9",
+                        borderRadius: 8,
+                        padding: "10px 12px",
+                      }}
+                    >
+                      <div style={{ display: "flex", flexDirection: "column", minWidth: 0 }}>
+                        <span style={{ color: text, fontSize: 13, fontWeight: 600 }}>
+                          {red.plataforma || detectSocialPlatform(red.url)}
+                        </span>
+                        <span style={{ color: sub, fontSize: 11, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          {red.url}
+                        </span>
+                      </div>
+                      <button
+                        onClick={() => handleDeleteRed(i)}
+                        style={{
+                          background: "#ef4444",
+                          border: "none",
+                          color: "#fff",
+                          borderRadius: 6,
+                          padding: "6px 12px",
+                          cursor: "pointer",
+                          fontSize: 13,
+                          fontWeight: 600,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 4,
+                          flexShrink: 0,
+                        }}
+                      >
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                          <polyline points="3 6 5 6 21 6"></polyline>
+                          <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                        </svg>
+                        Eliminar
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "flex-end", marginTop: 20 }}>
+                <button
+                  onClick={() => setDeleteRedes(false)}
+                  style={{
+                    background: isDark ? "#1D283A" : "#E2E8F0",
+                    border: "none",
+                    color: text,
+                    borderRadius: 8,
+                    padding: "10px 24px",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                  }}
+                >
+                  Cerrar
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* ====== MODAL AÑADIR RED SOCIAL ====== */}
+      <AnimatePresence>
+        {showAddRed && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            style={overlay}
+            onClick={() => setShowAddRed(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              transition={{ type: "spring", damping: 22, stiffness: 260 }}
+              onClick={(e) => e.stopPropagation()}
+              style={{ ...modalBox, maxWidth: 520 }}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, marginBottom: 18 }}>
+                <div>
+                  <h3 style={{ color: text, fontWeight: 800, margin: "0 0 4px", fontSize: 20 }}>Añadir Red Social</h3>
+                  <p style={{ color: sub, fontSize: 13, margin: 0, lineHeight: 1.5 }}>Registra un nuevo enlace a tu perfil.</p>
+                </div>
+                <button
+                  onClick={() => setShowAddRed(false)}
+                  style={{ background: isDark ? "#1D283A" : "#F1F5F9", color: text, border: `1px solid ${border}`, borderRadius: 8, width: 32, height: 32, cursor: "pointer", fontWeight: 800 }}
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div style={{ display: "flex", flexDirection: "column", gap: 14, marginBottom: 20 }}>
+                <div>
+                  <label style={lbl}>Plataforma</label>
+                  <input
+                    placeholder="Ej: GitHub, LinkedIn, Twitter, etc."
+                    value={addRedForm.plataforma || ""}
+                    onChange={(e) => setAddRedForm({ ...addRedForm, plataforma: e.target.value })}
+                    style={inp}
+                  />
+                </div>
+                <div>
+                  <label style={lbl}>URL o correo</label>
+                  <input
+                    placeholder="https://github.com/usuario o correo@ejemplo.com"
+                    value={addRedForm.url || ""}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setAddRedForm({
+                        ...addRedForm,
+                        url: value,
+                        plataforma: addRedForm.plataforma || detectSocialPlatform(value),
+                      });
+                    }}
+                    style={inp}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: 10 }}>
+                <button
+                  onClick={() => setShowAddRed(false)}
+                  style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 16px", cursor: "pointer", fontWeight: 700 }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  onClick={handleAddRed}
+                  disabled={savingRedes}
+                  style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "9px 22px", cursor: savingRedes ? "not-allowed" : "pointer", fontWeight: 800, opacity: savingRedes ? 0.7 : 1 }}
+                >
+                  {savingRedes ? "Guardando..." : "Guardar"}
                 </button>
               </div>
             </motion.div>
