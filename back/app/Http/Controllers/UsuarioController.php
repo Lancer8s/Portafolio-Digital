@@ -255,6 +255,7 @@ class UsuarioController extends Controller
         // Buscar usuarios públicos cuyo nombre, apellido, profesión, título profesional
         // o habilidades coincidan con el término de búsqueda.
         // Usamos DISTINCT para evitar duplicados por múltiples habilidades coincidentes.
+        // Solo se muestran usuarios con perfil completo (datos obligatorios llenos).
         $usuarios = DB::select("
             SELECT DISTINCT u.id_usuario,
                    u.nombre,
@@ -270,6 +271,10 @@ class UsuarioController extends Controller
             LEFT JOIN habilidad h ON h.id_habilidad = uh.id_habilidad
             WHERE u.activo = true
               AND u.visibilidad = 'publico'
+              AND u.profesion IS NOT NULL AND u.profesion <> ''
+              AND u.telefono IS NOT NULL AND u.telefono <> ''
+              AND u.biografia IS NOT NULL AND u.biografia <> ''
+              AND u.id_imagen IS NOT NULL
               AND (
                     LOWER(u.nombre) LIKE ?
                  OR LOWER(u.apellido) LIKE ?
@@ -344,6 +349,23 @@ class UsuarioController extends Controller
                 'codigo' => 'PERFIL_PRIVADO',
                 'mensaje' => 'Este perfil es privado'
             ], 403);
+        }
+
+        // Verificar completitud del perfil — perfiles incompletos no son públicos
+        if (!$isOwner) {
+            $perfil = $data['perfil'];
+            $perfilCompleto = !empty($perfil['profesion'])
+                && !empty($perfil['telefono'])
+                && !empty($perfil['biografia'])
+                && !empty($perfil['foto_url']);
+
+            if (!$perfilCompleto) {
+                return response()->json([
+                    'ok' => false,
+                    'codigo' => 'PERFIL_INCOMPLETO',
+                    'mensaje' => 'Este portafolio aún no está disponible porque el usuario no ha completado su perfil'
+                ], 403);
+            }
         }
 
         // Obtener habilidades, proyectos y experiencias
