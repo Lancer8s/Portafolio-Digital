@@ -146,7 +146,12 @@ export default function PublicPortfolioPage() {
         setData({ ...perfil, proyectos });
       } catch (err) {
         if (err.response?.status === 403) {
-          setError("Este portafolio es privado.");
+          const codigo = err.response?.data?.codigo;
+          if (codigo === "PERFIL_INCOMPLETO") {
+            setError("Este portafolio aún no está disponible. El usuario no ha completado los datos obligatorios de su perfil.");
+          } else {
+            setError("Este portafolio es privado.");
+          }
         } else if (err.response?.status === 404) {
           setError("El portafolio no existe.");
         } else {
