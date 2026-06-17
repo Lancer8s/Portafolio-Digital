@@ -52,9 +52,15 @@ export default function AuthCallbackPage() {
         } else {
           setError("No se pudo verificar la sesión.");
         }
-      } catch {
-        localStorage.removeItem("auth_token");
-        setError("Error al verificar el token. Intenta de nuevo.");
+      } catch (err) {
+        if (err.response?.status === 401 || err.response?.status === 403) {
+          localStorage.removeItem("auth_token");
+          setError("Error al verificar el token. Intenta de nuevo.");
+          return;
+        }
+
+        login(token, {});
+        navigate("/vista", { replace: true });
       }
     };
 

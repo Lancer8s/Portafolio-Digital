@@ -2,20 +2,10 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
-import axios from "axios";
-import { proyectoAPI, API_HOST } from "../api";
+import { proyectoAPI, portafolioAPI, resolveMediaUrl as mediaUrl } from "../api";
 import DefaultAvatar from "../components/DefaultAvatar";
 import VerificationBadge from "../components/VerificationBadge";
 import { useApp } from "../context/AppContext";
-
-const mediaUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith("blob:")) return url;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/api/media")) return `${API_HOST}${url}`;
-  if (url.startsWith("/")) return `${API_HOST}${url}`;
-  return `${API_HOST}/api/media/${url}`;
-};
 
 const parseImageList = (value) => {
   if (!value) return [];
@@ -134,12 +124,10 @@ export default function PublicPortfolioPage() {
     const fetchPortfolio = async () => {
       const actualId = id.split("-").pop();
       try {
-        const headers = {};
         const token = localStorage.getItem("auth_token");
-        if (token) headers.Authorization = `Bearer ${token}`;
 
-        const resp = await axios.get(`${API_HOST}/api/portafolio/${actualId}`, { headers });
-        const perfil = resp.data.perfil || {};
+        const resp = await portafolioAPI.obtenerPublico(actualId);
+        const perfil = resp.perfil || {};
         let proyectos = perfil.proyectos || [];
 
         // Sin tocar backend: si el dueño abre su portafolio desde "Compartir",
@@ -267,7 +255,7 @@ export default function PublicPortfolioPage() {
   };
 
   const renderProjectGrid = (items) => (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
+    <div className="portfolio-project-grid" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: 20 }}>
       {items.map((p, i) => {
         const img = projectImage(p);
         return (
@@ -335,6 +323,26 @@ export default function PublicPortfolioPage() {
             height: auto !important;
           }
           .portfolio-main { padding-left: 0 !important; }
+        }
+        @media (max-width: 640px) {
+          .portfolio-layout { max-width: 100% !important; }
+          .portfolio-sidebar {
+            padding: 22px 16px !important;
+            top: 0 !important;
+            overflow-y: visible !important;
+          }
+          .portfolio-sidebar h1 {
+            font-size: 21px !important;
+            line-height: 1.2 !important;
+            flex-wrap: wrap !important;
+          }
+          .portfolio-main { padding: 24px 16px 48px !important; }
+          .portfolio-main section { margin-bottom: 34px !important; }
+          .portfolio-main h2 { font-size: 19px !important; margin-bottom: 14px !important; }
+          .portfolio-project-grid {
+            grid-template-columns: minmax(0, 1fr) !important;
+            gap: 14px !important;
+          }
         }
       `}</style>
 
@@ -558,6 +566,7 @@ function ProjectModal({ project, loading, onClose, isDark, text, sub, border, ca
     <AnimatePresence>
       {project && (
         <motion.div
+          className="portfolio-project-modal-overlay"
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
@@ -565,13 +574,14 @@ function ProjectModal({ project, loading, onClose, isDark, text, sub, border, ca
           style={{ position: "fixed", inset: 0, background: "rgba(15,23,42,0.62)", backdropFilter: "blur(7px)", zIndex: 9999, display: "flex", alignItems: "center", justifyContent: "center", padding: 20 }}
         >
           <motion.div
+            className="portfolio-project-modal"
             initial={{ opacity: 0, y: 18, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: 18, scale: 0.96 }}
             onClick={(e) => e.stopPropagation()}
             style={{ width: "100%", maxWidth: 760, maxHeight: "90vh", overflowY: "auto", background: cardBg, border: `1px solid ${border}`, borderRadius: 18, boxShadow: isDark ? "0 20px 70px rgba(0,0,0,0.55)" : "0 20px 70px rgba(15,23,42,0.25)" }}
           >
-            <div style={{ position: "relative", height: 280, background: isDark ? "#1D283A" : "#E2E8F0", borderRadius: "18px 18px 0 0", overflow: "hidden" }}>
+            <div className="portfolio-project-modal-image" style={{ position: "relative", height: 280, background: isDark ? "#1D283A" : "#E2E8F0", borderRadius: "18px 18px 0 0", overflow: "hidden" }}>
               {currentImage ? (
                 <img src={currentImage} alt="proyecto" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               ) : (
@@ -607,8 +617,8 @@ function ProjectModal({ project, loading, onClose, isDark, text, sub, border, ca
               )}
             </div>
 
-            <div style={{ padding: 26 }}>
-              <div style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", marginBottom: 12 }}>
+            <div className="portfolio-project-modal-body" style={{ padding: 26 }}>
+              <div className="portfolio-project-modal-title-row" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", marginBottom: 12 }}>
                 <div>
                   <p style={{ color: "#3B82F6", fontSize: 12, fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase", margin: "0 0 8px" }}>Vista de solo lectura</p>
                   <h2 style={{ color: text, fontSize: 26, margin: 0, fontWeight: 900 }}>{project.titulo || project.nombre || "Proyecto"}</h2>

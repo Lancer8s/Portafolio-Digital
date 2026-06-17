@@ -7,3 +7,14 @@
   box-shadow: 0 4px 32px rgba(0,0,0,0.10);
 }
 .edit-body { padding: 0 28px; }
+
+@media (max-width: 560px) {
+  .edit-card {
+    border-radius: 12px;
+    max-width: 100%;
+  }
+
+  .edit-body {
+    padding: 0 16px;
+  }
+}

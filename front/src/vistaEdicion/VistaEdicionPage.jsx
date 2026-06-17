@@ -51,16 +51,24 @@ export default function VistaEdicionPage({ userData,
             width: 100%; position: relative; height: auto;
             border-right: none; border-bottom: 1px solid ${border};
             padding: 12px; display: flex; gap: 6px; overflow-x: auto;
+            top: 0;
           }
           .vista-main { padding: 16px; }
           .vista-nav-btn { white-space: nowrap; width: auto; padding: 8px 12px; font-size: 13px; }
+        }
+        @media (max-width: 560px) {
+          .vista-sidebar { padding: 10px 8px; gap: 5px; }
+          .vista-user-card { display: none !important; }
+          .vista-nav-btn { padding: 8px 10px; font-size: 12px; }
+          .vista-nav-btn svg { width: 16px; height: 16px; }
+          .vista-main { padding: 14px 12px 24px; }
         }
       `}</style>
       <div className="vista-layout" style={{ background: bg, fontFamily: "'Inter', sans-serif" }}>
         {/* Sidebar */}
         <div className="vista-sidebar" style={{ background: sidebarBg }}>
           {/* User Mini Card */}
-          <div style={{ padding: "8px 10px 20px", marginBottom: 8, borderBottom: `1px solid ${border}` }}>
+          <div className="vista-user-card" style={{ padding: "8px 10px 20px", marginBottom: 8, borderBottom: `1px solid ${border}` }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
               {userData?.preview || userData?.foto_url ? (
                 <img src={userData.preview || userData.foto_url} style={{ width: 38, height: 38, borderRadius: "50%", objectFit: "cover", border: `2px solid ${border}` }} alt="" />

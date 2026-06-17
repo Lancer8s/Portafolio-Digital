@@ -2,16 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useParams, useNavigate } from "react-router-dom";
 import { useApp } from "../../context/AppContext";
-import { proyectoAPI, API_HOST } from "../../api";
-
-const resolveMediaUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith("blob:")) return url;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/api/media")) return `${API_HOST}${url}`;
-  if (url.startsWith("/")) return `${API_HOST}${url}`;
-  return `${API_HOST}/api/media/${url}`;
-};
+import { proyectoAPI, resolveMediaUrl } from "../../api";
 
 export default function ProyectoDetalle({ isDark }) {
   const { idx } = useParams();

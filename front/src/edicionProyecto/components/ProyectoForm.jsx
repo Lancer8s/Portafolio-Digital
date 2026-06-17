@@ -1,18 +1,9 @@
 import { useState, useRef, useEffect } from "react";
 import { defaultProyecto, TECH_OPTIONS } from "../interfaces/proyecto.interface";
 import { validateProyecto, validateImageFile } from "../services/proyecto.service";
-import { proyectoAPI, habilidadAPI, API_HOST } from "../../api";
+import { proyectoAPI, habilidadAPI, resolveMediaUrl } from "../../api";
 import { useApp } from "../../context/AppContext";
 import { motion } from "framer-motion";
-
-const resolveMediaUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith("blob:")) return url;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/api/media")) return `${API_HOST}${url}`;
-  if (url.startsWith("/")) return `${API_HOST}${url}`;
-  return `${API_HOST}/api/media/${url}`;
-};
 
 export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
   const { debouncedRefresh } = useApp();
@@ -306,6 +297,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
 
   return (
     <div
+      className="project-form-shell"
       style={{
         maxWidth: 580,
         margin: "0 auto",
@@ -529,7 +521,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
           </span>
         )}
 
-        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+        <div className="project-evidence-row" style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <button
             onClick={() => setCarouselIdx((i) => Math.max(0, i - 1))}
             disabled={carouselIdx === 0}
@@ -545,6 +537,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
           </button>
 
           <div
+            className="project-evidence-slots"
             style={{
               display: "flex",
               gap: 10,
@@ -554,6 +547,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
           >
             {visibleSlots.map((idx) => (
               <motion.div
+                className="project-evidence-slot"
                 key={idx}
                 onClick={() => fileRefs[idx].current?.click()}
                 style={{
@@ -641,6 +635,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
 
       {/* BOTONES */}
       <div
+        className="project-form-actions"
         style={{
           display: "flex",
           justifyContent: "center",
@@ -673,7 +668,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
       </div>
 
       {/* Atrás */}
-      <div>
+      <div className="project-form-back">
         <button
           onClick={onBack}
           style={{

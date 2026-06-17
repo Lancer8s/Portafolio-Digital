@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, useRef } from "react";
-import { authAPI, perfilAPI, habilidadAPI, proyectoAPI } from "../api";
+import { authAPI, perfilAPI, habilidadAPI, proyectoAPI, resolveMediaUrl } from "../api";
 
 const AppContext = createContext();
 
@@ -16,6 +16,7 @@ export const AppProvider = ({ children }) => {
   // Ref para evitar refreshes concurrentes y throttlear llamadas
   const refreshingRef = useRef(false);
   const refreshTimerRef = useRef(null);
+  const loggingOutRef = useRef(false);
 
   // ── Helper para actualizar userData parcialmente ──
   const setUserData = (updater) =>
@@ -25,6 +26,8 @@ export const AppProvider = ({ children }) => {
 
   // ── Login: guardar token y usuario ──
   const login = useCallback((token, usuario) => {
+    loggingOutRef.current = false;
+    window.__authLogoutInProgress = false;
     localStorage.setItem("auth_token", token);
     setUser(usuario);
     setIsAuthenticated(true);
@@ -32,6 +35,13 @@ export const AppProvider = ({ children }) => {
 
   // ── Logout: revocar token en el backend ──
   const logout = useCallback(async () => {
+    loggingOutRef.current = true;
+    window.__authLogoutInProgress = true;
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
+    refreshingRef.current = false;
     try {
       await authAPI.logout();
     } catch {
@@ -41,10 +51,19 @@ export const AppProvider = ({ children }) => {
     setUser(null);
     setIsAuthenticated(false);
     setUserDataState({ techSkills: [], softSkills: [], proyectos: [] });
+    setLoading(false);
+    window.setTimeout(() => {
+      loggingOutRef.current = false;
+      window.__authLogoutInProgress = false;
+    }, 0);
   }, []);
 
   // ── Restaurar sesión al montar ──
   const restoreSession = useCallback(async () => {
+    if (loggingOutRef.current) {
+      setLoading(false);
+      return false;
+    }
     const token = localStorage.getItem("auth_token");
     if (!token) {
       setLoading(false);
@@ -58,8 +77,22 @@ export const AppProvider = ({ children }) => {
         setLoading(false);
         return true;
       }
-    } catch {
-      localStorage.removeItem("auth_token");
+    } catch (err) {
+      if (loggingOutRef.current) {
+        setLoading(false);
+        return false;
+      }
+      const status = err.response?.status;
+      if (status === 401 || status === 403) {
+        localStorage.removeItem("auth_token");
+        setIsAuthenticated(false);
+        setLoading(false);
+        return false;
+      }
+
+      setIsAuthenticated(true);
+      setLoading(false);
+      return true;
     }
     setLoading(false);
     return false;
@@ -68,6 +101,7 @@ export const AppProvider = ({ children }) => {
   // ── Cargar datos completos del usuario (perfil + habilidades + proyectos) ──
   // Optimizado: evita concurrencia, throttlea a 500ms mínimo entre llamadas
   const refreshUserData = useCallback(async () => {
+    if (loggingOutRef.current) return;
     if (!localStorage.getItem("auth_token")) return;
 
     // Si ya se está refresheando, no hacer otra llamada
@@ -139,6 +173,7 @@ export const AppProvider = ({ children }) => {
         nombre = user.nombre || "";
         apellido = user.apellido || "";
       }
+      const fotoUrl = resolveMediaUrl(perfil.foto_url);
 
       setUserDataState({
         id_usuario: user?.id_usuario || perfil.id_usuario,
@@ -155,8 +190,8 @@ export const AppProvider = ({ children }) => {
         visibilidad: perfil.visibilidad || "publico",
         ci_estado: perfil.ci_estado || null,
         roles: perfil.roles || user?.roles || [],
-        foto_url: perfil.foto_url || null,
-        preview: perfil.foto_url || null,
+        foto_url: fotoUrl,
+        preview: fotoUrl,
         techSkills,
         softSkills,
         proyectos,
@@ -171,6 +206,7 @@ export const AppProvider = ({ children }) => {
   // ── Refresh debounced: colapsa múltiples llamadas en una sola ──
   // Usar esta versión cuando se hacen varias operaciones seguidas
   const debouncedRefresh = useCallback(() => {
+    if (loggingOutRef.current || !localStorage.getItem("auth_token")) return;
     if (refreshTimerRef.current) {
       clearTimeout(refreshTimerRef.current);
     }
@@ -188,6 +224,12 @@ export const AppProvider = ({ children }) => {
   }, [restoreSession, refreshUserData]);
 
   const resetState = () => {
+    loggingOutRef.current = false;
+    window.__authLogoutInProgress = false;
+    if (refreshTimerRef.current) {
+      clearTimeout(refreshTimerRef.current);
+      refreshTimerRef.current = null;
+    }
     localStorage.removeItem("auth_token");
     setUser(null);
     setIsAuthenticated(false);

@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
 import { useApp } from "../../context/AppContext";
-import { perfilAPI, habilidadAPI, proyectoAPI, API_HOST } from "../../api";
+import { perfilAPI, habilidadAPI, proyectoAPI, resolveMediaUrl as mediaUrl } from "../../api";
 import ExperienciaList from "./ExperienciaList";
 import UserHomeStats from "./UserHomeStats";
 import DefaultAvatar from "../../components/DefaultAvatar";
@@ -11,14 +11,6 @@ import VerificationBadge from "../../components/VerificationBadge";
 import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
 import StarToggle from "../../components/StarToggle";
-
-const mediaUrl = (url) => {
-  if (!url) return null;
-  if (url.startsWith("http")) return url;
-  if (url.startsWith("/api/media")) return `${API_HOST}${url}`;
-  if (url.startsWith("/")) return `${API_HOST}${url}`;
-  return `${API_HOST}/api/media/${url}`;
-};
 
 const getProjectImages = (project) => {
   const images = [];
