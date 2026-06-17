@@ -1,6 +1,5 @@
 export const validateProyecto = ({ titulo = "", descripcion = "", imagenes = [], link }, options = {}) => {
   const errors = {};
-  const requireImages = options.requireImages ?? true;
   const imageCount = Array.isArray(imagenes) ? imagenes.filter(Boolean).length : 0;
 
   if (!String(titulo).trim())
@@ -9,16 +8,15 @@ export const validateProyecto = ({ titulo = "", descripcion = "", imagenes = [],
   if (!String(descripcion).trim())
     errors.descripcion = "La descripción es requerida";
 
-  if (requireImages && imageCount < 3)
-    errors.imagenes = "Mínimo 3 imágenes requeridas";
-
   if (imageCount > 6)
     errors.imagenes = "Solo se permiten hasta un máximo de 6 imágenes por proyecto";
 
   if (link && String(link).trim()) {
-    const githubRegex = /^https:\/\/(www\.)?github\.com\/[^/]+\/[^/]+/;
-    if (!githubRegex.test(String(link).trim()))
-      errors.link = "Ingrese un enlace válido de repositorio (GitHub)";
+    try {
+      new URL(String(link).trim());
+    } catch {
+      errors.link = "Ingrese un enlace válido (ejemplo: https://...)";
+    }
   }
 
   return errors;

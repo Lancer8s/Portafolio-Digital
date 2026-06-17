@@ -170,17 +170,14 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
   const handleSave = async () => {
     // Validate: count real images
     const imageCount = form.imagenes.filter(Boolean).length;
-    const errs = validateProyecto(
-      {
-        ...form,
-        imagenes: form.imagenes.map((img) => {
-          if (!img) return null;
-          if (typeof img === "string") return img;
-          return img.preview || img.url || img.ruta || img;
-        }),
-      },
-      { requireImages: !initialData?.id_proyecto }
-    );
+    const errs = validateProyecto({
+      ...form,
+      imagenes: form.imagenes.map((img) => {
+        if (!img) return null;
+        if (typeof img === "string") return img;
+        return img.preview || img.url || img.ruta || img;
+      }),
+    });
     if (Object.keys(errs).length) {
       setErrors(errs);
       return;
@@ -513,7 +510,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
           Evidencia
         </p>
         <p style={{ color: sub, fontSize: 12, marginBottom: 12 }}>
-          Minimo 3 imagenes Maximo 6
+          Máximo 6 imágenes (opcional)
         </p>
         {errors.imagenes && (
           <span style={{ color: "#ef4444", fontSize: 12 }}>
