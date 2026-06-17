@@ -6,6 +6,7 @@ import { proyectoAPI, portafolioAPI, resolveMediaUrl as mediaUrl } from "../api"
 import DefaultAvatar from "../components/DefaultAvatar";
 import VerificationBadge from "../components/VerificationBadge";
 import { useApp } from "../context/AppContext";
+import ProjectImageFallback from "../components/ProjectImageFallback";
 
 const parseImageList = (value) => {
   if (!value) return [];
@@ -277,16 +278,16 @@ export default function PublicPortfolioPage() {
               cursor: "pointer",
             }}
           >
-            <div style={{ width: "100%", height: 160, background: isDark ? "#1D283A" : "#E2E8F0" }}>
+            <div style={{ width: "100%", height: 160, background: isDark ? "#1D283A" : "#E2E8F0", overflow: "hidden" }}>
               {img ? (
                 <img src={img} alt="portada" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: sub }}>Sin imagen</div>
+                <ProjectImageFallback title={p.titulo || p.nombre || "Proyecto"} height="100%" />
               )}
             </div>
-            <div style={{ padding: 20 }}>
-              <h4 style={{ margin: "0 0 8px", color: text, fontSize: 16 }}>{p.titulo || p.nombre || "Proyecto"}</h4>
-              <p style={{ margin: "0 0 16px", color: sub, fontSize: 13, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+            <div style={{ padding: 20, minWidth: 0 }}>
+              <h4 style={{ margin: "0 0 8px", color: text, fontSize: 16, wordBreak: "break-word", overflowWrap: "break-word" }}>{p.titulo || p.nombre || "Proyecto"}</h4>
+              <p style={{ margin: "0 0 16px", color: sub, fontSize: 13, lineHeight: 1.5, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden", wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {p.descripcion || "Sin descripción."}
               </p>
               <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
@@ -590,9 +591,7 @@ function ProjectModal({ project, loading, onClose, isDark, text, sub, border, ca
               {currentImage ? (
                 <img src={currentImage} alt="proyecto" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
               ) : (
-                <div style={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: sub }}>
-                  {loading ? "Cargando imágenes..." : "Sin imagen"}
-                </div>
+                <ProjectImageFallback title={project.titulo || project.nombre || "Proyecto"} height="100%" />
               )}
 
               {total > 1 && (
@@ -624,14 +623,14 @@ function ProjectModal({ project, loading, onClose, isDark, text, sub, border, ca
 
             <div className="portfolio-project-modal-body" style={{ padding: 26 }}>
               <div className="portfolio-project-modal-title-row" style={{ display: "flex", justifyContent: "space-between", gap: 18, alignItems: "flex-start", marginBottom: 12 }}>
-                <div>
+                <div style={{ minWidth: 0, flex: 1 }}>
                   <p style={{ color: "#3B82F6", fontSize: 12, fontWeight: 900, letterSpacing: ".08em", textTransform: "uppercase", margin: "0 0 8px" }}>Vista de solo lectura</p>
-                  <h2 style={{ color: text, fontSize: 26, margin: 0, fontWeight: 900 }}>{project.titulo || project.nombre || "Proyecto"}</h2>
+                  <h2 style={{ color: text, fontSize: 26, margin: 0, fontWeight: 900, wordBreak: "break-word", overflowWrap: "break-word" }}>{project.titulo || project.nombre || "Proyecto"}</h2>
                 </div>
-                <button onClick={onClose} style={{ background: isDark ? "#1D283A" : "#F1F5F9", color: text, border: `1px solid ${border}`, borderRadius: 10, width: 36, height: 36, cursor: "pointer", fontWeight: 900 }}>×</button>
+                <button onClick={onClose} style={{ background: isDark ? "#1D283A" : "#F1F5F9", color: text, border: `1px solid ${border}`, borderRadius: 10, width: 36, height: 36, cursor: "pointer", fontWeight: 900, flexShrink: 0 }}>×</button>
               </div>
 
-              <p style={{ color: sub, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap", margin: "0 0 18px" }}>
+              <p style={{ color: sub, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap", margin: "0 0 18px", wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {project.descripcion || "Sin descripción."}
               </p>
 

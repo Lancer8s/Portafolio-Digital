@@ -10,7 +10,8 @@ import DefaultAvatar from "../../components/DefaultAvatar";
 import VerificationBadge from "../../components/VerificationBadge";
 import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
-import StarToggle from "../../components/StarToggle";
+import PinToggle from "../../components/PinToggle";
+import ProjectImageFallback from "../../components/ProjectImageFallback";
 
 const getProjectImages = (project) => {
   const images = [];
@@ -1078,9 +1079,9 @@ export default function SkillsEditor({
                   position: "relative",
                 }}
               >
-                {/* Estrellita de destacado (Top Left) */}
+                {/* Pin de destacado (Top Left) */}
                 <div style={{ position: "absolute", top: 8, left: 8, zIndex: 10 }}>
-                  <StarToggle 
+                  <PinToggle 
                     projectId={p.id_proyecto} 
                     initiallyVisible={p.visible_portafolio !== false} 
                   />
@@ -1109,22 +1110,10 @@ export default function SkillsEditor({
                         }}
                       />
                     ) : (
-                      <svg
-                        width="40"
-                        height="40"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        stroke={sub}
-                        strokeWidth="1.5"
-                      >
-                        <rect x="3" y="3" width="7" height="7" rx="1" />
-                        <rect x="14" y="3" width="7" height="7" rx="1" />
-                        <rect x="3" y="14" width="7" height="7" rx="1" />
-                        <rect x="14" y="14" width="7" height="7" rx="1" />
-                      </svg>
+                      <ProjectImageFallback title={p.titulo || p.nombre || "Proyecto"} height="100%" />
                     )}
                   </div>
-                  <div style={{ padding: "12px 14px" }}>
+                  <div style={{ padding: "12px 14px", minWidth: 0 }}>
                     <p
                       style={{
                         color: text,
@@ -1132,6 +1121,7 @@ export default function SkillsEditor({
                         fontSize: 14,
                         marginBottom: 6,
                         wordBreak: "break-word",
+                        overflowWrap: "break-word",
                       }}
                     >
                       {p.titulo || p.nombre}
@@ -1146,6 +1136,8 @@ export default function SkillsEditor({
                         WebkitLineClamp: 3,
                         WebkitBoxOrient: "vertical",
                         overflow: "hidden",
+                        wordBreak: "break-word",
+                        overflowWrap: "break-word",
                       }}
                     >
                       {p.descripcion}
@@ -2869,7 +2861,7 @@ function ProjectReadOnlyModal({ project, onClose, isDark, text, sub, border }) {
               {currentImage ? (
                 <img src={currentImage} alt="proyecto" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
               ) : (
-                <div style={{ height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: sub }}>Sin imagen</div>
+                <ProjectImageFallback title={project.titulo || project.nombre || "Proyecto"} height="100%" />
               )}
 
               {total > 1 && (
@@ -2906,11 +2898,11 @@ function ProjectReadOnlyModal({ project, onClose, isDark, text, sub, border }) {
               </button>
             </div>
 
-            <div style={{ padding: "24px 28px" }}>
-              <h2 style={{ margin: "0 0 10px", color: text, fontSize: 24, fontWeight: 800 }}>
+            <div style={{ padding: "24px 28px", minWidth: 0 }}>
+              <h2 style={{ margin: "0 0 10px", color: text, fontSize: 24, fontWeight: 800, wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {project.titulo || project.nombre || "Proyecto"}
               </h2>
-              <p style={{ color: sub, fontSize: 14, lineHeight: 1.7, margin: "0 0 18px", whiteSpace: "pre-wrap" }}>
+              <p style={{ color: sub, fontSize: 14, lineHeight: 1.7, margin: "0 0 18px", whiteSpace: "pre-wrap", wordBreak: "break-word", overflowWrap: "break-word" }}>
                 {project.descripcion || "Sin descripción."}
               </p>
 

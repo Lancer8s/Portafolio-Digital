@@ -166,6 +166,25 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
     });
   };
 
+  const scrollToFirstError = (errs) => {
+    const firstErrorKey = Object.keys(errs)[0];
+    if (!firstErrorKey) return;
+
+    let element;
+    if (firstErrorKey === "imagenes") {
+      element = document.getElementById("evidencia-container");
+    } else {
+      element = document.getElementsByName(firstErrorKey)[0];
+    }
+
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      if (element.focus && firstErrorKey !== "imagenes") {
+        element.focus({ preventScroll: true });
+      }
+    }
+  };
+
   const handleSave = async () => {
     // Validate: count real images
     const errs = validateProyecto({
@@ -178,6 +197,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
     });
     if (Object.keys(errs).length) {
       setErrors(errs);
+      setTimeout(() => scrollToFirstError(errs), 50);
       return;
     }
 
@@ -188,9 +208,11 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
         p.id_proyecto !== initialData?.id_proyecto
     );
     if (isDuplicate) {
-      setErrors({
+      const dupErrors = {
         titulo: "Ya tienes un proyecto con este título. Evita duplicados.",
-      });
+      };
+      setErrors(dupErrors);
+      setTimeout(() => scrollToFirstError(dupErrors), 50);
       return;
     }
 
@@ -275,6 +297,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
           backendErrors.descripcion = resp.errores.descripcion[0];
         if (resp.errores.link) backendErrors.link = resp.errores.link[0];
         setErrors(backendErrors);
+        setTimeout(() => scrollToFirstError(backendErrors), 50);
       } else {
         showToastMsg(
           err.message || resp?.mensaje || "Error de conexión con el servidor",
@@ -341,12 +364,16 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
 
       {/* Título */}
       <div>
-        <label style={lbl}>Titulo</label>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <label style={{ ...lbl, marginBottom: 0 }}>Titulo</label>
+          <span style={{ color: sub, fontSize: 11 }}>{(form.titulo || "").length}/80</span>
+        </div>
         <input
           name="titulo"
           value={form.titulo}
           onChange={handleChange}
           style={inp}
+          maxLength={80}
         />
         {errors.titulo && (
           <span style={{ color: "#ef4444", fontSize: 12 }}>
@@ -357,12 +384,16 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
 
       {/* Descripción */}
       <div>
-        <label style={lbl}>Descripcion</label>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+          <label style={{ ...lbl, marginBottom: 0 }}>Descripcion</label>
+          <span style={{ color: sub, fontSize: 11 }}>{(form.descripcion || "").length}/120</span>
+        </div>
         <input
           name="descripcion"
           value={form.descripcion}
           onChange={handleChange}
           style={inp}
+          maxLength={120}
         />
         {errors.descripcion && (
           <span style={{ color: "#ef4444", fontSize: 12 }}>
@@ -447,7 +478,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
       </div>
 
       {/* EVIDENCIA — carrusel */}
-      <div>
+      <div id="evidencia-container">
         <p
           style={{
             color: "#3B82F6",
