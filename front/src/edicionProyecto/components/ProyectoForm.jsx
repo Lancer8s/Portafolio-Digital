@@ -1,12 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { defaultProyecto, TECH_OPTIONS } from "../interfaces/proyecto.interface";
+import { defaultProyecto } from "../interfaces/proyecto.interface";
 import { validateProyecto, validateImageFile } from "../services/proyecto.service";
 import { proyectoAPI, habilidadAPI, resolveMediaUrl } from "../../api";
 import { useApp } from "../../context/AppContext";
-import { motion } from "framer-motion";
+import SkillCatalogPicker from "../../components/SkillCatalogPicker";
 
 export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
-  const { debouncedRefresh } = useApp();
+  const { debouncedRefresh, userData } = useApp();
 
   const [form, setForm] = useState(() => {
     if (initialData) {
@@ -27,7 +27,6 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
   });
 
   const [errors, setErrors] = useState({});
-  const [showSkills, setShowSkills] = useState(false);
   const [carouselIdx, setCarouselIdx] = useState(0);
   const [saving, setSaving] = useState(false);
   const [toast, setToast] = useState(null);
@@ -169,7 +168,6 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
 
   const handleSave = async () => {
     // Validate: count real images
-    const imageCount = form.imagenes.filter(Boolean).length;
     const errs = validateProyecto({
       ...form,
       imagenes: form.imagenes.map((img) => {
@@ -180,6 +178,19 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
     });
     if (Object.keys(errs).length) {
       setErrors(errs);
+      return;
+    }
+
+    // Evitar proyectos con el mismo nombre (duplicados)
+    const isDuplicate = (userData?.proyectos || []).some(
+      (p) =>
+        p.titulo.toLowerCase().trim() === form.titulo.toLowerCase().trim() &&
+        p.id_proyecto !== initialData?.id_proyecto
+    );
+    if (isDuplicate) {
+      setErrors({
+        titulo: "Ya tienes un proyecto con este título. Evita duplicados.",
+      });
       return;
     }
 
@@ -231,22 +242,18 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
       }
 
       // Sincronizar habilidades del proyecto
-      if (form.habilidades.length > 0) {
-        try {
-          const ids = form.habilidades
-            .map((name) => {
-              const found = catalogo.find(
-                (c) => c.nombre.toLowerCase() === name.toLowerCase()
-              );
-              return found?.id_habilidad;
-            })
-            .filter(Boolean);
-          if (ids.length > 0) {
-            await proyectoAPI.sincronizarHabilidades(projectId, ids);
-          }
-        } catch (habErr) {
-          console.error("Error sincronizando habilidades:", habErr);
-        }
+      try {
+        const ids = form.habilidades
+          .map((name) => {
+            const found = catalogo.find(
+              (c) => c.nombre.toLowerCase() === name.toLowerCase()
+            );
+            return found?.id_habilidad;
+          })
+          .filter(Boolean);
+        await proyectoAPI.sincronizarHabilidades(projectId, ids);
+      } catch (habErr) {
+        console.error("Error sincronizando habilidades:", habErr);
       }
 
       showToastMsg(
@@ -383,112 +390,54 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
 
       {/* HABILIDADES */}
       <div>
-        <label style={lbl} onClick={() => setShowSkills((s) => !s)}>
-          {"</>"} Habilidades
+        <label style={lbl}>
+          {"</>"} Habilidades del Proyecto
         </label>
-
-        <div
-          style={{
-            border: `1px solid ${border}`,
-            borderRadius: 8,
-            overflow: "hidden",
-          }}
-        >
-          <button
-            onClick={() => setShowSkills((s) => !s)}
-            style={{
-              width: "100%",
-              background: "#3B82F6",
-              border: "none",
-              padding: "10px 16px",
-              cursor: "pointer",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}
-          >
-            <span style={{ color: "#fff", fontWeight: 700, fontSize: 14 }}>
-              + AÑADIR HABILIDAD
-            </span>
-            <span style={{ color: "#fff", fontSize: 16 }}>
-              {showSkills ? "^" : "v"}
-            </span>
-          </button>
-
-          {showSkills && (
-            <div style={{ padding: "12px", background: bg }}>
-              <div
-                style={{
-                  display: "flex",
-                  flexWrap: "wrap",
-                  gap: 8,
-                  marginBottom: 12,
-                }}
-              >
-                {TECH_OPTIONS.map((h) => {
-                  const selected = form.habilidades.includes(h);
-                  return (
-                    <button
-                      key={h}
-                      onClick={() => toggleHabilidad(h)}
-                      style={{
-                        padding: "5px 14px",
-                        border: `1px solid ${
-                          selected ? "#3B82F6" : border
-                        }`,
-                        borderRadius: 4,
-                        background: selected ? "#3B82F6" : "transparent",
-                        color: selected ? "#fff" : text,
-                        cursor: "pointer",
-                        fontSize: 13,
-                        fontWeight: selected ? 700 : 400,
-                      }}
-                    >
-                      {h}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
+        <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+          <SkillCatalogPicker
+            isDark={isDark}
+            selected={form.habilidades}
+            existing={[]}
+            onToggle={toggleHabilidad}
+            showSoftSkills={false}
+          />
 
           {form.habilidades.length > 0 && (
-            <div
-              style={{
-                padding: "10px 12px",
-                background: bg,
-                display: "flex",
-                flexDirection: "column",
-                gap: 6,
-              }}
-            >
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginTop: 4 }}>
               {form.habilidades.map((h) => (
                 <div
                   key={h}
                   style={{
-                    display: "flex",
-                    justifyContent: "space-between",
+                    background: isDark ? "rgba(59,130,246,0.15)" : "rgba(59,130,246,0.08)",
+                    border: `1.5px solid ${isDark ? "rgba(59,130,246,0.3)" : "rgba(59,130,246,0.2)"}`,
+                    borderRadius: 20,
+                    padding: "6px 14px",
+                    display: "inline-flex",
                     alignItems: "center",
-                    border: `1px solid ${border}`,
-                    borderRadius: 4,
-                    padding: "6px 12px",
-                    background: isDark ? "#020617" : "#fff",
+                    gap: 8,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: isDark ? "#60a5fa" : "#2563eb",
                   }}
                 >
-                  <span style={{ color: text, fontSize: 13 }}>{h}</span>
+                  {h}
                   <button
+                    type="button"
                     onClick={() => removeHabilidad(h)}
                     style={{
-                      background: "#ef4444",
+                      background: "none",
                       border: "none",
-                      color: "#fff",
-                      borderRadius: 4,
-                      padding: "2px 8px",
+                      color: isDark ? "#94a3b8" : "#64748b",
                       cursor: "pointer",
-                      fontSize: 13,
+                      fontSize: 14,
+                      padding: 0,
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: "bold",
                     }}
                   >
-                    —
+                    ×
                   </button>
                 </div>
               ))}
@@ -543,7 +492,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
             }}
           >
             {visibleSlots.map((idx) => (
-              <motion.div
+              <div
                 className="project-evidence-slot"
                 key={idx}
                 onClick={() => fileRefs[idx].current?.click()}
@@ -606,7 +555,7 @@ export default function ProyectoForm({ isDark, onBack, onSave, initialData }) {
                   hidden
                   onChange={(e) => handleImage(idx, e)}
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
 
