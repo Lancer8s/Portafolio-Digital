@@ -65,8 +65,8 @@ class ProyectoController extends Controller
     public function crear(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'titulo'      => 'required|string|max:150',
-            'descripcion' => 'nullable|string',
+            'titulo'      => 'required|string|max:80',
+            'descripcion' => 'nullable|string|max:120',
             'link'        => 'nullable|url|max:300',
         ]);
 
@@ -142,8 +142,8 @@ class ProyectoController extends Controller
     public function actualizar(Request $request, int $idProyecto)
     {
         $validator = Validator::make($request->all(), [
-            'titulo'      => 'nullable|string|max:150',
-            'descripcion' => 'nullable|string',
+            'titulo'      => 'nullable|string|max:80',
+            'descripcion' => 'nullable|string|max:120',
             'link'        => 'nullable|url|max:300',
         ]);
 

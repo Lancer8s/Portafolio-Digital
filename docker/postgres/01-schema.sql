@@ -126,7 +126,7 @@ CREATE TABLE proyecto (
   fecha_creacion     TIMESTAMP    NOT NULL DEFAULT NOW(),
   estado             VARCHAR(20)  NOT NULL DEFAULT 'en_desarrollo'
                       CHECK (estado IN ('planificado','en_desarrollo','completado','pausado')),
-  visible_portafolio BOOLEAN      NOT NULL DEFAULT TRUE
+  visible_portafolio BOOLEAN      NOT NULL DEFAULT FALSE
 );
 
 -- ============================================================

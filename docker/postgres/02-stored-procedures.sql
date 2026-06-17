@@ -1240,7 +1240,7 @@ BEGIN
   PERFORM set_config('app.usuario_actual', p_id_usuario::TEXT, TRUE);
 
   INSERT INTO proyecto (id_usuario, nombre, descripcion, url_repositorio, estado, visible_portafolio, fecha_creacion)
-  VALUES (p_id_usuario, TRIM(p_nombre), p_descripcion, NULLIF(TRIM(COALESCE(p_url_repo,'')),'' ), 'en_desarrollo', TRUE, NOW())
+  VALUES (p_id_usuario, TRIM(p_nombre), p_descripcion, NULLIF(TRIM(COALESCE(p_url_repo,'')),'' ), 'en_desarrollo', FALSE, NOW())
   RETURNING id_proyecto INTO v_id_proyecto;
 
   RETURN jsonb_build_object(
