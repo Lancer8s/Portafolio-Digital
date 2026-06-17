@@ -76,6 +76,19 @@ class ProyectoController extends Controller
 
         $id = $request->user()->id_usuario;
 
+        // Validar nombre duplicado para el mismo usuario
+        $duplicado = DB::table('proyecto')
+            ->where('id_usuario', $id)
+            ->whereRaw('LOWER(TRIM(nombre)) = ?', [mb_strtolower(trim($request->titulo))])
+            ->exists();
+
+        if ($duplicado) {
+            return response()->json([
+                'ok' => false,
+                'errores' => ['titulo' => ['Ya tienes un proyecto con este nombre']],
+            ], 422);
+        }
+
         $data = DB::transaction(function () use ($id, $request) {
             DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
 
@@ -139,6 +152,22 @@ class ProyectoController extends Controller
         }
 
         $id = $request->user()->id_usuario;
+
+        // Validar nombre duplicado para el mismo usuario (excluyendo el proyecto actual)
+        if ($request->titulo) {
+            $duplicado = DB::table('proyecto')
+                ->where('id_usuario', $id)
+                ->where('id_proyecto', '!=', $idProyecto)
+                ->whereRaw('LOWER(TRIM(nombre)) = ?', [mb_strtolower(trim($request->titulo))])
+                ->exists();
+
+            if ($duplicado) {
+                return response()->json([
+                    'ok' => false,
+                    'errores' => ['titulo' => ['Ya tienes un proyecto con este nombre']],
+                ], 422);
+            }
+        }
 
         $data = DB::transaction(function () use ($id, $idProyecto, $request) {
             DB::statement("SET LOCAL app.usuario_actual = '{$id}'");

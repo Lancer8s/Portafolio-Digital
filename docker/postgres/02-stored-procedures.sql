@@ -1227,12 +1227,14 @@ BEGIN
                               'mensaje', 'El título del proyecto es obligatorio');
   END IF;
 
-  -- Validar formato GitHub si se proporcionó URL
-  IF p_url_repo IS NOT NULL AND TRIM(p_url_repo) != '' THEN
-    IF NOT (TRIM(p_url_repo) ~ '^https://(www\.)?github\.com/[^/]+/[^/]+') THEN
-      RETURN jsonb_build_object('ok', FALSE, 'codigo', 'URL_INVALIDA',
-                                'mensaje', 'El enlace debe ser un repositorio válido de GitHub');
-    END IF;
+  -- Validar nombre duplicado para el mismo usuario
+  IF EXISTS (
+    SELECT 1 FROM proyecto
+    WHERE id_usuario = p_id_usuario
+      AND LOWER(TRIM(nombre)) = LOWER(TRIM(p_nombre))
+  ) THEN
+    RETURN jsonb_build_object('ok', FALSE, 'codigo', 'NOMBRE_DUPLICADO',
+                              'mensaje', 'Ya tienes un proyecto con este nombre');
   END IF;
 
   PERFORM set_config('app.usuario_actual', p_id_usuario::TEXT, TRUE);
@@ -1425,11 +1427,16 @@ BEGIN
                               'mensaje', 'El proyecto no existe o no te pertenece');
   END IF;
 
-  -- Validar URL GitHub si se envía
-  IF p_url_repo IS NOT NULL AND TRIM(p_url_repo) != '' THEN
-    IF NOT (TRIM(p_url_repo) ~ '^https://(www\.)?github\.com/[^/]+/[^/]+') THEN
-      RETURN jsonb_build_object('ok', FALSE, 'codigo', 'URL_INVALIDA',
-                                'mensaje', 'El enlace debe ser un repositorio válido de GitHub');
+  -- Validar nombre duplicado (excluyendo el proyecto actual)
+  IF p_nombre IS NOT NULL AND TRIM(p_nombre) != '' THEN
+    IF EXISTS (
+      SELECT 1 FROM proyecto
+      WHERE id_usuario = p_id_usuario
+        AND id_proyecto != p_id_proyecto
+        AND LOWER(TRIM(nombre)) = LOWER(TRIM(p_nombre))
+    ) THEN
+      RETURN jsonb_build_object('ok', FALSE, 'codigo', 'NOMBRE_DUPLICADO',
+                                'mensaje', 'Ya tienes un proyecto con este nombre');
     END IF;
   END IF;
 
