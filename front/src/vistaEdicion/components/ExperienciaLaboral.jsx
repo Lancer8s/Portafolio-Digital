@@ -67,14 +67,14 @@ export default function ExperienciaLaboral({ isDark }) {
   };
 
   useEffect(() => { loadData(); }, []);
-
+// Abre el modal en modo creación con el formulario vacío
   const openAdd = () => {
     setForm(EMPTY_FORM);
     setIsEditing(false);
     setIsDeleting(false);
     setModalOpen(true);
   };
-
+// Abre el modal en modo edición cargando los datos de la experiencia seleccionada
   const openEdit = (exp) => {
     setForm({
       id_experiencia: exp.id_experiencia,
