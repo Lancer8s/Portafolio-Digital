@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { experienciaAPI } from "../../api";
 import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
-
+/** Formatea una fecha ISO a formato legible en español, o "Actualidad" si es nula */
 const formatDate = (dateStr) => {
   if (!dateStr) return "Actualidad";
   const d = new Date(dateStr);
@@ -22,7 +22,11 @@ const EMPTY_FORM = {
   descripcion: "",
   referencias: "",
 };
-
+/**
+ * Componente de gestión de experiencia laboral del usuario.
+ * Permite listar, agregar, editar y eliminar experiencias laborales.
+ * @param {boolean} isDark - Tema oscuro activo
+ */
 export default function ExperienciaLaboral({ isDark }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
