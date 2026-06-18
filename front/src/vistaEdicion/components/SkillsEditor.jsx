@@ -2828,7 +2828,10 @@ export default function SkillsEditor({
     </div>
   );
 }
-
+/**
+ * Modal de solo lectura para visualizar el detalle de un proyecto.
+ * Incluye carrusel de imágenes, descripción, habilidades y fechas.
+ */
 function ProjectReadOnlyModal({ project, onClose, isDark, text, sub, border }) {
   const [carouselIdx, setCarouselIdx] = useState(0);
   const cardBg = isDark ? "#0F172A" : "#fff";
