@@ -114,6 +114,8 @@ export const AppProvider = ({ children }) => {
 
     try {
       // Usar allSettled para que un fallo parcial no pierda todo
+      // Promise.allSettled garantiza que un fallo parcial (ej: perfil caído)
+      // no cancela la carga de habilidades o proyectos
       const [perfilRes, habRes, proyRes] = await Promise.allSettled([
         perfilAPI.obtener(),
         habilidadAPI.listar(),
