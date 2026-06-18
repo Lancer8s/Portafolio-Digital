@@ -7,8 +7,19 @@
     <title>PORTAGEN</title>
     <script type="module" crossorigin src="/assets/index-DDrq9N9B.js"></script>
     <link rel="stylesheet" crossorigin href="/assets/index-bliC0zzo.css">
+    <!-- Scroll-to-top on every SPA navigation -->
+    <script>
+      (function () {
+        var _push = history.pushState;
+        var _replace = history.replaceState;
+        function scrollUp() { window.scrollTo({ top: 0, left: 0, behavior: 'instant' }); }
+        history.pushState = function () { _push.apply(this, arguments); scrollUp(); };
+        history.replaceState = function () { _replace.apply(this, arguments); scrollUp(); };
+        window.addEventListener('popstate', scrollUp);
+      })();
+    </script>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
   </body>
 </html>
