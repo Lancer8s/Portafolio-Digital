@@ -100,7 +100,7 @@ function AnimatedRoutes() {
         style={{ minHeight: "100vh" }}
       >
         <Routes location={location}>
-          {/* Public routes */}
+          {/* ── Rutas públicas: accesibles sin autenticación ── */}
           <Route
             path="/"
             element={
@@ -115,7 +115,7 @@ function AnimatedRoutes() {
           <Route path="/portafolio/:id" element={<PublicPortfolioPage />} />
           <Route path="/registro" element={<Navigate to="/" replace />} />
 
-          {/* Protected routes */}
+          {/* ── Rutas protegidas: requieren sesión activa ── */}
           <Route
             path="/edicion"
             element={
@@ -197,6 +197,7 @@ function AnimatedRoutes() {
               </ProtectedRoute>
             }
           />
+          {/* ── Rutas de administrador: requieren rol 'administrador' ── */}
           <Route
             path="/admin"
             element={
