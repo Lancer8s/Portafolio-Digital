@@ -11,6 +11,8 @@ class HabilidadController extends Controller
     /**
      * GET /api/habilidades/catalogo
      * Devuelve el catálogo completo (público, sin autenticación).
+     * Las habilidades personalizadas (categoria='Personalizada') NO se incluyen
+     * en el catálogo público para evitar que aparezcan en el picker de otros usuarios.
      */
     public function catalogo()
     {
@@ -19,6 +21,13 @@ class HabilidadController extends Controller
             $result = DB::select("SELECT sp_listar_catalogo_habilidades() AS result");
             return json_decode($result[0]->result, true);
         });
+
+        // Filtrar habilidades personalizadas del catálogo público.
+        // El SP las agrupa bajo la clave "Personalizada" dentro de 'tecnicas'.
+        // Las eliminamos para que no aparezcan en el selector de otros usuarios.
+        if (isset($data['tecnicas']) && is_array($data['tecnicas'])) {
+            unset($data['tecnicas']['Personalizada']);
+        }
 
         return response()->json($data)
             ->header('Cache-Control', 'public, max-age=300');
