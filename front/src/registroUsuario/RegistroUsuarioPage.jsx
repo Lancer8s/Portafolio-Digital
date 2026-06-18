@@ -3,10 +3,15 @@ import { useTheme } from "../context/ThemeContext";
 import RegisterModule from "./modules/RegisterModule";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
-
+/**
+ * Página de registro de nuevo usuario.
+ * Soporta modo modal (sin fondo completo) y modo página completa.
+ * @param {boolean} modal - Si true, se renderiza sin fondo ni botón de tema
+ * @param {Function} onSwitchToLogin - Callback para cambiar al formulario de login
+ */
 export default function RegistroUsuarioPage({ modal = false, onSwitchToLogin } = {}) {
   const { isDark, toggleTheme } = useTheme();
-
+// Colores según el tema activo
   const bg = isDark ? "#020617" : "#D9D9D9";
   const card = isDark ? "#0F172A" : "#fff";
   const sub = isDark ? "#94a3b8" : "#807F81";

@@ -7,16 +7,21 @@ import { perfilAPI, proyectoAPI, adminAPI } from "../api";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
 import DefaultAvatar from "./DefaultAvatar";
-
+// Rutas donde la navbar no se muestra
 const HIDDEN_ON = ["/", "/registro", "/login", "/auth/callback"];
 
+// Etiquetas de título por ruta para mostrar en la navbar
 const LABELS = {
   "/vista": "Mi Portafolio",
   "/habilidad": "Habilidades",
   "/proyecto": "Proyectos",
   "/edicion": "Editar Perfil",
 };
-
+/**
+ * Barra de navegación principal de la aplicación.
+ * Se oculta en rutas públicas (login, registro, home).
+ * Muestra navbar de administrador o usuario según el rol.
+ */
 export default function Navbar() {
   const { isDark, toggleTheme } = useTheme();
   const { userData, isAuthenticated, logout, setUserData } = useApp();
@@ -65,7 +70,7 @@ export default function Navbar() {
     }
     navigate(isAuthenticated ? "/vista" : "/");
   };
-
+// Construye el slug del portafolio: "nombre-apellido-id"
   const buildPortfolioSlug = () => {
     const n = (userData?.nombreCompleto || "").trim().toLowerCase().replace(/\s+/g, "-");
     const a = (userData?.apellidoCompleto || "").trim().toLowerCase().replace(/\s+/g, "-");
