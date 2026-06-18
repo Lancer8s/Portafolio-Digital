@@ -15,7 +15,7 @@ export default function AuthCallbackPage() {
   const { login, refreshUserData } = useApp();
   const { isDark } = useTheme();
   const [error, setError] = useState(null);
-
+// Colores según el tema activo
   const bg = isDark ? "#020617" : "#D9D9D9";
   const text = isDark ? "#fff" : "#111";
   const sub = isDark ? "#94a3b8" : "#807F81";
