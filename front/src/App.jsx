@@ -35,7 +35,13 @@ const pageVariants = {
   },
 };
 
-// Protected route wrapper
+/**
+ * Wrapper de ruta protegida.
+ * - Redirige a "/" si el usuario no está autenticado.
+ * - Redirige a "/admin" si el usuario es administrador intentando acceder a rutas normales.
+ * - Redirige a "/vista" si un usuario normal intenta acceder a rutas de admin.
+ * @param {boolean} requireAdmin - Si true, solo permite acceso a administradores
+ */
 function ProtectedRoute({ children, requireAdmin = false }) {
   const { isAuthenticated, loading, userData } = useApp();
   const location = useLocation();
