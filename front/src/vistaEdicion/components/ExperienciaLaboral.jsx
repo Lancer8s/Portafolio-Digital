@@ -48,7 +48,7 @@ export default function ExperienciaLaboral({ isDark }) {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
-
+// Carga las experiencias laborales del usuario ordenadas por fecha de inicio descendente
   const loadData = async () => {
     setLoading(true);
     try {
