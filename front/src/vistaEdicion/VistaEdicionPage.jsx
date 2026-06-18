@@ -17,7 +17,16 @@ const NAV_ITEMS = [
 ];
 
 
-
+/**
+ * Página principal de edición del portafolio.
+ * Muestra un sidebar de navegación y el contenido de cada sección.
+ * @param {Object} userData - Datos del usuario autenticado
+ * @param {Function} onGoToHabilidad - Navega a la página de habilidades
+ * @param {Function} onGoToProyecto - Navega a la página de proyectos
+ * @param {Function} onBack - Navega a la página anterior
+ * @param {Function} onEditProyecto - Abre edición de un proyecto específico
+ * @param {Function} onVerProyecto - Abre vista de un proyecto específico
+ */
 export default function VistaEdicionPage({ userData,
     onGoToHabilidad, onGoToProyecto, onBack,
     onEditDatos, onEditProyecto, onVerProyecto }) {
