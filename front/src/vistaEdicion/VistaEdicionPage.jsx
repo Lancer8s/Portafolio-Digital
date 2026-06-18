@@ -77,7 +77,7 @@ export default function VistaEdicionPage({ userData,
         }
       `}</style>
       <div className="vista-layout" style={{ background: bg, fontFamily: "'Inter', sans-serif" }}>
-        {/* Sidebar */}
+        {/* ── Sidebar: navegación lateral ── */}
         <div className="vista-sidebar" style={{ background: sidebarBg }}>
           {/* User Mini Card */}
           <div className="vista-user-card" style={{ padding: "8px 10px 20px", marginBottom: 8, borderBottom: `1px solid ${border}` }}>
@@ -117,7 +117,7 @@ export default function VistaEdicionPage({ userData,
           ))}
         </div>
 
-        {/* Main content */}
+        {/* ── Main: contenido de la sección activa ── */}
         <div className="vista-main">
           <motion.div key={activeSection} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }}>
             <VistaModule
