@@ -226,7 +226,8 @@ export const AppProvider = ({ children }) => {
       if (restored) refreshUserData();
     });
   }, [restoreSession, refreshUserData]);
-
+// ── Reset de emergencia: limpia todo el estado sin llamar al backend ──
+// Usar cuando el logout normal falla o el token ya es inválido
   const resetState = () => {
     loggingOutRef.current = false;
     window.__authLogoutInProgress = false;
