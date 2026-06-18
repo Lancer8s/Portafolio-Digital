@@ -11,7 +11,7 @@ import iconoLuna from "../assets/iconoLuna.png";
  */
 export default function RegistroUsuarioPage({ modal = false, onSwitchToLogin } = {}) {
   const { isDark, toggleTheme } = useTheme();
-
+// Colores según el tema activo
   const bg = isDark ? "#020617" : "#D9D9D9";
   const card = isDark ? "#0F172A" : "#fff";
   const sub = isDark ? "#94a3b8" : "#807F81";
