@@ -12,7 +12,7 @@ export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
-
+// Sincroniza el tema con localStorage, data-theme y colores del body
   useEffect(() => {
     localStorage.setItem("theme", isDark ? "dark" : "light");
     document.documentElement.dataset.theme = isDark ? "dark" : "light";
