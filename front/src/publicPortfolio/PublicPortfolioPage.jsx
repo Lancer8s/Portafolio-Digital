@@ -7,7 +7,7 @@ import DefaultAvatar from "../components/DefaultAvatar";
 import VerificationBadge from "../components/VerificationBadge";
 import { useApp } from "../context/AppContext";
 import ProjectImageFallback from "../components/ProjectImageFallback";
-
+/** Convierte cualquier formato de lista de imágenes a un array limpio */
 const parseImageList = (value) => {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -33,7 +33,7 @@ const parseImageList = (value) => {
   if (typeof value === "object") return [value];
   return [];
 };
-
+/** Extrae la URL de imagen de un objeto con múltiples posibles propiedades */
 const getImagePathFromObject = (img) => {
   if (!img || typeof img !== "object") return img;
 
@@ -51,7 +51,7 @@ const getImagePathFromObject = (img) => {
     img.url_imagen
   );
 };
-
+/** Recopila todas las URLs de imágenes de un proyecto en orden de prioridad */
 const getProjectImages = (project) => {
   const images = [];
   const add = (url) => {
@@ -87,14 +87,14 @@ const getProjectImages = (project) => {
 };
 
 const projectImage = (project) => getProjectImages(project)?.[0] || null;
-
+/** Formatea una fecha ISO a formato legible en español (ej: "ene. 2024") */
 const formatDate = (value) => {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleDateString("es-BO", { year: "numeric", month: "short" });
 };
-
+/** Escapa caracteres especiales HTML para prevenir XSS en el CV generado */
 const esc = (value) =>
   String(value ?? "")
     .replace(/&/g, "&amp;")
@@ -134,6 +134,8 @@ export default function PublicPortfolioPage() {
 
         // Sin tocar backend: si el dueño abre su portafolio desde "Compartir",
         // pedimos sus proyectos privados/visibles con el endpoint ya existente.
+        // Si el dueño visita su propio portafolio, cargamos también
+        // los proyectos privados usando el endpoint autenticado
         if (perfil.is_owner && token) {
           try {
             const proyResp = await proyectoAPI.listar();
@@ -734,7 +736,7 @@ export default function PublicPortfolioPage() {
     </div>
   );
 }
-
+/** Píldora de información de contacto (teléfono, email) */
 function InfoPill({ icon, text, sub, cardBg, border }) {
   return (
     <div style={{ color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: cardBg, borderRadius: 8, border: `1px solid ${border}` }}>
@@ -742,7 +744,7 @@ function InfoPill({ icon, text, sub, cardBg, border }) {
     </div>
   );
 }
-
+/** Píldora de enlace externo (LinkedIn, GitHub, redes sociales) */
 function LinkPill({ href, label, cardBg, border }) {
   return (
     <a href={href} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: cardBg, padding: "8px 12px", borderRadius: 8, border: `1px solid ${border}` }}>
@@ -750,7 +752,7 @@ function LinkPill({ href, label, cardBg, border }) {
     </a>
   );
 }
-
+/** Modal de detalle de proyecto con carrusel de imágenes */
 function ProjectModal({ project, loading, onClose, isDark, text, sub, border, cardBg }) {
   const [carouselIdx, setCarouselIdx] = useState(0);
 

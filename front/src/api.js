@@ -21,7 +21,12 @@ const resolveApiHost = () => {
 };
 
 export const API_HOST = resolveApiHost();
-
+/**
+ * Resuelve la URL completa de un recurso multimedia.
+ * Prioridad: blob > http absoluto > /api/media > /storage > relativa
+ * @param {string|null} url - Ruta relativa o absoluta del recurso
+ * @returns {string|null}
+ */
 export const resolveMediaUrl = (url) => {
   if (!url) return null;
   const value = String(url);
@@ -36,19 +41,24 @@ const api = axios.create({
   baseURL: API_BASE,
   headers: { Accept: "application/json" },
 });
-
-export const getApiErrorMessage = (err, fallback = "Error de conexion con el servidor") => {
-  if (err.code === "ECONNABORTED") return "El servidor tardo demasiado en responder";
+/**
+ * Extrae un mensaje legible del error de Axios.
+ * @param {import('axios').AxiosError} err - Error capturado
+ * @param {string} fallback - Mensaje por defecto si no se puede interpretar
+ * @returns {string}
+ */
+export const getApiErrorMessage = (err, fallback = "Error de conexión con el servidor") => {
+  if (err.code === "ECONNABORTED") return "El servidor tardó demasiado en responder";
   if (!err.response) return fallback;
 
   const { status, data } = err.response;
   if (data?.mensaje) return data.mensaje;
   if (data?.message) return data.message;
-  if (status === 401) return "Tu sesion expiro. Inicia sesion nuevamente";
-  if (status === 403) return "No tienes permisos para realizar esta accion";
+  if (status === 401) return "Tu sesión expiró. Inicia sesión nuevamente";
+  if (status === 403) return "No tienes permisos para realizar esta acción";
   if (status === 429) return "Demasiadas solicitudes. Espera unos segundos y vuelve a intentar";
-  if (status === 404) return "No se encontro la ruta del servidor";
-  if (status === 405) return "El servidor no acepta este metodo HTTP";
+  if (status === 404) return "No se encontró la ruta del servidor";
+  if (status === 405) return "El servidor no acepta este método HTTP";
   if (status >= 500) return "Error interno del servidor. Revisa los logs de Laravel";
   return fallback;
 };
@@ -196,7 +206,22 @@ export const portafolioAPI = {
     return res.data;
   },
 };
-
+// Helper reutilizable para construir parámetros de bitácora
+/**
+ * Construye los parámetros de URL para los endpoints de bitácora.
+ * @param {Object} filtros - Filtros opcionales (fecha_desde, fecha_hasta, accion, id_usuario, page, per_page)
+ * @returns {URLSearchParams}
+ */
+const buildBitacoraParams = (filtros = {}) => {
+  const params = new URLSearchParams();
+  if (filtros.fecha_desde) params.set("fecha_desde", filtros.fecha_desde);
+  if (filtros.fecha_hasta) params.set("fecha_hasta", filtros.fecha_hasta);
+  if (filtros.accion)      params.set("accion", filtros.accion);
+  if (filtros.id_usuario)  params.set("id_usuario", filtros.id_usuario);
+  if (filtros.page)        params.set("page", filtros.page);
+  if (filtros.per_page)    params.set("per_page", filtros.per_page);
+  return params;
+};
 export const adminAPI = {
   getPendingCI: async () => {
     const res = await api.get('/admin/ci-pending');
@@ -211,23 +236,12 @@ export const adminAPI = {
     return res.data;
   },
   getBitacoras: async (tabla, filtros = {}) => {
-    const params = new URLSearchParams();
-    if (filtros.fecha_desde) params.set('fecha_desde', filtros.fecha_desde);
-    if (filtros.fecha_hasta) params.set('fecha_hasta', filtros.fecha_hasta);
-    if (filtros.accion) params.set('accion', filtros.accion);
-    if (filtros.id_usuario) params.set('id_usuario', filtros.id_usuario);
-    if (filtros.page) params.set('page', filtros.page);
-    if (filtros.per_page) params.set('per_page', filtros.per_page);
-    const res = await api.get(`/admin/bitacoras/${tabla}?${params.toString()}`);
+    const res = await api.get(`/admin/bitacoras/${tabla}?${buildBitacoraParams(filtros)}`);
     return res.data;
   },
   exportBitacora: async (tabla, filtros = {}) => {
-    const params = new URLSearchParams();
-    if (filtros.fecha_desde) params.set('fecha_desde', filtros.fecha_desde);
-    if (filtros.fecha_hasta) params.set('fecha_hasta', filtros.fecha_hasta);
-    if (filtros.accion) params.set('accion', filtros.accion);
-    const res = await api.get(`/admin/bitacoras/${tabla}/export?${params.toString()}`, {
-      responseType: 'blob',
+    const res = await api.get(`/admin/bitacoras/${tabla}/export?${buildBitacoraParams(filtros)}`, {
+      responseType: "blob",
     });
     const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement('a');

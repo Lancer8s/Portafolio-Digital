@@ -6,7 +6,12 @@ import { authAPI } from "../api";
 import { motion } from "framer-motion";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
-
+/**
+ * Página de inicio de sesión.
+ * Soporta login con email/contraseña y OAuth con GitHub.
+ * @param {boolean} modal - Si true, se renderiza sin fondo completo (modo modal)
+ * @param {Function} onSwitchToRegister - Callback para cambiar al formulario de registro
+ */
 export default function LoginPage({ modal = false, onSwitchToRegister } = {}) {
   const { isDark, toggleTheme } = useTheme();
   const { login, refreshUserData } = useApp();
