@@ -18,6 +18,8 @@ class Experiencia extends Model
         'fecha_inicio',
         'fecha_fin',
         'descripcion',
+        'nivel_academico',
+        'referencias',
     ];
 
     protected $casts = [

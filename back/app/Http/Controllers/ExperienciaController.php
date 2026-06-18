@@ -21,15 +21,17 @@ class ExperienciaController extends Controller
     public function crear(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'tipo' => 'required|in:laboral,academica',
+            'tipo'                => 'required|in:laboral,academica',
             'institucion_empresa' => 'required|string|max:150',
-            'cargo_titulo' => 'required|string|max:150',
-            'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
-            'descripcion' => 'nullable|string',
+            'cargo_titulo'        => 'required|string|max:150',
+            'fecha_inicio'        => 'required|date',
+            'fecha_fin'           => 'nullable|date|after_or_equal:fecha_inicio',
+            'descripcion'         => 'nullable|string',
+            'nivel_academico'     => 'nullable|string|max:50',
+            'referencias'         => 'nullable|string|max:500',
         ], [
-            'institucion_empresa.required' => 'El nombre de la empresa es obligatorio',
-            'fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la fecha de inicio'
+            'institucion_empresa.required' => 'El nombre de la empresa o institución es obligatorio',
+            'fecha_fin.after_or_equal'     => 'La fecha de fin no puede ser anterior a la fecha de inicio',
         ]);
 
         if ($validator->fails()) {
@@ -54,15 +56,17 @@ class ExperienciaController extends Controller
         }
 
         $validator = Validator::make($request->all(), [
-            'tipo' => 'required|in:laboral,academica',
+            'tipo'                => 'required|in:laboral,academica',
             'institucion_empresa' => 'required|string|max:150',
-            'cargo_titulo' => 'required|string|max:150',
-            'fecha_inicio' => 'required|date',
-            'fecha_fin' => 'nullable|date|after_or_equal:fecha_inicio',
-            'descripcion' => 'nullable|string',
+            'cargo_titulo'        => 'required|string|max:150',
+            'fecha_inicio'        => 'required|date',
+            'fecha_fin'           => 'nullable|date|after_or_equal:fecha_inicio',
+            'descripcion'         => 'nullable|string',
+            'nivel_academico'     => 'nullable|string|max:50',
+            'referencias'         => 'nullable|string|max:500',
         ], [
-            'institucion_empresa.required' => 'El nombre de la empresa es obligatorio',
-            'fecha_fin.after_or_equal' => 'La fecha de fin no puede ser anterior a la fecha de inicio'
+            'institucion_empresa.required' => 'El nombre de la empresa o institución es obligatorio',
+            'fecha_fin.after_or_equal'     => 'La fecha de fin no puede ser anterior a la fecha de inicio',
         ]);
 
         if ($validator->fails()) {
