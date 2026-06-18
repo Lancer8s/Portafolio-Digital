@@ -22,7 +22,7 @@ import EdicionProyectoPage from "./edicionProyecto/EdicionProyectoPage";
 import VistaProyectoPage from "./vistaProyecto/VistaProyectoPage";
 import PublicPortfolioPage from "./publicPortfolio/PublicPortfolioPage";
 import AdminDashboardPage from "./adminDashboard/AdminDashboardPage";
-
+// Variantes de animación para transiciones entre páginas (fade rápido)
 const pageVariants = {
   initial: { opacity: 0 },
   animate: {
