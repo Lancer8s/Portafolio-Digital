@@ -68,7 +68,13 @@ const detectSocialPlatform = (value) => {
   if (low.includes("@") || low.includes("mailto:")) return "Correo";
   return "Enlace";
 };
-
+/**
+ * Editor principal del portafolio del usuario.
+ * Gestiona secciones de perfil, habilidades, proyectos y redes sociales.
+ * @param {Object} userData - Datos del usuario autenticado
+ * @param {boolean} isDark - Tema oscuro activo
+ * @param {string} activeSection - Sección activa del sidebar
+ */
 export default function SkillsEditor({
   userData,
   isDark,
