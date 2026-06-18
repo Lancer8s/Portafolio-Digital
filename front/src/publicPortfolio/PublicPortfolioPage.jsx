@@ -542,7 +542,7 @@ export default function PublicPortfolioPage() {
     </div>
   );
 }
-
+/** Píldora de información de contacto (teléfono, email) */
 function InfoPill({ icon, text, sub, cardBg, border }) {
   return (
     <div style={{ color: sub, fontSize: 13, display: "flex", alignItems: "center", gap: 8, padding: "8px 12px", background: cardBg, borderRadius: 8, border: `1px solid ${border}` }}>
@@ -550,7 +550,7 @@ function InfoPill({ icon, text, sub, cardBg, border }) {
     </div>
   );
 }
-
+/** Píldora de enlace externo (LinkedIn, GitHub, redes sociales) */
 function LinkPill({ href, label, cardBg, border }) {
   return (
     <a href={href} target="_blank" rel="noreferrer" style={{ textDecoration: "none", color: "#3B82F6", fontSize: 13, display: "flex", alignItems: "center", gap: 8, background: cardBg, padding: "8px 12px", borderRadius: 8, border: `1px solid ${border}` }}>
@@ -558,7 +558,7 @@ function LinkPill({ href, label, cardBg, border }) {
     </a>
   );
 }
-
+/** Modal de detalle de proyecto con carrusel de imágenes */
 function ProjectModal({ project, loading, onClose, isDark, text, sub, border, cardBg }) {
   const [carouselIdx, setCarouselIdx] = useState(0);
 
