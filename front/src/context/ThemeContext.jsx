@@ -28,5 +28,8 @@ export const ThemeProvider = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
-
+/**
+ * Hook para acceder al contexto de tema.
+ * @returns {{ isDark: boolean, toggleTheme: Function, iconoSol: string, iconoLuna: string }}
+ */
 export const useTheme = () => useContext(ThemeContext);
