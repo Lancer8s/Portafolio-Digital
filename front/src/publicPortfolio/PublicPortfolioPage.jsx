@@ -133,6 +133,8 @@ export default function PublicPortfolioPage() {
 
         // Sin tocar backend: si el dueño abre su portafolio desde "Compartir",
         // pedimos sus proyectos privados/visibles con el endpoint ya existente.
+        // Si el dueño visita su propio portafolio, cargamos también
+        // los proyectos privados usando el endpoint autenticado
         if (perfil.is_owner && token) {
           try {
             const proyResp = await proyectoAPI.listar();
