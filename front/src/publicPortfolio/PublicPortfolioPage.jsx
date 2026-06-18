@@ -498,31 +498,68 @@ export default function PublicPortfolioPage() {
             <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
               Trayectoria
             </h2>
-            {data.experiencias?.length === 0 ? (
+            {(!data.experiencias || data.experiencias.length === 0) ? (
               <p style={{ color: sub, fontSize: 14 }}>Aún no hay experiencia registrada.</p>
-            ) : (
-              <div style={{ position: "relative", paddingLeft: 24 }}>
-                <div style={{ position: "absolute", left: 7, top: 6, bottom: 6, width: 2, background: "linear-gradient(to bottom, #3B82F6, #6366F1 50%, transparent)", borderRadius: 2 }} />
-                {data.experiencias?.map((exp, i) => (
-                  <div key={i} style={{ position: "relative", marginBottom: 24 }}>
-                    <div style={{ position: "absolute", left: -20, top: 8, width: 12, height: 12, borderRadius: "50%", background: "#3B82F6", border: `2px solid ${cardBg}`, boxShadow: "0 0 0 3px rgba(59,130,246,0.2)" }} />
-                    <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 12, padding: "16px 20px" }}>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6, flexWrap: "wrap" }}>
-                        <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: exp.tipo === "laboral" ? "rgba(59,130,246,0.12)" : "rgba(168,85,247,0.12)", color: exp.tipo === "laboral" ? "#3B82F6" : "#a855f7" }}>
-                          {exp.tipo}
-                        </span>
-                        <span style={{ color: sub, fontSize: 12 }}>
-                          {formatDate(exp.fecha_inicio)} — {exp.fecha_fin ? formatDate(exp.fecha_fin) : "Actualidad"}
-                        </span>
+            ) : (() => {
+              const laborales  = (data.experiencias || []).filter(e => e.tipo === "laboral");
+              const academicas = (data.experiencias || []).filter(e => e.tipo === "academica");
+              const renderTimeline = (items, accentColor) => (
+                <div style={{ position: "relative", paddingLeft: 24 }}>
+                  <div style={{ position: "absolute", left: 7, top: 6, bottom: 6, width: 2, background: `linear-gradient(to bottom, ${accentColor}, ${accentColor}88, transparent)`, borderRadius: 2 }} />
+                  {items.map((exp, i) => (
+                    <div key={i} style={{ position: "relative", marginBottom: i < items.length - 1 ? 16 : 0 }}>
+                      <div style={{ position: "absolute", left: -20, top: 10, width: 12, height: 12, borderRadius: "50%", background: accentColor, border: `2px solid ${cardBg}`, boxShadow: `0 0 0 3px ${accentColor}33` }} />
+                      <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 12, padding: "14px 18px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, flexWrap: "wrap" }}>
+                          {exp.nivel_academico && (
+                            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: `${accentColor}18`, color: accentColor }}>
+                              {exp.nivel_academico}
+                            </span>
+                          )}
+                          {!exp.fecha_fin && (
+                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
+                              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+                              {exp.tipo === "laboral" ? "Actual" : "En curso"}
+                            </span>
+                          )}
+                          <span style={{ color: sub, fontSize: 12 }}>
+                            {formatDate(exp.fecha_inicio)} — {exp.fecha_fin ? formatDate(exp.fecha_fin) : "Actualidad"}
+                          </span>
+                        </div>
+                        <h4 style={{ color: text, fontSize: 15, margin: "0 0 3px", fontWeight: 700 }}>{exp.cargo_titulo}</h4>
+                        <div style={{ color: accentColor, fontSize: 13, fontWeight: 600 }}>{exp.institucion_empresa}</div>
+                        {exp.descripcion && <p style={{ color: sub, fontSize: 12, margin: "8px 0 0", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{exp.descripcion}</p>}
                       </div>
-                      <h4 style={{ color: text, fontSize: 16, margin: "0 0 4px", fontWeight: 700 }}>{exp.cargo_titulo}</h4>
-                      <div style={{ color: text, fontSize: 14, opacity: 0.9 }}>{exp.institucion_empresa}</div>
-                      {exp.descripcion && <p style={{ color: sub, fontSize: 13, margin: "8px 0 0", lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{exp.descripcion}</p>}
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
+                  ))}
+                </div>
+              );
+
+              return (
+                <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                  {laborales.length > 0 && (
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#3B82F6", boxShadow: "0 0 0 3px rgba(59,130,246,0.2)" }} />
+                        <span style={{ color: text, fontSize: 14, fontWeight: 700 }}>Experiencia Laboral</span>
+                        <span style={{ color: sub, fontSize: 12 }}>({laborales.length})</span>
+                      </div>
+                      {renderTimeline(laborales, "#3B82F6")}
+                    </div>
+                  )}
+                  {academicas.length > 0 && (
+                    <div>
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#a855f7", boxShadow: "0 0 0 3px rgba(168,85,247,0.2)" }} />
+                        <span style={{ color: text, fontSize: 14, fontWeight: 700 }}>Formación Académica</span>
+                        <span style={{ color: sub, fontSize: 12 }}>({academicas.length})</span>
+                      </div>
+                      {renderTimeline(academicas, "#a855f7")}
+                    </div>
+                  )}
+                </div>
+              );
+            })()}
           </section>
         </div>
       </div>

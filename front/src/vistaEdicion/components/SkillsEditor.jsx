@@ -4,7 +4,8 @@ import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
 import { useApp } from "../../context/AppContext";
 import { perfilAPI, habilidadAPI, proyectoAPI, resolveMediaUrl as mediaUrl } from "../../api";
-import ExperienciaList from "./ExperienciaList";
+import ExperienciaLaboral from "./ExperienciaLaboral";
+import FormacionAcademica from "./FormacionAcademica";
 import UserHomeStats from "./UserHomeStats";
 import DefaultAvatar from "../../components/DefaultAvatar";
 import VerificationBadge from "../../components/VerificationBadge";
@@ -1293,14 +1294,25 @@ export default function SkillsEditor({
         </motion.div>
       )}
 
-      {/* === SECTION: EXPERIENCIA === */}
-      {activeSection === "experiencia" && (
+      {/* === SECTION: EXPERIENCIA LABORAL === */}
+      {activeSection === "exp_laboral" && (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.28 }}
       >
-        <ExperienciaList isDark={isDark} />
+        <ExperienciaLaboral isDark={isDark} />
+      </motion.div>
+      )}
+
+      {/* === SECTION: FORMACIÓN ACADÉMICA === */}
+      {activeSection === "formacion_academica" && (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.28 }}
+      >
+        <FormacionAcademica isDark={isDark} />
       </motion.div>
       )}
 
