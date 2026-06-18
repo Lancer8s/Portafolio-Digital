@@ -21,7 +21,12 @@ const resolveApiHost = () => {
 };
 
 export const API_HOST = resolveApiHost();
-
+/**
+ * Resuelve la URL completa de un recurso multimedia.
+ * Prioridad: blob > http absoluto > /api/media > /storage > relativa
+ * @param {string|null} url - Ruta relativa o absoluta del recurso
+ * @returns {string|null}
+ */
 export const resolveMediaUrl = (url) => {
   if (!url) return null;
   const value = String(url);
@@ -36,7 +41,12 @@ const api = axios.create({
   baseURL: API_BASE,
   headers: { Accept: "application/json" },
 });
-
+/**
+ * Extrae un mensaje legible del error de Axios.
+ * @param {import('axios').AxiosError} err - Error capturado
+ * @param {string} fallback - Mensaje por defecto si no se puede interpretar
+ * @returns {string}
+ */
 export const getApiErrorMessage = (err, fallback = "Error de conexión con el servidor") => {
   if (err.code === "ECONNABORTED") return "El servidor tardó demasiado en responder";
   if (!err.response) return fallback;
@@ -197,6 +207,11 @@ export const portafolioAPI = {
   },
 };
 // Helper reutilizable para construir parámetros de bitácora
+/**
+ * Construye los parámetros de URL para los endpoints de bitácora.
+ * @param {Object} filtros - Filtros opcionales (fecha_desde, fecha_hasta, accion, id_usuario, page, per_page)
+ * @returns {URLSearchParams}
+ */
 const buildBitacoraParams = (filtros = {}) => {
   const params = new URLSearchParams();
   if (filtros.fecha_desde) params.set("fecha_desde", filtros.fecha_desde);
