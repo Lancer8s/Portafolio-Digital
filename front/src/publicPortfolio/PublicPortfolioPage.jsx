@@ -114,6 +114,7 @@ export default function PublicPortfolioPage() {
   const [error, setError] = useState(null);
   const [selectedProject, setSelectedProject] = useState(null);
   const [modalLoading, setModalLoading] = useState(false);
+  const [activeSection, setActiveSection] = useState("sec-perfil");
 
   const bg = isDark ? "#020617" : "#F1F5F9";
   const text = isDark ? "#fff" : "#111";
@@ -316,35 +317,195 @@ export default function PublicPortfolioPage() {
     </div>
   );
 
+  // Secciones para la navegación
+  const NAV_SECTIONS = [
+    { id: "sec-perfil",     label: "Acerca de mí",        icon: "M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" },
+    { id: "sec-habilidades", label: "Habilidades",         icon: "M13 10V3L4 14h7v7l9-11h-7z" },
+    { id: "sec-proyectos",  label: "Proyectos",            icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" },
+    { id: "sec-laboral",    label: "Experiencia Laboral",  icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+    { id: "sec-academica",  label: "Formación Académica",  icon: "M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" },
+  ];
+
+  const scrollToSection = (id) => {
+    setActiveSection(id);
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
+
+  const laborales  = (data.experiencias || []).filter(e => e.tipo === "laboral");
+  const academicas = (data.experiencias || []).filter(e => e.tipo === "academica");
+
+  const renderTimeline = (items, accentColor) => (
+    <div style={{ position: "relative", paddingLeft: 24 }}>
+      <div style={{ position: "absolute", left: 7, top: 6, bottom: 6, width: 2, background: `linear-gradient(to bottom, ${accentColor}, ${accentColor}88, transparent)`, borderRadius: 2 }} />
+      {items.map((exp, i) => (
+        <div key={i} style={{ position: "relative", marginBottom: i < items.length - 1 ? 16 : 0 }}>
+          <div style={{ position: "absolute", left: -20, top: 10, width: 12, height: 12, borderRadius: "50%", background: accentColor, border: `2px solid ${cardBg}`, boxShadow: `0 0 0 3px ${accentColor}33` }} />
+          <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 12, padding: "14px 18px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, flexWrap: "wrap" }}>
+              {exp.nivel_academico && (
+                <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: `${accentColor}18`, color: accentColor }}>
+                  {exp.nivel_academico}
+                </span>
+              )}
+              {!exp.fecha_fin && (
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
+                  <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
+                  {exp.tipo === "laboral" ? "Actual" : "En curso"}
+                </span>
+              )}
+              <span style={{ color: sub, fontSize: 12 }}>
+                {formatDate(exp.fecha_inicio)} — {exp.fecha_fin ? formatDate(exp.fecha_fin) : "Actualidad"}
+              </span>
+            </div>
+            <h4 style={{ color: text, fontSize: 15, margin: "0 0 3px", fontWeight: 700 }}>{exp.cargo_titulo}</h4>
+            <div style={{ color: accentColor, fontSize: 13, fontWeight: 600 }}>{exp.institucion_empresa}</div>
+            {exp.descripcion && <p style={{ color: sub, fontSize: 12, margin: "8px 0 0", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{exp.descripcion}</p>}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
-    <div style={{ background: bg, minHeight: "100vh", width: "100%", paddingBottom: 80 }}>
+    <div style={{ background: bg, minHeight: "100vh", width: "100%", fontFamily: "'Inter', sans-serif" }}>
       <style>{`
-        @media (max-width: 768px) {
-          .portfolio-layout { flex-direction: column !important; }
-          .portfolio-sidebar {
-            width: 100% !important;
-            border-right: none !important;
-            border-bottom: 1px solid ${border};
-            position: relative !important;
-            height: auto !important;
-          }
-          .portfolio-main { padding-left: 0 !important; }
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        .pub-layout {
+          display: flex;
+          min-height: 100vh;
+          max-width: 1280px;
+          margin: 0 auto;
         }
-        @media (max-width: 640px) {
-          .portfolio-layout { max-width: 100% !important; }
-          .portfolio-sidebar {
-            padding: 22px 16px !important;
-            top: 0 !important;
-            overflow-y: visible !important;
+
+        /* ── SIDEBAR ── */
+        .pub-sidebar {
+          width: 280px;
+          flex-shrink: 0;
+          position: sticky;
+          top: 0;
+          height: 100vh;
+          overflow-y: auto;
+          border-right: 1px solid ${border};
+          background: ${cardBg};
+          display: flex;
+          flex-direction: column;
+          padding: 28px 16px;
+          gap: 0;
+        }
+        .pub-sidebar::-webkit-scrollbar { width: 4px; }
+        .pub-sidebar::-webkit-scrollbar-thumb { background: ${border}; border-radius: 4px; }
+
+        /* ── PROFILE CARD IN SIDEBAR ── */
+        .pub-profile-card {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          text-align: center;
+          padding-bottom: 20px;
+          border-bottom: 1px solid ${border};
+          margin-bottom: 16px;
+        }
+
+        /* ── NAV LINKS ── */
+        .pub-nav-item {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 9px 12px;
+          border-radius: 10px;
+          cursor: pointer;
+          font-size: 13px;
+          font-weight: 600;
+          color: ${sub};
+          border: none;
+          background: none;
+          width: 100%;
+          text-align: left;
+          transition: all 0.15s;
+          margin-bottom: 2px;
+          font-family: 'Inter', sans-serif;
+        }
+        .pub-nav-item:hover { background: ${isDark ? "rgba(59,130,246,0.08)" : "rgba(59,130,246,0.06)"}; color: #3B82F6; }
+        .pub-nav-item.active {
+          background: ${isDark ? "rgba(59,130,246,0.15)" : "rgba(59,130,246,0.1)"};
+          color: #3B82F6;
+          border-left: 3px solid #3B82F6;
+        }
+        .pub-nav-item svg { flex-shrink: 0; }
+
+        /* ── MAIN AREA ── */
+        .pub-main {
+          flex: 1;
+          min-width: 0;
+          overflow-y: auto;
+          height: 100vh;
+          scroll-behavior: smooth;
+        }
+        .pub-main::-webkit-scrollbar { width: 5px; }
+        .pub-main::-webkit-scrollbar-thumb { background: ${border}; border-radius: 4px; }
+
+        /* ── SECTIONS ── */
+        .pub-section {
+          padding: 36px 36px 0;
+          scroll-margin-top: 20px;
+        }
+        .pub-section-divider {
+          height: 1px;
+          background: ${border};
+          margin: 36px 36px 0;
+        }
+        .pub-section-header {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          margin-bottom: 22px;
+        }
+        .pub-section-icon {
+          width: 38px;
+          height: 38px;
+          border-radius: 10px;
+          background: rgba(59,130,246,0.1);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+        }
+        .pub-section-title {
+          color: ${text};
+          font-size: 20px;
+          font-weight: 800;
+          margin: 0;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+          .pub-layout { flex-direction: column; }
+          .pub-sidebar {
+            width: 100%;
+            height: auto;
+            position: relative;
+            border-right: none;
+            border-bottom: 1px solid ${border};
+            padding: 20px 16px 12px;
           }
-          .portfolio-sidebar h1 {
-            font-size: 21px !important;
-            line-height: 1.2 !important;
-            flex-wrap: wrap !important;
+          .pub-nav-row {
+            display: flex !important;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 6px;
           }
-          .portfolio-main { padding: 24px 16px 48px !important; }
-          .portfolio-main section { margin-bottom: 34px !important; }
-          .portfolio-main h2 { font-size: 19px !important; margin-bottom: 14px !important; }
+          .pub-nav-item { white-space: nowrap; width: auto; }
+          .pub-nav-item.active { border-left: none; border-bottom: 2px solid #3B82F6; }
+          .pub-main { height: auto; overflow-y: visible; }
+          .pub-section { padding: 24px 16px 0; }
+          .pub-section-divider { margin: 24px 16px 0; }
+        }
+        @media (max-width: 560px) {
+          .pub-section-title { font-size: 17px; }
           .portfolio-project-grid {
             grid-template-columns: minmax(0, 1fr) !important;
             gap: 14px !important;
@@ -352,216 +513,212 @@ export default function PublicPortfolioPage() {
         }
       `}</style>
 
-      <div className="portfolio-layout" style={{ display: "flex", maxWidth: 1200, margin: "0 auto", position: "relative" }}>
-        <div className="portfolio-sidebar" style={{ width: 320, borderRight: `1px solid ${border}`, padding: "32px 24px", height: "calc(100vh - 60px)", position: "sticky", top: 60, overflowY: "auto", boxSizing: "border-box" }}>
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", marginBottom: 24 }}>
+      <div className="pub-layout">
+        {/* ═══════════ SIDEBAR ═══════════ */}
+        <aside className="pub-sidebar">
+
+          {/* Perfil card */}
+          <div className="pub-profile-card">
             {fotoPerfil ? (
-              <img src={fotoPerfil} alt="perfil" style={{ width: 120, height: 120, borderRadius: "50%", objectFit: "cover", border: `4px solid ${isDark ? "#1D283A" : "#fff"}`, boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
+              <img src={fotoPerfil} alt="perfil" style={{ width: 88, height: 88, borderRadius: "50%", objectFit: "cover", border: `3px solid ${isDark ? "#1D283A" : "#E2E8F0"}`, marginBottom: 12 }} />
             ) : (
-              <DefaultAvatar size={120} style={{ border: `4px solid ${isDark ? "#1D283A" : "#fff"}`, boxShadow: "0 4px 10px rgba(0,0,0,0.1)" }} />
+              <DefaultAvatar size={88} style={{ marginBottom: 12 }} />
             )}
-            <h1 style={{ color: text, fontSize: 24, fontWeight: 800, margin: "16px 0 4px", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <span>{data.nombre} {data.apellido}</span>
-              <VerificationBadge ciEstado={data.ci_estado} size={22} />
+            <h1 style={{ color: text, fontSize: 18, fontWeight: 800, margin: "0 0 4px", lineHeight: 1.2, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, flexWrap: "wrap" }}>
+              {data.nombre} {data.apellido}
+              <VerificationBadge ciEstado={data.ci_estado} size={18} />
             </h1>
             {data.titulo_profesional && (
-              <span style={{ display: "inline-block", fontSize: 13, fontWeight: 600, color: "#3B82F6", background: isDark ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.08)", padding: "4px 12px", borderRadius: 20, marginBottom: 12 }}>
+              <span style={{ display: "inline-block", fontSize: 12, fontWeight: 600, color: "#3B82F6", background: isDark ? "rgba(59,130,246,0.12)" : "rgba(59,130,246,0.08)", padding: "3px 10px", borderRadius: 20, marginBottom: 10 }}>
                 {data.titulo_profesional}
               </span>
             )}
             <button
               onClick={openCV}
-              style={{
-                marginTop: 8,
-                background: isDark ? "#1D283A" : "#FFFFFF",
-                color: "#3B82F6",
-                border: `1px solid ${border}`,
-                borderRadius: 10,
-                padding: "10px 14px",
-                cursor: "pointer",
-                fontSize: 13,
-                fontWeight: 800,
-                display: "flex",
-                alignItems: "center",
-                gap: 8,
-              }}
+              style={{ background: isDark ? "#1D283A" : "#F1F5F9", color: "#3B82F6", border: `1px solid ${border}`, borderRadius: 8, padding: "8px 14px", cursor: "pointer", fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 7 }}
             >
-              📄 Descargar PDF / CV
+              📄 Descargar CV
             </button>
 
             {isOwnerView && portfolioUserId && (
-              <div
-                style={{
-                  width: "100%",
-                  marginTop: 12,
-                  background: isDark ? "#1D283A" : "#FFFFFF",
-                  border: `1px solid ${border}`,
-                  borderRadius: 12,
-                  padding: "12px 14px",
-                  boxSizing: "border-box",
-                  textAlign: "left",
-                }}
-              >
-                <p style={{ margin: "0 0 4px", color: sub, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em" }}>ID del portafolio</p>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 }}>
-                  <strong style={{ color: "#3B82F6", fontSize: 20 }}>{portfolioUserId}</strong>
+              <div style={{ width: "100%", marginTop: 10, background: isDark ? "rgba(59,130,246,0.08)" : "rgba(59,130,246,0.05)", border: `1px solid ${border}`, borderRadius: 10, padding: "10px 12px", textAlign: "left" }}>
+                <p style={{ margin: "0 0 4px", color: sub, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: ".06em" }}>ID del portafolio</p>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
+                  <strong style={{ color: "#3B82F6", fontSize: 18 }}>{portfolioUserId}</strong>
                   <button
-                    onClick={() => {
-                      navigator.clipboard.writeText(String(portfolioUserId));
-                      alert("ID copiado al portapapeles");
-                    }}
-                    style={{
-                      background: isDark ? "#0F172A" : "#F8FAFC",
-                      color: "#3B82F6",
-                      border: `1px solid ${border}`,
-                      borderRadius: 8,
-                      padding: "7px 10px",
-                      cursor: "pointer",
-                      fontSize: 12,
-                      fontWeight: 800,
-                      whiteSpace: "nowrap",
-                    }}
+                    onClick={() => { navigator.clipboard.writeText(String(portfolioUserId)); alert("ID copiado al portapapeles"); }}
+                    style={{ background: isDark ? "#0F172A" : "#fff", color: "#3B82F6", border: `1px solid ${border}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", fontSize: 11, fontWeight: 800, whiteSpace: "nowrap" }}
                   >
                     Copiar ID
                   </button>
                 </div>
-                <p style={{ color: sub, margin: "8px 0 0", fontSize: 12, lineHeight: 1.5 }}>
-                  Comparte este número para que te encuentren desde el buscador.
-                </p>
               </div>
             )}
           </div>
 
-          <div style={{ marginBottom: 32 }}>
-            <h3 style={{ color: text, fontSize: 14, fontWeight: 800, margin: "0 0 10px 4px", textTransform: "uppercase", letterSpacing: "1px" }}>Sobre mí</h3>
-            <p style={{ color: sub, fontSize: 14, lineHeight: 1.6, margin: 0, padding: "0 4px", whiteSpace: "pre-wrap" }}>
-              {data.biografia || "Sin biografía."}
-            </p>
+          {/* Navegación de secciones */}
+          <p style={{ color: sub, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px 4px" }}>Secciones</p>
+          <div className="pub-nav-row" style={{ display: "flex", flexDirection: "column" }}>
+            {NAV_SECTIONS.map((s) => (
+              <button
+                key={s.id}
+                className={`pub-nav-item${activeSection === s.id ? " active" : ""}`}
+                onClick={() => scrollToSection(s.id)}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d={s.icon} />
+                </svg>
+                {s.label}
+              </button>
+            ))}
           </div>
 
-          <div style={{ marginBottom: 32 }}>
-            <h3 style={{ color: text, fontSize: 14, fontWeight: 800, margin: "0 0 10px 4px", textTransform: "uppercase", letterSpacing: "1px" }}>Contacto & Redes</h3>
-            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-              {data.telefono && <InfoPill text={data.telefono} sub={sub} cardBg={cardBg} border={border} icon="☎" />}
-              {data.email && <InfoPill text={data.email} sub={sub} cardBg={cardBg} border={border} icon="✉" />}
-              {data.linkedin_url && <LinkPill href={data.linkedin_url} label="LinkedIn" border={border} cardBg={cardBg} />}
-              {data.github_url && <LinkPill href={data.github_url} label="GitHub" border={border} cardBg={cardBg} />}
-              {(data.redes_sociales || []).map((red, i) => red.url ? (
-                <LinkPill key={i} href={red.url} label={red.plataforma || "Enlace"} border={border} cardBg={cardBg} />
-              ) : null)}
+          {/* Contacto */}
+          {(data.telefono || data.email || data.linkedin_url || data.github_url || (data.redes_sociales || []).some(r => r.url)) && (
+            <div style={{ marginTop: 20, paddingTop: 16, borderTop: `1px solid ${border}` }}>
+              <p style={{ color: sub, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.08em", margin: "0 0 8px 4px" }}>Contacto</p>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {data.telefono && <InfoPill text={data.telefono} sub={sub} cardBg={cardBg} border={border} icon="☎" />}
+                {data.email && <InfoPill text={data.email} sub={sub} cardBg={cardBg} border={border} icon="✉" />}
+                {data.linkedin_url && <LinkPill href={data.linkedin_url} label="LinkedIn" border={border} cardBg={cardBg} />}
+                {data.github_url && <LinkPill href={data.github_url} label="GitHub" border={border} cardBg={cardBg} />}
+                {(data.redes_sociales || []).map((red, i) => red.url ? (
+                  <LinkPill key={i} href={red.url} label={red.plataforma || "Enlace"} border={border} cardBg={cardBg} />
+                ) : null)}
+              </div>
             </div>
-          </div>
-        </div>
-
-        <div className="portfolio-main" style={{ flex: 1, padding: "40px 32px", boxSizing: "border-box", overflowX: "hidden" }}>
-          <section style={{ marginBottom: 48 }}>
-            <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-              Habilidades
-            </h2>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
-              {data.techSkills?.map((s, i) => (
-                <span key={`t-${i}`} style={{ background: "rgba(59,130,246,0.1)", color: "#3B82F6", padding: "6px 14px", borderRadius: 20, fontSize: 14, fontWeight: 600, border: "1px solid rgba(59,130,246,0.2)" }}>
-                  {s.nombre} {s.nivel ? `(${s.nivel}%)` : ""}
-                </span>
-              ))}
-              {data.softSkills?.map((s, i) => (
-                <span key={`s-${i}`} style={{ background: "rgba(168,85,247,0.1)", color: "#a855f7", padding: "6px 14px", borderRadius: 20, fontSize: 14, fontWeight: 600, border: "1px solid rgba(168,85,247,0.2)" }}>
-                  {s.nombre}
-                </span>
-              ))}
-              {(!data.techSkills?.length && !data.softSkills?.length) && <p style={{ color: sub, fontSize: 14 }}>Aún no hay habilidades registradas.</p>}
-            </div>
-          </section>
-
-          <section style={{ marginBottom: 48 }}>
-            <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-              Proyectos Destacados
-            </h2>
-            {proyectosDestacados.length === 0 ? (
-              <p style={{ color: sub, fontSize: 14 }}>Aún no hay proyectos destacados.</p>
-            ) : renderProjectGrid(proyectosDestacados)}
-          </section>
-
-          {proyectosGenerales.length > 0 && (
-            <section style={{ marginBottom: 48 }}>
-              <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 8, display: "flex", alignItems: "center", gap: 10 }}>
-                Proyectos Generales
-              </h2>
-              <p style={{ color: sub, fontSize: 13, margin: "0 0 20px" }}>
-                Proyectos adicionales del portafolio.
-              </p>
-              {renderProjectGrid(proyectosGenerales)}
-            </section>
           )}
+        </aside>
 
-          <section>
-            <h2 style={{ color: text, fontSize: 22, fontWeight: 700, marginBottom: 20, display: "flex", alignItems: "center", gap: 10 }}>
-              Trayectoria
-            </h2>
-            {(!data.experiencias || data.experiencias.length === 0) ? (
-              <p style={{ color: sub, fontSize: 14 }}>Aún no hay experiencia registrada.</p>
-            ) : (() => {
-              const laborales  = (data.experiencias || []).filter(e => e.tipo === "laboral");
-              const academicas = (data.experiencias || []).filter(e => e.tipo === "academica");
-              const renderTimeline = (items, accentColor) => (
-                <div style={{ position: "relative", paddingLeft: 24 }}>
-                  <div style={{ position: "absolute", left: 7, top: 6, bottom: 6, width: 2, background: `linear-gradient(to bottom, ${accentColor}, ${accentColor}88, transparent)`, borderRadius: 2 }} />
-                  {items.map((exp, i) => (
-                    <div key={i} style={{ position: "relative", marginBottom: i < items.length - 1 ? 16 : 0 }}>
-                      <div style={{ position: "absolute", left: -20, top: 10, width: 12, height: 12, borderRadius: "50%", background: accentColor, border: `2px solid ${cardBg}`, boxShadow: `0 0 0 3px ${accentColor}33` }} />
-                      <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 12, padding: "14px 18px" }}>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 5, flexWrap: "wrap" }}>
-                          {exp.nivel_academico && (
-                            <span style={{ fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: `${accentColor}18`, color: accentColor }}>
-                              {exp.nivel_academico}
-                            </span>
-                          )}
-                          {!exp.fecha_fin && (
-                            <span style={{ display: "inline-flex", alignItems: "center", gap: 4, fontSize: 10, fontWeight: 700, textTransform: "uppercase", padding: "2px 8px", borderRadius: 4, background: "rgba(16,185,129,0.12)", color: "#10b981" }}>
-                              <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#10b981", display: "inline-block" }} />
-                              {exp.tipo === "laboral" ? "Actual" : "En curso"}
-                            </span>
-                          )}
-                          <span style={{ color: sub, fontSize: 12 }}>
-                            {formatDate(exp.fecha_inicio)} — {exp.fecha_fin ? formatDate(exp.fecha_fin) : "Actualidad"}
-                          </span>
-                        </div>
-                        <h4 style={{ color: text, fontSize: 15, margin: "0 0 3px", fontWeight: 700 }}>{exp.cargo_titulo}</h4>
-                        <div style={{ color: accentColor, fontSize: 13, fontWeight: 600 }}>{exp.institucion_empresa}</div>
-                        {exp.descripcion && <p style={{ color: sub, fontSize: 12, margin: "8px 0 0", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{exp.descripcion}</p>}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              );
+        {/* ═══════════ MAIN ═══════════ */}
+        <main className="pub-main">
 
-              return (
-                <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
-                  {laborales.length > 0 && (
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#3B82F6", boxShadow: "0 0 0 3px rgba(59,130,246,0.2)" }} />
-                        <span style={{ color: text, fontSize: 14, fontWeight: 700 }}>Experiencia Laboral</span>
-                        <span style={{ color: sub, fontSize: 12 }}>({laborales.length})</span>
-                      </div>
-                      {renderTimeline(laborales, "#3B82F6")}
-                    </div>
-                  )}
-                  {academicas.length > 0 && (
-                    <div>
-                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
-                        <div style={{ width: 10, height: 10, borderRadius: "50%", background: "#a855f7", boxShadow: "0 0 0 3px rgba(168,85,247,0.2)" }} />
-                        <span style={{ color: text, fontSize: 14, fontWeight: 700 }}>Formación Académica</span>
-                        <span style={{ color: sub, fontSize: 12 }}>({academicas.length})</span>
-                      </div>
-                      {renderTimeline(academicas, "#a855f7")}
-                    </div>
-                  )}
-                </div>
-              );
-            })()}
+          {/* ── Acerca de mí ── */}
+          <section id="sec-perfil" className="pub-section">
+            <div className="pub-section-header">
+              <div className="pub-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+              <h2 className="pub-section-title">Acerca de mí</h2>
+            </div>
+            <p style={{ color: sub, fontSize: 14, lineHeight: 1.7, whiteSpace: "pre-wrap", margin: 0 }}>
+              {data.biografia || "Sin biografía registrada."}
+            </p>
           </section>
-        </div>
+
+          <div className="pub-section-divider" />
+
+          {/* ── Habilidades ── */}
+          <section id="sec-habilidades" className="pub-section">
+            <div className="pub-section-header">
+              <div className="pub-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </div>
+              <h2 className="pub-section-title">Habilidades</h2>
+            </div>
+            {(!data.techSkills?.length && !data.softSkills?.length) ? (
+              <p style={{ color: sub, fontSize: 14 }}>Aún no hay habilidades registradas.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+                {data.techSkills?.length > 0 && (
+                  <div>
+                    <p style={{ color: text, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 10px", opacity: 0.6 }}>Técnicas</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {data.techSkills.map((s, i) => (
+                        <span key={`t-${i}`} style={{ background: "rgba(59,130,246,0.1)", color: "#3B82F6", padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, border: "1px solid rgba(59,130,246,0.2)" }}>
+                          {s.nombre} {s.nivel ? `(${s.nivel}%)` : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                {data.softSkills?.length > 0 && (
+                  <div>
+                    <p style={{ color: text, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 10px", opacity: 0.6 }}>Blandas</p>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: 8 }}>
+                      {data.softSkills.map((s, i) => (
+                        <span key={`s-${i}`} style={{ background: "rgba(168,85,247,0.1)", color: "#a855f7", padding: "6px 14px", borderRadius: 20, fontSize: 13, fontWeight: 600, border: "1px solid rgba(168,85,247,0.2)" }}>
+                          {s.nombre}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          <div className="pub-section-divider" />
+
+          {/* ── Proyectos ── */}
+          <section id="sec-proyectos" className="pub-section">
+            <div className="pub-section-header">
+              <div className="pub-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" />
+                </svg>
+              </div>
+              <h2 className="pub-section-title">Proyectos</h2>
+            </div>
+            {proyectosDestacados.length === 0 && proyectosGenerales.length === 0 ? (
+              <p style={{ color: sub, fontSize: 14 }}>Aún no hay proyectos.</p>
+            ) : (
+              <div style={{ display: "flex", flexDirection: "column", gap: 28 }}>
+                {proyectosDestacados.length > 0 && (
+                  <div>
+                    <p style={{ color: text, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 14px", opacity: 0.6 }}>Destacados</p>
+                    {renderProjectGrid(proyectosDestacados)}
+                  </div>
+                )}
+                {proyectosGenerales.length > 0 && (
+                  <div>
+                    <p style={{ color: text, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.07em", margin: "0 0 14px", opacity: 0.6 }}>Generales</p>
+                    {renderProjectGrid(proyectosGenerales)}
+                  </div>
+                )}
+              </div>
+            )}
+          </section>
+
+          <div className="pub-section-divider" />
+
+          {/* ── Experiencia Laboral ── */}
+          <section id="sec-laboral" className="pub-section">
+            <div className="pub-section-header">
+              <div className="pub-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+              </div>
+              <h2 className="pub-section-title">Experiencia Laboral</h2>
+            </div>
+            {laborales.length === 0 ? (
+              <p style={{ color: sub, fontSize: 14 }}>Sin experiencia laboral registrada.</p>
+            ) : renderTimeline(laborales, "#3B82F6")}
+          </section>
+
+          <div className="pub-section-divider" />
+
+          {/* ── Formación Académica ── */}
+          <section id="sec-academica" className="pub-section" style={{ paddingBottom: 60 }}>
+            <div className="pub-section-header">
+              <div className="pub-section-icon">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#3B82F6" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+                </svg>
+              </div>
+              <h2 className="pub-section-title">Formación Académica</h2>
+            </div>
+            {academicas.length === 0 ? (
+              <p style={{ color: sub, fontSize: 14 }}>Sin formación académica registrada.</p>
+            ) : renderTimeline(academicas, "#a855f7")}
+          </section>
+
+        </main>
       </div>
 
       <ProjectModal
