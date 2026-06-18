@@ -4,7 +4,11 @@ import { useApp } from "../context/AppContext";
 import { useTheme } from "../context/ThemeContext";
 import { authAPI } from "../api";
 import { motion } from "framer-motion";
-
+/**
+ * Página de callback tras autenticación OAuth con GitHub.
+ * Lee el token de los query params, valida la sesión y redirige al usuario.
+ * Muestra un spinner mientras procesa o un mensaje de error si falla.
+ */
 export default function AuthCallbackPage() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
