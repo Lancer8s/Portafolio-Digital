@@ -12,8 +12,11 @@ const NAV_ITEMS = [
   { id: "habilidades", label: "Habilidades", icon: "M13 10V3L4 14h7v7l9-11h-7z" },
   { id: "proyectos", label: "Proyectos", icon: "M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z" },
   { id: "redes", label: "Redes Sociales", icon: "M13.828 10.172a4 4 0 010 5.656l-2 2a4 4 0 01-5.656-5.656l1.172-1.172M10.172 13.828a4 4 0 010-5.656l2-2a4 4 0 015.656 5.656l-1.172 1.172" },
-  { id: "experiencia", label: "Experiencia", icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+  { id: "exp_laboral", label: "Experiencia Laboral", icon: "M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" },
+  { id: "formacion_academica", label: "Formación Académica", icon: "M12 14l9-5-9-5-9 5 9 5z M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" },
 ];
+
+
 
 export default function VistaEdicionPage({ userData,
     onGoToHabilidad, onGoToProyecto, onBack,
