@@ -37,7 +37,7 @@ const api = axios.create({
   headers: { Accept: "application/json" },
 });
 
-export const getApiErrorMessage = (err, fallback = "Error de conexion con el servidor") => {
+export const getApiErrorMessage = (err, fallback = "Error de conexión con el servidor") => {
   if (err.code === "ECONNABORTED") return "El servidor tardó demasiado en responder";
   if (!err.response) return fallback;
 
@@ -48,7 +48,7 @@ export const getApiErrorMessage = (err, fallback = "Error de conexion con el ser
   if (status === 403) return "No tienes permisos para realizar esta acción";
   if (status === 429) return "Demasiadas solicitudes. Espera unos segundos y vuelve a intentar";
   if (status === 404) return "No se encontró la ruta del servidor";
-  if (status === 405) return "El servidor no acepta este metodo HTTP";
+  if (status === 405) return "El servidor no acepta este método HTTP";
   if (status >= 500) return "Error interno del servidor. Revisa los logs de Laravel";
   return fallback;
 };
@@ -196,7 +196,17 @@ export const portafolioAPI = {
     return res.data;
   },
 };
-
+// Helper reutilizable para construir parámetros de bitácora
+const buildBitacoraParams = (filtros = {}) => {
+  const params = new URLSearchParams();
+  if (filtros.fecha_desde) params.set("fecha_desde", filtros.fecha_desde);
+  if (filtros.fecha_hasta) params.set("fecha_hasta", filtros.fecha_hasta);
+  if (filtros.accion)      params.set("accion", filtros.accion);
+  if (filtros.id_usuario)  params.set("id_usuario", filtros.id_usuario);
+  if (filtros.page)        params.set("page", filtros.page);
+  if (filtros.per_page)    params.set("per_page", filtros.per_page);
+  return params;
+};
 export const adminAPI = {
   getPendingCI: async () => {
     const res = await api.get('/admin/ci-pending');
@@ -211,23 +221,12 @@ export const adminAPI = {
     return res.data;
   },
   getBitacoras: async (tabla, filtros = {}) => {
-    const params = new URLSearchParams();
-    if (filtros.fecha_desde) params.set('fecha_desde', filtros.fecha_desde);
-    if (filtros.fecha_hasta) params.set('fecha_hasta', filtros.fecha_hasta);
-    if (filtros.accion) params.set('accion', filtros.accion);
-    if (filtros.id_usuario) params.set('id_usuario', filtros.id_usuario);
-    if (filtros.page) params.set('page', filtros.page);
-    if (filtros.per_page) params.set('per_page', filtros.per_page);
-    const res = await api.get(`/admin/bitacoras/${tabla}?${params.toString()}`);
+    const res = await api.get(`/admin/bitacoras/${tabla}?${buildBitacoraParams(filtros)}`);
     return res.data;
   },
   exportBitacora: async (tabla, filtros = {}) => {
-    const params = new URLSearchParams();
-    if (filtros.fecha_desde) params.set('fecha_desde', filtros.fecha_desde);
-    if (filtros.fecha_hasta) params.set('fecha_hasta', filtros.fecha_hasta);
-    if (filtros.accion) params.set('accion', filtros.accion);
-    const res = await api.get(`/admin/bitacoras/${tabla}/export?${params.toString()}`, {
-      responseType: 'blob',
+    const res = await api.get(`/admin/bitacoras/${tabla}/export?${buildBitacoraParams(filtros)}`, {
+      responseType: "blob",
     });
     const url = window.URL.createObjectURL(new Blob([res.data]));
     const link = document.createElement('a');
