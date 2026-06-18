@@ -616,7 +616,7 @@ export default function SkillsEditor({
         </div>
       )}
 
-      {/* === SECTION: INICIO === */}
+      {/* ── Sección: Inicio ── */}
       {activeSection === "inicio" && (
         <UserHomeStats userData={userData} isDark={isDark} />
       )}
@@ -836,7 +836,7 @@ export default function SkillsEditor({
       )}
       </>)}
 
-      {/* === SECTION: HABILIDADES === */}
+      {/* ── Sección: Habilidades ── */}
       {activeSection === "habilidades" && (<>
       {/* HABILIDADES */}
       <motion.div
@@ -995,7 +995,7 @@ export default function SkillsEditor({
 
       </>)}
 
-      {/* === SECTION: PROYECTOS === */}
+      {/* ── Sección: Proyectos ── */}
       {activeSection === "proyectos" && (<>
       {/* PROYECTOS */}
       <motion.div
@@ -1248,7 +1248,7 @@ export default function SkillsEditor({
       </motion.div>
       </>)}
 
-      {/* === SECTION: REDES SOCIALES === */}
+      {/* ── Sección: Redes Sociales ── */}
       {activeSection === "redes" && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
