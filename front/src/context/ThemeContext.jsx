@@ -3,7 +3,11 @@ import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
 
 const ThemeContext = createContext();
-
+/**
+ * Proveedor del contexto de tema (claro/oscuro).
+ * Persiste la preferencia en localStorage y aplica clases al documento.
+ * @param {{ children: React.ReactNode }} props
+ */
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem("theme") === "dark";
