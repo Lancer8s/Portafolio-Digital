@@ -13,7 +13,7 @@ import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
 import PinToggle from "../../components/PinToggle";
 import ProjectImageFallback from "../../components/ProjectImageFallback";
-
+/** Recopila todas las URLs de imágenes de un proyecto en orden de prioridad */
 const getProjectImages = (project) => {
   const images = [];
   const add = (url) => {
@@ -35,16 +35,17 @@ const getProjectImages = (project) => {
 
   return images;
 };
+/** Retorna la primera imagen disponible de un proyecto, o null si no hay */
 
 const projectImage = (project) => getProjectImages(project)?.[0] || null;
-
+/** Formatea una fecha ISO a formato legible en español (ej: "ene. 2024") */
 const formatDate = (value) => {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleDateString("es-BO", { year: "numeric", month: "short" });
 };
-
+/** Normaliza una URL social: agrega https:// o mailto: si falta el protocolo */
 const normalizeSocialUrl = (url) => {
   const value = String(url || "").trim();
   if (!value) return "";
@@ -54,7 +55,7 @@ const normalizeSocialUrl = (url) => {
   if (/^(https?:\/\/|mailto:)/i.test(value)) return value;
   return `https://${value}`;
 };
-
+/** Detecta la plataforma social a partir de la URL (Instagram, GitHub, etc.) */
 const detectSocialPlatform = (value) => {
   const low = String(value || "").toLowerCase();
   if (low.includes("instagram")) return "Instagram";
