@@ -2,7 +2,11 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { authAPI, perfilAPI, habilidadAPI, proyectoAPI, resolveMediaUrl } from "../api";
 
 const AppContext = createContext();
-
+/**
+ * Proveedor global del contexto de la aplicación.
+ * Gestiona autenticación, datos del usuario, y sincronización con el backend.
+ * @param {{ children: React.ReactNode }} props
+ */
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);            // datos auth básicos
   const [userData, setUserDataState] = useState({     // perfil completo
@@ -110,6 +114,8 @@ export const AppProvider = ({ children }) => {
 
     try {
       // Usar allSettled para que un fallo parcial no pierda todo
+      // Promise.allSettled garantiza que un fallo parcial (ej: perfil caído)
+      // no cancela la carga de habilidades o proyectos
       const [perfilRes, habRes, proyRes] = await Promise.allSettled([
         perfilAPI.obtener(),
         habilidadAPI.listar(),
@@ -222,7 +228,8 @@ export const AppProvider = ({ children }) => {
       if (restored) refreshUserData();
     });
   }, [restoreSession, refreshUserData]);
-
+// ── Reset de emergencia: limpia todo el estado sin llamar al backend ──
+// Usar cuando el logout normal falla o el token ya es inválido
   const resetState = () => {
     loggingOutRef.current = false;
     window.__authLogoutInProgress = false;

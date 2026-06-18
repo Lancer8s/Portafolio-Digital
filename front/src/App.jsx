@@ -22,7 +22,7 @@ import EdicionProyectoPage from "./edicionProyecto/EdicionProyectoPage";
 import VistaProyectoPage from "./vistaProyecto/VistaProyectoPage";
 import PublicPortfolioPage from "./publicPortfolio/PublicPortfolioPage";
 import AdminDashboardPage from "./adminDashboard/AdminDashboardPage";
-
+// Variantes de animación para transiciones entre páginas (fade rápido)
 const pageVariants = {
   initial: { opacity: 0 },
   animate: {
@@ -35,7 +35,13 @@ const pageVariants = {
   },
 };
 
-// Protected route wrapper
+/**
+ * Wrapper de ruta protegida.
+ * - Redirige a "/" si el usuario no está autenticado.
+ * - Redirige a "/admin" si el usuario es administrador intentando acceder a rutas normales.
+ * - Redirige a "/vista" si un usuario normal intenta acceder a rutas de admin.
+ * @param {boolean} requireAdmin - Si true, solo permite acceso a administradores
+ */
 function ProtectedRoute({ children, requireAdmin = false }) {
   const { isAuthenticated, loading, userData } = useApp();
   const location = useLocation();
@@ -100,7 +106,7 @@ function AnimatedRoutes() {
         style={{ minHeight: "100vh" }}
       >
         <Routes location={location}>
-          {/* Public routes */}
+          {/* ── Rutas públicas: accesibles sin autenticación ── */}
           <Route
             path="/"
             element={
@@ -115,7 +121,7 @@ function AnimatedRoutes() {
           <Route path="/portafolio/:id" element={<PublicPortfolioPage />} />
           <Route path="/registro" element={<Navigate to="/" replace />} />
 
-          {/* Protected routes */}
+          {/* ── Rutas protegidas: requieren sesión activa ── */}
           <Route
             path="/edicion"
             element={
@@ -197,6 +203,7 @@ function AnimatedRoutes() {
               </ProtectedRoute>
             }
           />
+          {/* ── Rutas de administrador: requieren rol 'administrador' ── */}
           <Route
             path="/admin"
             element={
