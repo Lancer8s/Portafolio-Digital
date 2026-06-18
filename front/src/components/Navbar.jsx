@@ -70,7 +70,7 @@ export default function Navbar() {
     }
     navigate(isAuthenticated ? "/vista" : "/");
   };
-
+// Construye el slug del portafolio: "nombre-apellido-id"
   const buildPortfolioSlug = () => {
     const n = (userData?.nombreCompleto || "").trim().toLowerCase().replace(/\s+/g, "-");
     const a = (userData?.apellidoCompleto || "").trim().toLowerCase().replace(/\s+/g, "-");
