@@ -7,9 +7,10 @@ import { perfilAPI, proyectoAPI, adminAPI } from "../api";
 import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
 import DefaultAvatar from "./DefaultAvatar";
-
+// Rutas donde la navbar no se muestra
 const HIDDEN_ON = ["/", "/registro", "/login", "/auth/callback"];
 
+// Etiquetas de título por ruta para mostrar en la navbar
 const LABELS = {
   "/vista": "Mi Portafolio",
   "/habilidad": "Habilidades",
