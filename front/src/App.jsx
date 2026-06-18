@@ -1,3 +1,4 @@
+import NotFoundPage from "./components/NotFoundPage";
 import { useState } from "react";
 import {
   Routes,
@@ -204,7 +205,7 @@ function AnimatedRoutes() {
             }
           />
           {/* ── Rutas de administrador: requieren rol 'administrador' ── */}
-          <Route
+           <Route
             path="/admin"
             element={
               <ProtectedRoute requireAdmin={true}>
@@ -212,6 +213,8 @@ function AnimatedRoutes() {
               </ProtectedRoute>
             }
           />
+          {/* ── Ruta 404: captura cualquier ruta no definida ── */}
+          <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </motion.div>
     </AnimatePresence>
