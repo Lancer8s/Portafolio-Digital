@@ -2,6 +2,13 @@
  * Default avatar — modern silhouette with subtle gradient.
  * Used when no profile photo is uploaded.
  */
+/**
+ * Avatar por defecto con silueta moderna y gradiente azul.
+ * Se muestra cuando el usuario no ha subido una foto de perfil.
+ * @param {number} size - Tamaño en píxeles del avatar (ancho y alto)
+ * @param {Object} style - Estilos adicionales para el contenedor
+ */
+
 export default function DefaultAvatar({ size = 40, style = {} }) {
   const s = size;
   return (
