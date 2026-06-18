@@ -13,7 +13,7 @@ import SkillSelector from "../../edicionHabilidad/components/SkillSelector";
 import ProyectoForm from "../../edicionProyecto/components/ProyectoForm";
 import PinToggle from "../../components/PinToggle";
 import ProjectImageFallback from "../../components/ProjectImageFallback";
-
+/** Recopila todas las URLs de imágenes de un proyecto en orden de prioridad */
 const getProjectImages = (project) => {
   const images = [];
   const add = (url) => {
@@ -35,16 +35,17 @@ const getProjectImages = (project) => {
 
   return images;
 };
+/** Retorna la primera imagen disponible de un proyecto, o null si no hay */
 
 const projectImage = (project) => getProjectImages(project)?.[0] || null;
-
+/** Formatea una fecha ISO a formato legible en español (ej: "ene. 2024") */
 const formatDate = (value) => {
   if (!value) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return String(value);
   return date.toLocaleDateString("es-BO", { year: "numeric", month: "short" });
 };
-
+/** Normaliza una URL social: agrega https:// o mailto: si falta el protocolo */
 const normalizeSocialUrl = (url) => {
   const value = String(url || "").trim();
   if (!value) return "";
@@ -54,7 +55,7 @@ const normalizeSocialUrl = (url) => {
   if (/^(https?:\/\/|mailto:)/i.test(value)) return value;
   return `https://${value}`;
 };
-
+/** Detecta la plataforma social a partir de la URL (Instagram, GitHub, etc.) */
 const detectSocialPlatform = (value) => {
   const low = String(value || "").toLowerCase();
   if (low.includes("instagram")) return "Instagram";
@@ -67,7 +68,13 @@ const detectSocialPlatform = (value) => {
   if (low.includes("@") || low.includes("mailto:")) return "Correo";
   return "Enlace";
 };
-
+/**
+ * Editor principal del portafolio del usuario.
+ * Gestiona secciones de perfil, habilidades, proyectos y redes sociales.
+ * @param {Object} userData - Datos del usuario autenticado
+ * @param {boolean} isDark - Tema oscuro activo
+ * @param {string} activeSection - Sección activa del sidebar
+ */
 export default function SkillsEditor({
   userData,
   isDark,
@@ -609,7 +616,7 @@ export default function SkillsEditor({
         </div>
       )}
 
-      {/* === SECTION: INICIO === */}
+      {/* ── Sección: Inicio ── */}
       {activeSection === "inicio" && (
         <UserHomeStats userData={userData} isDark={isDark} />
       )}
@@ -829,7 +836,7 @@ export default function SkillsEditor({
       )}
       </>)}
 
-      {/* === SECTION: HABILIDADES === */}
+      {/* ── Sección: Habilidades ── */}
       {activeSection === "habilidades" && (<>
       {/* HABILIDADES */}
       <motion.div
@@ -988,7 +995,7 @@ export default function SkillsEditor({
 
       </>)}
 
-      {/* === SECTION: PROYECTOS === */}
+      {/* ── Sección: Proyectos ── */}
       {activeSection === "proyectos" && (<>
       {/* PROYECTOS */}
       <motion.div
@@ -1241,7 +1248,7 @@ export default function SkillsEditor({
       </motion.div>
       </>)}
 
-      {/* === SECTION: REDES SOCIALES === */}
+      {/* ── Sección: Redes Sociales ── */}
       {activeSection === "redes" && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -2821,7 +2828,10 @@ export default function SkillsEditor({
     </div>
   );
 }
-
+/**
+ * Modal de solo lectura para visualizar el detalle de un proyecto.
+ * Incluye carrusel de imágenes, descripción, habilidades y fechas.
+ */
 function ProjectReadOnlyModal({ project, onClose, isDark, text, sub, border }) {
   const [carouselIdx, setCarouselIdx] = useState(0);
   const cardBg = isDark ? "#0F172A" : "#fff";

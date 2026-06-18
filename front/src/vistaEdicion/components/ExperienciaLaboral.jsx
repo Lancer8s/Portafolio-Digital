@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { experienciaAPI } from "../../api";
 import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
-
+/** Formatea una fecha ISO a formato legible en español, o "Actualidad" si es nula */
 const formatDate = (dateStr) => {
   if (!dateStr) return "Actualidad";
   const d = new Date(dateStr);
@@ -22,7 +22,11 @@ const EMPTY_FORM = {
   descripcion: "",
   referencias: "",
 };
-
+/**
+ * Componente de gestión de experiencia laboral del usuario.
+ * Permite listar, agregar, editar y eliminar experiencias laborales.
+ * @param {boolean} isDark - Tema oscuro activo
+ */
 export default function ExperienciaLaboral({ isDark }) {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -44,7 +48,7 @@ export default function ExperienciaLaboral({ isDark }) {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 3500);
   };
-
+// Carga las experiencias laborales del usuario ordenadas por fecha de inicio descendente
   const loadData = async () => {
     setLoading(true);
     try {
@@ -63,14 +67,14 @@ export default function ExperienciaLaboral({ isDark }) {
   };
 
   useEffect(() => { loadData(); }, []);
-
+// Abre el modal en modo creación con el formulario vacío
   const openAdd = () => {
     setForm(EMPTY_FORM);
     setIsEditing(false);
     setIsDeleting(false);
     setModalOpen(true);
   };
-
+// Abre el modal en modo edición cargando los datos de la experiencia seleccionada
   const openEdit = (exp) => {
     setForm({
       id_experiencia: exp.id_experiencia,
