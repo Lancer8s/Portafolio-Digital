@@ -3,12 +3,16 @@ import iconoSol from "../assets/iconoSol.png";
 import iconoLuna from "../assets/iconoLuna.png";
 
 const ThemeContext = createContext();
-
+/**
+ * Proveedor del contexto de tema (claro/oscuro).
+ * Persiste la preferencia en localStorage y aplica clases al documento.
+ * @param {{ children: React.ReactNode }} props
+ */
 export const ThemeProvider = ({ children }) => {
   const [isDark, setIsDark] = useState(() => {
     return localStorage.getItem("theme") === "dark";
   });
-
+// Sincroniza el tema con localStorage, data-theme y colores del body
   useEffect(() => {
     localStorage.setItem("theme", isDark ? "dark" : "light");
     document.documentElement.dataset.theme = isDark ? "dark" : "light";
@@ -24,5 +28,8 @@ export const ThemeProvider = ({ children }) => {
     </ThemeContext.Provider>
   );
 };
-
+/**
+ * Hook para acceder al contexto de tema.
+ * @returns {{ isDark: boolean, toggleTheme: Function, iconoSol: string, iconoLuna: string }}
+ */
 export const useTheme = () => useContext(ThemeContext);
