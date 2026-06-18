@@ -65,8 +65,8 @@ class ProyectoController extends Controller
     public function crear(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'titulo'      => 'required|string|max:150',
-            'descripcion' => 'nullable|string',
+            'titulo'      => 'required|string|max:80',
+            'descripcion' => 'nullable|string|max:120',
             'link'        => 'nullable|url|max:300',
         ]);
 
@@ -142,8 +142,8 @@ class ProyectoController extends Controller
     public function actualizar(Request $request, int $idProyecto)
     {
         $validator = Validator::make($request->all(), [
-            'titulo'      => 'nullable|string|max:150',
-            'descripcion' => 'nullable|string',
+            'titulo'      => 'nullable|string|max:80',
+            'descripcion' => 'nullable|string|max:120',
             'link'        => 'nullable|url|max:300',
         ]);
 
@@ -364,40 +364,21 @@ class ProyectoController extends Controller
      * PUT /api/proyectos/visibilidad-multiple
      * Cambia la visibilidad de varios proyectos en el portafolio público.
      * Body: { ids: [int], visible_portafolio: true|false }
-     * Tambien acepta { proyectos: [{ id_proyecto, visible_portafolio }] }.
      */
     public function toggleVisibilidadMultiple(Request $request)
     {
-        $proyectos = $request->input('proyectos');
-        if (is_array($proyectos)) {
-            $ids = [];
-            $visiblePorProyecto = [];
+        $validator = Validator::make($request->all(), [
+            'ids' => 'required|array',
+            'ids.*' => 'integer',
+            'visible_portafolio' => 'required|boolean',
+        ]);
 
-            foreach ($proyectos as $proyecto) {
-                $idProyecto = $proyecto['id_proyecto'] ?? $proyecto['id'] ?? null;
-                if (!$idProyecto || !array_key_exists('visible_portafolio', $proyecto)) {
-                    return response()->json(['ok' => false, 'mensaje' => 'Formato de proyectos invalido'], 422);
-                }
-                $ids[] = (int) $idProyecto;
-                $visiblePorProyecto[(int) $idProyecto] = filter_var($proyecto['visible_portafolio'], FILTER_VALIDATE_BOOLEAN);
-            }
-        } else {
-            $validator = Validator::make($request->all(), [
-                'ids' => 'required|array',
-                'ids.*' => 'integer',
-                'visible_portafolio' => 'required|boolean',
-            ]);
-
-            if ($validator->fails()) {
-                return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
-            }
-
-            $ids = array_map('intval', $request->ids);
-            $visiblePorProyecto = array_fill_keys($ids, (bool) $request->visible_portafolio);
+        if ($validator->fails()) {
+            return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
         }
 
         $userId = $request->user()->id_usuario;
-        $ids = array_values(array_unique($ids));
+        $ids = $request->ids;
 
         // Verify ownership of all provided projects
         $ownedCount = DB::table('proyecto')
@@ -409,17 +390,16 @@ class ProyectoController extends Controller
             return response()->json(['ok' => false, 'mensaje' => 'Algunos proyectos no pertenecen al usuario'], 404);
         }
 
-        foreach ($visiblePorProyecto as $idProyecto => $visible) {
-            DB::table('proyecto')
-                ->where('id_proyecto', $idProyecto)
-                ->where('id_usuario', $userId)
-                ->update(['visible_portafolio' => $visible]);
-        }
+        DB::table('proyecto')
+            ->whereIn('id_proyecto', $ids)
+            ->where('id_usuario', $userId)
+            ->update(['visible_portafolio' => $request->visible_portafolio]);
 
         return response()->json([
             'ok' => true,
-            'mensaje' => 'Visibilidad de proyectos actualizada',
+            'mensaje' => $request->visible_portafolio ? 'Proyectos visibles en portafolio' : 'Proyectos ocultos del portafolio',
+            'visible_portafolio' => $request->visible_portafolio,
             'ids' => $ids,
         ]);
     }
-}
+}

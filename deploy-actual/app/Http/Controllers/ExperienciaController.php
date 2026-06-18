@@ -11,19 +11,11 @@ class ExperienciaController extends Controller
 {
     public function listar(Request $request)
     {
-        try {
-            $idUsuario = $request->user()->id_usuario;
-            $experiencias = Experiencia::where('id_usuario', $idUsuario)
-                ->orderBy('fecha_inicio', 'desc')
-                ->get();
-            return response()->json(['ok' => true, 'experiencias' => $experiencias]);
-        } catch (\Throwable $e) {
-            \Log::error('Error listando experiencias: ' . $e->getMessage());
-            return response()->json([
-                'ok' => false,
-                'mensaje' => 'No se pudieron cargar las experiencias',
-            ], 500);
-        }
+        $idUsuario = $request->user()->id_usuario;
+        $experiencias = Experiencia::where('id_usuario', $idUsuario)
+            ->orderBy('fecha_inicio', 'desc')
+            ->get();
+        return response()->json(['ok' => true, 'experiencias' => $experiencias]);
     }
 
     public function crear(Request $request)
@@ -44,24 +36,9 @@ class ExperienciaController extends Controller
             return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
         }
 
-        try {
-            $experiencia = new Experiencia($request->only([
-                'tipo',
-                'institucion_empresa',
-                'cargo_titulo',
-                'fecha_inicio',
-                'fecha_fin',
-                'descripcion',
-            ]));
-            $experiencia->id_usuario = $request->user()->id_usuario;
-            $experiencia->save();
-        } catch (\Throwable $e) {
-            \Log::error('Error creando experiencia: ' . $e->getMessage());
-            return response()->json([
-                'ok' => false,
-                'mensaje' => 'No se pudo guardar la experiencia',
-            ], 500);
-        }
+        $experiencia = new Experiencia($request->all());
+        $experiencia->id_usuario = $request->user()->id_usuario;
+        $experiencia->save();
 
         return response()->json(['ok' => true, 'experiencia' => $experiencia]);
     }
@@ -92,22 +69,7 @@ class ExperienciaController extends Controller
             return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
         }
 
-        try {
-            $experiencia->update($request->only([
-                'tipo',
-                'institucion_empresa',
-                'cargo_titulo',
-                'fecha_inicio',
-                'fecha_fin',
-                'descripcion',
-            ]));
-        } catch (\Throwable $e) {
-            \Log::error('Error actualizando experiencia: ' . $e->getMessage());
-            return response()->json([
-                'ok' => false,
-                'mensaje' => 'No se pudo actualizar la experiencia',
-            ], 500);
-        }
+        $experiencia->update($request->all());
 
         return response()->json(['ok' => true, 'experiencia' => $experiencia]);
     }
