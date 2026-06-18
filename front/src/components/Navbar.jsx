@@ -16,7 +16,11 @@ const LABELS = {
   "/proyecto": "Proyectos",
   "/edicion": "Editar Perfil",
 };
-
+/**
+ * Barra de navegación principal de la aplicación.
+ * Se oculta en rutas públicas (login, registro, home).
+ * Muestra navbar de administrador o usuario según el rol.
+ */
 export default function Navbar() {
   const { isDark, toggleTheme } = useTheme();
   const { userData, isAuthenticated, logout, setUserData } = useApp();
