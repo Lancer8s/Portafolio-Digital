@@ -38,16 +38,16 @@ const api = axios.create({
 });
 
 export const getApiErrorMessage = (err, fallback = "Error de conexion con el servidor") => {
-  if (err.code === "ECONNABORTED") return "El servidor tardo demasiado en responder";
+  if (err.code === "ECONNABORTED") return "El servidor tardó demasiado en responder";
   if (!err.response) return fallback;
 
   const { status, data } = err.response;
   if (data?.mensaje) return data.mensaje;
   if (data?.message) return data.message;
-  if (status === 401) return "Tu sesion expiro. Inicia sesion nuevamente";
-  if (status === 403) return "No tienes permisos para realizar esta accion";
+  if (status === 401) return "Tu sesión expiró. Inicia sesión nuevamente";
+  if (status === 403) return "No tienes permisos para realizar esta acción";
   if (status === 429) return "Demasiadas solicitudes. Espera unos segundos y vuelve a intentar";
-  if (status === 404) return "No se encontro la ruta del servidor";
+  if (status === 404) return "No se encontró la ruta del servidor";
   if (status === 405) return "El servidor no acepta este metodo HTTP";
   if (status >= 500) return "Error interno del servidor. Revisa los logs de Laravel";
   return fallback;
