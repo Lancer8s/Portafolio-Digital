@@ -57,6 +57,7 @@ export default function AuthCallbackPage() {
           setError("No se pudo verificar la sesión.");
         }
       } catch (err) {
+          // Si el token falla la verificación, limpiamos y mostramos error
         if (err.response?.status === 401 || err.response?.status === 403) {
           localStorage.removeItem("auth_token");
           setError("Error al verificar el token. Intenta de nuevo.");
