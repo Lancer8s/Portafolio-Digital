@@ -2,7 +2,11 @@ import { createContext, useContext, useState, useEffect, useCallback, useRef } f
 import { authAPI, perfilAPI, habilidadAPI, proyectoAPI, resolveMediaUrl } from "../api";
 
 const AppContext = createContext();
-
+/**
+ * Proveedor global del contexto de la aplicación.
+ * Gestiona autenticación, datos del usuario, y sincronización con el backend.
+ * @param {{ children: React.ReactNode }} props
+ */
 export const AppProvider = ({ children }) => {
   const [user, setUser] = useState(null);            // datos auth básicos
   const [userData, setUserDataState] = useState({     // perfil completo
