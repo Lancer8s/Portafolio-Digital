@@ -13,6 +13,12 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString("es-BO", { year: "numeric", month: "short" });
 };
 
+const formatAcademicDates = (exp) => {
+  if (!exp.fecha_inicio && exp.fecha_fin) return `Fecha de emisión: ${formatDate(exp.fecha_fin)}`;
+  if (!exp.fecha_inicio && !exp.fecha_fin) return "Sin fecha registrada";
+  return `${formatDate(exp.fecha_inicio)} — ${exp.fecha_fin ? formatDate(exp.fecha_fin) : "Actualidad"}`;
+};
+
 const NIVEL_COLORS = {
   "Técnico":   { bg: "rgba(59,130,246,0.12)",  text: "#3B82F6" },
   "Tecnólogo": { bg: "rgba(99,102,241,0.12)",  text: "#6366f1" },
@@ -34,6 +40,7 @@ const EMPTY_FORM = {
   fecha_fin: "",
   actualmente: false,
   descripcion: "",
+  url_certificado: "",
 };
 
 export default function FormacionAcademica({ isDark }) {
@@ -65,7 +72,7 @@ export default function FormacionAcademica({ isDark }) {
       if (data.ok) {
         const academicas = (data.experiencias || [])
           .filter((e) => e.tipo === "academica")
-          .sort((a, b) => new Date(b.fecha_inicio) - new Date(a.fecha_inicio));
+          .sort((a, b) => new Date(b.fecha_inicio || b.fecha_fin || 0) - new Date(a.fecha_inicio || a.fecha_fin || 0));
         setItems(academicas);
       }
     } catch (err) {
@@ -95,6 +102,7 @@ export default function FormacionAcademica({ isDark }) {
       fecha_fin: exp.fecha_fin ? String(exp.fecha_fin).split("T")[0] : "",
       actualmente: !exp.fecha_fin,
       descripcion: exp.descripcion || "",
+      url_certificado: exp.url_certificado || "",
     });
     setModalOpen(true);
   };
@@ -103,8 +111,7 @@ export default function FormacionAcademica({ isDark }) {
     if (!form.cargo_titulo.trim())        { showToast("El título es obligatorio", "error"); return; }
     if (!form.institucion_empresa.trim()) { showToast("La institución es obligatoria", "error"); return; }
     if (!form.nivel_academico)            { showToast("Selecciona un nivel académico", "error"); return; }
-    if (!form.fecha_inicio)               { showToast("La fecha de inicio es obligatoria", "error"); return; }
-    if (!form.actualmente && form.fecha_fin && form.fecha_fin < form.fecha_inicio) {
+    if (!form.actualmente && form.fecha_inicio && form.fecha_fin && form.fecha_fin < form.fecha_inicio) {
       showToast("La fecha de fin no puede ser anterior al inicio", "error"); return;
     }
 
@@ -115,9 +122,10 @@ export default function FormacionAcademica({ isDark }) {
         cargo_titulo: form.cargo_titulo.trim(),
         institucion_empresa: form.institucion_empresa.trim(),
         nivel_academico: form.nivel_academico,
-        fecha_inicio: form.fecha_inicio,
+        fecha_inicio: form.fecha_inicio || null,
         fecha_fin: form.actualmente ? null : (form.fecha_fin || null),
         descripcion: form.descripcion.trim() || null,
+        url_certificado: form.url_certificado.trim() || null,
       };
 
       let res;
@@ -272,13 +280,18 @@ export default function FormacionAcademica({ isDark }) {
                           </span>
                         )}
                         <span style={{ color: sub, fontSize: 11 }}>
-                          {formatDate(exp.fecha_inicio)} — {formatDate(exp.fecha_fin)}
+                          {formatAcademicDates(exp)}
                         </span>
                       </div>
                       <h4 style={{ color: text, fontSize: 15, margin: "2px 0 2px", fontWeight: 700 }}>{exp.cargo_titulo}</h4>
                       <p style={{ color: "#a855f7", fontSize: 13, margin: 0, fontWeight: 600 }}>{exp.institucion_empresa}</p>
                       {exp.descripcion && (
                         <p style={{ color: text, fontSize: 12, margin: "8px 0 0", whiteSpace: "pre-wrap", opacity: 0.8, lineHeight: 1.5 }}>{exp.descripcion}</p>
+                      )}
+                      {exp.url_certificado && (
+                        <a href={exp.url_certificado} target="_blank" rel="noreferrer" style={{ color: "#3B82F6", fontSize: 12, fontWeight: 700, display: "inline-block", marginTop: 8, textDecoration: "none" }}>
+                          Ver certificado
+                        </a>
                       )}
                     </div>
                     <div style={{ display: "flex", gap: 6, flexShrink: 0, marginLeft: 10 }}>
@@ -366,7 +379,7 @@ export default function FormacionAcademica({ isDark }) {
 
                 <div style={{ display: "flex", gap: 12 }}>
                   <div style={{ flex: 1 }}>
-                    <label style={lbl}>Fecha Inicio <span style={required}>*</span></label>
+                    <label style={lbl}>Fecha Inicio</label>
                     <input style={inp} type="date" value={form.fecha_inicio} onChange={(e) => setForm({ ...form, fecha_inicio: e.target.value })} />
                   </div>
                   <div style={{ flex: 1 }}>
@@ -374,6 +387,9 @@ export default function FormacionAcademica({ isDark }) {
                     <input style={{ ...inp, opacity: form.actualmente ? 0.4 : 1 }} type="date" value={form.actualmente ? "" : form.fecha_fin} onChange={(e) => setForm({ ...form, fecha_fin: e.target.value })} disabled={form.actualmente} />
                   </div>
                 </div>
+                <p style={{ color: sub, fontSize: 12, margin: "-8px 0 0", lineHeight: 1.45 }}>
+                  Para cursos o certificaciones, puedes dejar la fecha de inicio en blanco y usar «Fecha Fin» como la fecha de emisión
+                </p>
 
                 <label style={{ display: "flex", alignItems: "center", gap: 9, cursor: "pointer", userSelect: "none" }}>
                   <input type="checkbox" checked={form.actualmente} onChange={(e) => setForm({ ...form, actualmente: e.target.checked, fecha_fin: "" })} style={{ width: 15, height: 15, accentColor: "#3B82F6", cursor: "pointer" }} />
@@ -383,6 +399,11 @@ export default function FormacionAcademica({ isDark }) {
                 <div>
                   <label style={lbl}>Descripción</label>
                   <textarea style={{ ...inp, resize: "vertical", lineHeight: 1.55 }} rows={4} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Describe lo que aprendiste o destacaste..." />
+                </div>
+
+                <div>
+                  <label style={lbl}>URL del Certificado (Opcional)</label>
+                  <input style={inp} type="url" value={form.url_certificado} onChange={(e) => setForm({ ...form, url_certificado: e.target.value })} placeholder="Link a tu credencial de AWS, Google, etc." />
                 </div>
 
                 <div style={{ display: "flex", gap: 10, marginTop: 4 }}>

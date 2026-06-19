@@ -13,7 +13,7 @@ class ExperienciaController extends Controller
     {
         $idUsuario = $request->user()->id_usuario;
         $experiencias = Experiencia::where('id_usuario', $idUsuario)
-            ->orderBy('fecha_inicio', 'desc')
+            ->orderByRaw('COALESCE(fecha_inicio, fecha_fin) DESC')
             ->get();
         return response()->json(['ok' => true, 'experiencias' => $experiencias]);
     }
@@ -24,15 +24,25 @@ class ExperienciaController extends Controller
             'tipo'                => 'required|in:laboral,academica',
             'institucion_empresa' => 'required|string|max:150',
             'cargo_titulo'        => 'required|string|max:150',
-            'fecha_inicio'        => 'required|date',
-            'fecha_fin'           => 'nullable|date|after_or_equal:fecha_inicio',
+            'fecha_inicio'        => 'required_if:tipo,laboral|nullable|date',
+            'fecha_fin'           => 'nullable|date',
             'descripcion'         => 'nullable|string|max:500',
             'nivel_academico'     => 'nullable|string|max:50',
             'referencias'         => 'nullable|string|max:500',
+            'url_certificado'     => 'nullable|url|max:255',
         ], [
             'institucion_empresa.required' => 'El nombre de la empresa o institución es obligatorio',
-            'fecha_fin.after_or_equal'     => 'La fecha de fin no puede ser anterior a la fecha de inicio',
+            'fecha_inicio.required_if'     => 'La fecha de inicio es obligatoria para experiencia laboral',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $fechaInicio = $request->input('fecha_inicio');
+            $fechaFin = $request->input('fecha_fin');
+
+            if ($fechaInicio && $fechaFin && strtotime($fechaFin) < strtotime($fechaInicio)) {
+                $validator->errors()->add('fecha_fin', 'La fecha de fin no puede ser anterior a la fecha de inicio');
+            }
+        });
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
@@ -59,15 +69,25 @@ class ExperienciaController extends Controller
             'tipo'                => 'required|in:laboral,academica',
             'institucion_empresa' => 'required|string|max:150',
             'cargo_titulo'        => 'required|string|max:150',
-            'fecha_inicio'        => 'required|date',
-            'fecha_fin'           => 'nullable|date|after_or_equal:fecha_inicio',
+            'fecha_inicio'        => 'required_if:tipo,laboral|nullable|date',
+            'fecha_fin'           => 'nullable|date',
             'descripcion'         => 'nullable|string|max:500',
             'nivel_academico'     => 'nullable|string|max:50',
             'referencias'         => 'nullable|string|max:500',
+            'url_certificado'     => 'nullable|url|max:255',
         ], [
             'institucion_empresa.required' => 'El nombre de la empresa o institución es obligatorio',
-            'fecha_fin.after_or_equal'     => 'La fecha de fin no puede ser anterior a la fecha de inicio',
+            'fecha_inicio.required_if'     => 'La fecha de inicio es obligatoria para experiencia laboral',
         ]);
+
+        $validator->after(function ($validator) use ($request) {
+            $fechaInicio = $request->input('fecha_inicio');
+            $fechaFin = $request->input('fecha_fin');
+
+            if ($fechaInicio && $fechaFin && strtotime($fechaFin) < strtotime($fechaInicio)) {
+                $validator->errors()->add('fecha_fin', 'La fecha de fin no puede ser anterior a la fecha de inicio');
+            }
+        });
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
