@@ -337,6 +337,14 @@ export default function PublicPortfolioPage() {
   const laborales  = (data.experiencias || []).filter(e => e.tipo === "laboral");
   const academicas = (data.experiencias || []).filter(e => e.tipo === "academica");
 
+  const formatExperienceDates = (exp) => {
+    if (exp.tipo === "academica" && !exp.fecha_inicio && exp.fecha_fin) {
+      return `Fecha de emisión: ${formatDate(exp.fecha_fin)}`;
+    }
+    if (!exp.fecha_inicio && !exp.fecha_fin) return "Sin fecha registrada";
+    return `${formatDate(exp.fecha_inicio)} — ${exp.fecha_fin ? formatDate(exp.fecha_fin) : "Actualidad"}`;
+  };
+
   const renderTimeline = (items, accentColor) => (
     <div style={{ position: "relative", paddingLeft: 24 }}>
       <div style={{ position: "absolute", left: 7, top: 6, bottom: 6, width: 2, background: `linear-gradient(to bottom, ${accentColor}, ${accentColor}88, transparent)`, borderRadius: 2 }} />
@@ -357,12 +365,17 @@ export default function PublicPortfolioPage() {
                 </span>
               )}
               <span style={{ color: sub, fontSize: 12 }}>
-                {formatDate(exp.fecha_inicio)} — {exp.fecha_fin ? formatDate(exp.fecha_fin) : "Actualidad"}
+                {formatExperienceDates(exp)}
               </span>
             </div>
             <h4 style={{ color: text, fontSize: 15, margin: "0 0 3px", fontWeight: 700 }}>{exp.cargo_titulo}</h4>
             <div style={{ color: accentColor, fontSize: 13, fontWeight: 600 }}>{exp.institucion_empresa}</div>
             {exp.descripcion && <p style={{ color: sub, fontSize: 12, margin: "8px 0 0", lineHeight: 1.55, whiteSpace: "pre-wrap" }}>{exp.descripcion}</p>}
+            {exp.url_certificado && (
+              <a href={exp.url_certificado} target="_blank" rel="noreferrer" style={{ color: "#3B82F6", fontSize: 12, fontWeight: 700, display: "inline-block", marginTop: 8, textDecoration: "none" }}>
+                Ver certificado
+              </a>
+            )}
           </div>
         </div>
       ))}

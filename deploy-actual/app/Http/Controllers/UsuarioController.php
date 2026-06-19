@@ -374,10 +374,10 @@ class UsuarioController extends Controller
         
         $experiencias = DB::select("
             SELECT id_experiencia, tipo, institucion_empresa, cargo_titulo, 
-                   fecha_inicio, fecha_fin, descripcion 
+                   fecha_inicio, fecha_fin, descripcion, nivel_academico, referencias, url_certificado
             FROM experiencia 
             WHERE id_usuario = ? 
-            ORDER BY fecha_inicio DESC", [$id]);
+            ORDER BY COALESCE(fecha_inicio, fecha_fin) DESC", [$id]);
 
         $data['perfil']['techSkills'] = $habilidadesObj->getData(true)['techSkills'] ?? [];
         $data['perfil']['softSkills'] = $habilidadesObj->getData(true)['softSkills'] ?? [];
