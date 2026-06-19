@@ -26,7 +26,7 @@ class ExperienciaController extends Controller
             'cargo_titulo'        => 'required|string|max:150',
             'fecha_inicio'        => 'required|date',
             'fecha_fin'           => 'nullable|date|after_or_equal:fecha_inicio',
-            'descripcion'         => 'nullable|string',
+            'descripcion'         => 'nullable|string|max:500',
             'nivel_academico'     => 'nullable|string|max:50',
             'referencias'         => 'nullable|string|max:500',
         ], [
@@ -61,7 +61,7 @@ class ExperienciaController extends Controller
             'cargo_titulo'        => 'required|string|max:150',
             'fecha_inicio'        => 'required|date',
             'fecha_fin'           => 'nullable|date|after_or_equal:fecha_inicio',
-            'descripcion'         => 'nullable|string',
+            'descripcion'         => 'nullable|string|max:500',
             'nivel_academico'     => 'nullable|string|max:50',
             'referencias'         => 'nullable|string|max:500',
         ], [
