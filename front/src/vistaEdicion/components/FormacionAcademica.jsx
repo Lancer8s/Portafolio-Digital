@@ -5,6 +5,12 @@ import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
 
 const NIVELES = ["Técnico", "Tecnólogo", "Pregrado", "Posgrado", "Maestría", "Doctorado", "Diplomado", "Curso"];
+const MAX_LENGTHS = {
+  cargo_titulo: 150,
+  institucion_empresa: 150,
+  descripcion: 500,
+  url_certificado: 255,
+};
 
 const formatDate = (dateStr) => {
   if (!dateStr) return "Actualidad";
@@ -359,12 +365,12 @@ export default function FormacionAcademica({ isDark }) {
               <div style={{ padding: "24px 26px 26px", display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
                   <label style={lbl}>Título <span style={required}>*</span></label>
-                  <input style={inp} type="text" value={form.cargo_titulo} onChange={(e) => setForm({ ...form, cargo_titulo: e.target.value })} placeholder="Ej: Ingeniería Informática" />
+                  <input style={inp} type="text" maxLength={MAX_LENGTHS.cargo_titulo} value={form.cargo_titulo} onChange={(e) => setForm({ ...form, cargo_titulo: e.target.value })} placeholder="Ej: Ingeniería Informática" />
                 </div>
 
                 <div>
                   <label style={lbl}>Institución <span style={required}>*</span></label>
-                  <input style={inp} type="text" value={form.institucion_empresa} onChange={(e) => setForm({ ...form, institucion_empresa: e.target.value })} placeholder="Ej: Universidad Nacional" />
+                  <input style={inp} type="text" maxLength={MAX_LENGTHS.institucion_empresa} value={form.institucion_empresa} onChange={(e) => setForm({ ...form, institucion_empresa: e.target.value })} placeholder="Ej: Universidad Nacional" />
                 </div>
 
                 <div>
@@ -398,12 +404,12 @@ export default function FormacionAcademica({ isDark }) {
 
                 <div>
                   <label style={lbl}>Descripción</label>
-                  <textarea style={{ ...inp, resize: "vertical", lineHeight: 1.55 }} rows={4} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Describe lo que aprendiste o destacaste..." />
+                  <textarea style={{ ...inp, resize: "vertical", lineHeight: 1.55 }} rows={4} maxLength={MAX_LENGTHS.descripcion} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Describe lo que aprendiste o destacaste..." />
                 </div>
 
                 <div>
                   <label style={lbl}>URL del Certificado (Opcional)</label>
-                  <input style={inp} type="url" value={form.url_certificado} onChange={(e) => setForm({ ...form, url_certificado: e.target.value })} placeholder="Link a tu credencial de AWS, Google, etc." />
+                  <input style={inp} type="url" maxLength={MAX_LENGTHS.url_certificado} value={form.url_certificado} onChange={(e) => setForm({ ...form, url_certificado: e.target.value })} placeholder="Link a tu credencial de AWS, Google, etc." />
                 </div>
 
                 <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
