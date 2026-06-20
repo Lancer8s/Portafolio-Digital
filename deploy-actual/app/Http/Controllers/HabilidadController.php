@@ -135,7 +135,6 @@ class HabilidadController extends Controller
             $catalogo['tecnicas']['Personalizadas técnicas'] = $personalizadasTecnicas;
         }
         if ($personalizadasBlandas) {
-            $catalogo['tecnicas']['Personalizadas blandas'] = $personalizadasBlandas;
             $catalogo['blandas'] = array_values(array_merge(
                 $catalogo['blandas'] ?? [],
                 $personalizadasBlandas
