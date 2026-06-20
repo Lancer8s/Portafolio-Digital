@@ -100,6 +100,7 @@ Route::middleware('auth:sanctum')->group(function () {
     // Habilidades
     Route::prefix('habilidades')->group(function () {
         Route::get('/',                         [HabilidadController::class, 'listar']);
+        Route::get('catalogo-usuario',          [HabilidadController::class, 'catalogoUsuario']);
         Route::post('/',                        [HabilidadController::class, 'agregar']);
         Route::post('personalizada',            [HabilidadController::class, 'agregarPersonalizada']);
         Route::put('sincronizar',               [HabilidadController::class, 'sincronizar']);
