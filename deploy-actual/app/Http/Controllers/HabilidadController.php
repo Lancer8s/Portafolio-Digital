@@ -9,6 +9,37 @@ use Illuminate\Support\Facades\Validator;
 class HabilidadController extends Controller
 {
     /**
+     * Catálogo global sin habilidades personalizadas.
+     */
+    private function catalogoGlobal(): array
+    {
+        $data = cache()->remember('catalogo_habilidades', 600, function () {
+            $result = DB::select("SELECT sp_listar_catalogo_habilidades() AS result");
+            return json_decode($result[0]->result, true);
+        });
+
+        if (isset($data['tecnicas']) && is_array($data['tecnicas'])) {
+            foreach (array_keys($data['tecnicas']) as $categoria) {
+                if (str_contains(mb_strtolower($categoria), 'personaliz')) {
+                    unset($data['tecnicas'][$categoria]);
+                }
+            }
+        }
+
+        if (isset($data['blandas']) && is_array($data['blandas'])) {
+            $data['blandas'] = array_values(array_filter(
+                $data['blandas'],
+                fn ($item) => !str_contains(
+                    mb_strtolower((string) ($item['categoria'] ?? '')),
+                    'personaliz'
+                )
+            ));
+        }
+
+        return $data;
+    }
+
+    /**
      * GET /api/habilidades/catalogo
      * Devuelve el catálogo completo (público, sin autenticación).
      * Las habilidades personalizadas (categoria='Personalizada') NO se incluyen
@@ -31,6 +62,89 @@ class HabilidadController extends Controller
 
         return response()->json($data)
             ->header('Cache-Control', 'public, max-age=300');
+    }
+
+    /**
+     * GET /api/habilidades/catalogo-usuario
+     * Devuelve habilidades globales más las personalizadas del usuario autenticado.
+     */
+    public function catalogoUsuario(Request $request)
+    {
+        $idUsuario = $request->user()->id_usuario;
+        $catalogo = $this->catalogoGlobal();
+
+        $result = DB::select("SELECT sp_listar_habilidades_usuario(?) AS result", [$idUsuario]);
+        $propias = json_decode($result[0]->result, true);
+
+        if (!($propias['ok'] ?? false)) {
+            return response()->json($catalogo);
+        }
+
+        $idsGlobales = [];
+        $nombresGlobales = [];
+        $registrarGlobal = function (array $item) use (&$idsGlobales, &$nombresGlobales) {
+            if (isset($item['id_habilidad'])) {
+                $idsGlobales[(string) $item['id_habilidad']] = true;
+            }
+            if (!empty($item['nombre'])) {
+                $nombresGlobales[mb_strtolower(trim($item['nombre']))] = true;
+            }
+        };
+
+        foreach (($catalogo['tecnicas'] ?? []) as $items) {
+            if (is_array($items)) {
+                foreach ($items as $item) {
+                    if (is_array($item)) $registrarGlobal($item);
+                }
+            }
+        }
+        foreach (($catalogo['blandas'] ?? []) as $item) {
+            if (is_array($item)) $registrarGlobal($item);
+        }
+
+        $esPersonalizada = function (array $item) use ($idsGlobales, $nombresGlobales): bool {
+            $categoria = mb_strtolower((string) ($item['categoria'] ?? ''));
+            if (str_contains($categoria, 'personaliz')) return true;
+
+            $id = isset($item['id_habilidad']) ? (string) $item['id_habilidad'] : null;
+            $nombre = mb_strtolower(trim((string) ($item['nombre'] ?? '')));
+
+            return ($id && !isset($idsGlobales[$id]))
+                || ($nombre !== '' && !isset($nombresGlobales[$nombre]));
+        };
+
+        $personalizadasTecnicas = [];
+        foreach (($propias['tecnicas'] ?? []) as $item) {
+            if (is_array($item) && $esPersonalizada($item)) {
+                $item['tipo'] = 'tecnica';
+                $item['categoria'] = 'Personalizadas técnicas';
+                $personalizadasTecnicas[] = $item;
+            }
+        }
+
+        $personalizadasBlandas = [];
+        foreach (($propias['blandas'] ?? []) as $item) {
+            if (is_array($item) && $esPersonalizada($item)) {
+                $item['tipo'] = 'blanda';
+                $item['categoria'] = 'Personalizadas blandas';
+                $personalizadasBlandas[] = $item;
+            }
+        }
+
+        if ($personalizadasTecnicas) {
+            $catalogo['tecnicas']['Personalizadas técnicas'] = $personalizadasTecnicas;
+        }
+        if ($personalizadasBlandas) {
+            $catalogo['tecnicas']['Personalizadas blandas'] = $personalizadasBlandas;
+            $catalogo['blandas'] = array_values(array_merge(
+                $catalogo['blandas'] ?? [],
+                $personalizadasBlandas
+            ));
+        }
+
+        $catalogo['ok'] = true;
+        return response()->json($catalogo)
+            ->header('Cache-Control', 'private, no-store');
     }
 
     /**
