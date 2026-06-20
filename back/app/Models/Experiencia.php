@@ -20,6 +20,7 @@ class Experiencia extends Model
         'descripcion',
         'nivel_academico',
         'referencias',
+        'url_certificado',
     ];
 
     protected $casts = [

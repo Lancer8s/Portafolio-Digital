@@ -3,6 +3,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { experienciaAPI } from "../../api";
 import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
+const MAX_LENGTHS = {
+  cargo_titulo: 150,
+  institucion_empresa: 150,
+  descripcion: 500,
+  referencias: 500,
+};
 /** Formatea una fecha ISO a formato legible en español, o "Actualidad" si es nula */
 const formatDate = (dateStr) => {
   if (!dateStr) return "Actualidad";
@@ -334,12 +340,12 @@ export default function ExperienciaLaboral({ isDark }) {
               <div style={{ padding: "24px 26px 26px", display: "flex", flexDirection: "column", gap: 16 }}>
                 <div>
                   <label style={lbl}>Cargo <span style={required}>*</span></label>
-                  <input style={inp} type="text" value={form.cargo_titulo} onChange={(e) => setForm({ ...form, cargo_titulo: e.target.value })} placeholder="Ej: Desarrollador Full Stack" />
+                  <input style={inp} type="text" maxLength={MAX_LENGTHS.cargo_titulo} value={form.cargo_titulo} onChange={(e) => setForm({ ...form, cargo_titulo: e.target.value })} placeholder="Ej: Desarrollador Full Stack" />
                 </div>
 
                 <div>
                   <label style={lbl}>Empresa <span style={required}>*</span></label>
-                  <input style={inp} type="text" value={form.institucion_empresa} onChange={(e) => setForm({ ...form, institucion_empresa: e.target.value })} placeholder="Ej: Google, Microsoft, Startup X" />
+                  <input style={inp} type="text" maxLength={MAX_LENGTHS.institucion_empresa} value={form.institucion_empresa} onChange={(e) => setForm({ ...form, institucion_empresa: e.target.value })} placeholder="Ej: Google, Microsoft, Startup X" />
                 </div>
 
                 <div style={{ display: "flex", gap: 12 }}>
@@ -360,12 +366,12 @@ export default function ExperienciaLaboral({ isDark }) {
 
                 <div>
                   <label style={lbl}>Descripción</label>
-                  <textarea style={{ ...inp, resize: "vertical", lineHeight: 1.55 }} rows={4} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Describe tus responsabilidades y logros..." />
+                  <textarea style={{ ...inp, resize: "vertical", lineHeight: 1.55 }} rows={4} maxLength={MAX_LENGTHS.descripcion} value={form.descripcion} onChange={(e) => setForm({ ...form, descripcion: e.target.value })} placeholder="Describe tus responsabilidades y logros..." />
                 </div>
 
                 <div>
                   <label style={lbl}>Referencias <span style={{ color: sub, fontWeight: 400 }}>(opcional)</span></label>
-                  <textarea style={{ ...inp, resize: "vertical", lineHeight: 1.55 }} rows={2} value={form.referencias} onChange={(e) => setForm({ ...form, referencias: e.target.value })} placeholder="Ej: Juan Pérez — Jefe directo · juan@empresa.com · +591 70000000" />
+                  <textarea style={{ ...inp, resize: "vertical", lineHeight: 1.55 }} rows={2} maxLength={MAX_LENGTHS.referencias} value={form.referencias} onChange={(e) => setForm({ ...form, referencias: e.target.value })} placeholder="Ej: Juan Pérez — Jefe directo · juan@empresa.com · +591 70000000" />
                 </div>
 
                 <div style={{ display: "flex", gap: 10, marginTop: 4 }}>
