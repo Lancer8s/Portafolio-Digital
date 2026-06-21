@@ -23,6 +23,10 @@ import EdicionProyectoPage from "./edicionProyecto/EdicionProyectoPage";
 import VistaProyectoPage from "./vistaProyecto/VistaProyectoPage";
 import PublicPortfolioPage from "./publicPortfolio/PublicPortfolioPage";
 import AdminDashboardPage from "./adminDashboard/AdminDashboardPage";
+// TODO: Corregir scroll position al navegar entre pantallas.
+// Algunas pantallas se muestran scrolleadas desde abajo al acceder.
+// Solución: forzar window.scrollTo(0, 0) en cada transición de ruta.
+
 // Variantes de animación para transiciones entre páginas (fade rápido)
 const pageVariants = {
   initial: { opacity: 0 },
