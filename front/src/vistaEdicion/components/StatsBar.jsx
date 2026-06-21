@@ -5,6 +5,8 @@ import { createPortal } from "react-dom";
 import { perfilAPI } from "../../api";
 import { useApp } from "../../context/AppContext";
 
+// TODO: Manejar caso donde los datos del usuario aún no se han cargado
+// para evitar mostrar "0" momentáneamente antes de que llegue la respuesta API.
 export default function StatsBar({ userData, isDark }) {
   const { debouncedRefresh } = useApp();
   const [showRedesModal, setShowRedesModal] = useState(false);
