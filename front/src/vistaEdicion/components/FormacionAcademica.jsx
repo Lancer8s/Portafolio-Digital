@@ -19,6 +19,9 @@ const formatDate = (dateStr) => {
   return d.toLocaleDateString("es-BO", { year: "numeric", month: "short" });
 };
 
+// TODO: Agregar campo explícito de "fecha de emisión" para certificados.
+// Actualmente se usa fecha_fin como fecha de emisión cuando fecha_inicio es null,
+// pero debería existir un campo dedicado para mayor claridad en el formulario.
 const formatAcademicDates = (exp) => {
   if (!exp.fecha_inicio && exp.fecha_fin) return `Fecha de emisión: ${formatDate(exp.fecha_fin)}`;
   if (!exp.fecha_inicio && !exp.fecha_fin) return "Sin fecha registrada";
