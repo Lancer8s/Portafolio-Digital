@@ -149,7 +149,10 @@ export default function PublicPortfolioPage() {
 
         setData({ ...perfil, proyectos });
       } catch (err) {
-        if (err.response?.status === 403) {
+          // MEJORA: Mensajes de error más descriptivos y amigables cuando
+          // el portafolio no está disponible. Diferenciar entre perfil incompleto,
+          // portafolio privado y portafolio inexistente con iconos y acciones claras.
+          if (err.response?.status === 403) {
           const codigo = err.response?.data?.codigo;
           if (codigo === "PERFIL_INCOMPLETO") {
             setError("Este portafolio aún no está disponible. El usuario no ha completado los datos obligatorios de su perfil.");
