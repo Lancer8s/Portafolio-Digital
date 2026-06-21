@@ -85,42 +85,102 @@ class UsuarioController extends Controller
     /**
      * POST /api/usuario/foto
      * Sube o reemplaza la foto de perfil.
-     * Form-data: foto (file)
+     * Form-data: foto_perfil (file)
      */
     public function actualizarFoto(Request $request)
     {
+        // Compatibilidad con clientes anteriores que todavía envían "foto".
+        if (!$request->hasFile('foto_perfil') && $request->hasFile('foto')) {
+            $request->files->set('foto_perfil', $request->file('foto'));
+        }
+
         $validator = Validator::make($request->all(), [
-            'foto' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'foto_perfil' => 'nullable|image|mimes:jpeg,png,jpg|max:2048',
+        ], [
+            'foto_perfil.image' => 'El archivo debe ser una imagen válida.',
+            'foto_perfil.mimes' => 'Formato no válido. Solo se permiten imágenes JPG o PNG.',
+            'foto_perfil.max' => 'El archivo es demasiado grande. El tamaño máximo permitido es 2 MB.',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
         }
 
-        $id   = $request->user()->id_usuario;
-        $file = $request->file('foto');
-
-        $ruta       = $file->store('fotos_perfil', 'public');
-        $nombre     = $file->getClientOriginalName();
-        $tipo       = $file->getMimeType();
-        $tamanioKb  = (int) round($file->getSize() / 1024);
-
-        $data = DB::transaction(function () use ($id, $ruta, $nombre, $tipo, $tamanioKb) {
-            DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
-
-            $result = DB::select(
-                "SELECT sp_actualizar_foto_perfil(?,?,?,?,?,?) AS result",
-                [$id, $ruta, $nombre, $tipo, $tamanioKb, 'perfil']
-            );
-
-            return json_decode($result[0]->result, true);
-        });
-
-        if ($data['ok']) {
-            $data['foto_url'] = '/api/media/' . $ruta;
+        if (!$request->hasFile('foto_perfil') || !$request->file('foto_perfil')->isValid()) {
+            return response()->json([
+                'ok' => false,
+                'mensaje' => 'No se recibió una imagen válida. Verifica el formato y que no supere los 2 MB.',
+            ], 422);
         }
 
-        return response()->json($data, $data['ok'] ? 200 : 400);
+        $id   = $request->user()->id_usuario;
+        $file = $request->file('foto_perfil');
+        $ruta = null;
+
+        try {
+            $ruta = $file->store('fotos_perfil', 'public');
+
+            if (!$ruta) {
+                throw new \RuntimeException('No fue posible almacenar la imagen.');
+            }
+
+            $nombre    = $file->getClientOriginalName();
+            $tipo      = $file->getMimeType();
+            $tamanioKb = (int) round($file->getSize() / 1024);
+
+            $data = DB::transaction(function () use ($id, $ruta, $nombre, $tipo, $tamanioKb) {
+                DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
+
+                $result = DB::select(
+                    "SELECT sp_actualizar_foto_perfil(?,?,?,?,?,?) AS result",
+                    [$id, $ruta, $nombre, $tipo, $tamanioKb, 'perfil']
+                );
+
+                if (empty($result) || !isset($result[0]->result)) {
+                    throw new \RuntimeException('El servidor no confirmó la actualización de la foto.');
+                }
+
+                $response = json_decode($result[0]->result, true);
+
+                if (!is_array($response)) {
+                    throw new \RuntimeException('La respuesta al actualizar la foto no es válida.');
+                }
+
+                return $response;
+            });
+
+            if (empty($data['ok'])) {
+                try {
+                    Storage::disk('public')->delete($ruta);
+                } catch (\Throwable $cleanupException) {
+                    report($cleanupException);
+                }
+
+                return response()->json([
+                    'ok' => false,
+                    'mensaje' => $data['mensaje'] ?? 'No se pudo actualizar la foto de perfil.',
+                ], 400);
+            }
+
+            $data['foto_url'] = '/api/media/' . $ruta;
+
+            return response()->json($data, 200);
+        } catch (\Throwable $exception) {
+            if ($ruta) {
+                try {
+                    Storage::disk('public')->delete($ruta);
+                } catch (\Throwable $cleanupException) {
+                    report($cleanupException);
+                }
+            }
+
+            report($exception);
+
+            return response()->json([
+                'ok' => false,
+                'mensaje' => 'No se pudo procesar la foto de perfil. Intenta con otra imagen JPG o PNG de hasta 2 MB.',
+            ], 500);
+        }
     }
 
     public function actualizarCI(Request $request)
