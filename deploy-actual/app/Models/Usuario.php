@@ -27,6 +27,7 @@ class Usuario extends Authenticatable
         'nombre_modificado',
         'id_imagen_ci',
         'ci_estado',
+        'motivo_rechazo_ci',
         'linkedin_url',
         'github_url',
         'visibilidad',
