@@ -679,6 +679,9 @@ export default function PublicPortfolioPage() {
               </div>
               <h2 className="pub-section-title">Proyectos</h2>
             </div>
+            {/* FIX: Unificar mensaje cuando el portafolio está vacío.
+                El mensaje debe ser consistente: "Aún no hay proyectos registrados."
+                No alternar entre diferentes mensajes según el estado de carga. */}
             {proyectosDestacados.length === 0 && proyectosGenerales.length === 0 ? (
               <p style={{ color: sub, fontSize: 14 }}>Aún no hay proyectos.</p>
             ) : (
