@@ -102,7 +102,11 @@ export const AppProvider = ({ children }) => {
     return false;
   }, []);
 
-  // ── Cargar datos completos del usuario (perfil + habilidades + proyectos) ──
+    // TODO: Investigar por qué a veces desaparecen los proyectos del listado.
+    // Posible causa: race condition en refreshUserData cuando se hacen
+    // múltiples operaciones seguidas (crear/editar/eliminar).
+    // Verificar que Promise.allSettled no sobreescriba con datos vacíos.
+    // ── Cargar datos completos del usuario (perfil + habilidades + proyectos) ──
   // Optimizado: evita concurrencia, throttlea a 500ms mínimo entre llamadas
   const refreshUserData = useCallback(async () => {
     if (loggingOutRef.current) return;
