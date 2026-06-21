@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
+use App\Models\Certificacion;
 
 class UsuarioController extends Controller
 {
@@ -388,6 +389,10 @@ class UsuarioController extends Controller
         // y los con visible_portafolio=false aparecen como "Proyectos Generales"
         $data['perfil']['proyectos'] = array_values($todosProyectos);
         $data['perfil']['experiencias'] = $experiencias;
+        $data['perfil']['certificaciones'] = Certificacion::where('user_id', $id)
+            ->orderByDesc('fecha_emision')
+            ->orderByDesc('id')
+            ->get();
         $data['perfil']['is_owner'] = $isOwner;
 
         // Ocultar datos sensibles (ci_estado se mantiene para el badge de verificación)
