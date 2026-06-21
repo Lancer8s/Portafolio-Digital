@@ -23,6 +23,17 @@ class UsuarioController extends Controller
         $result = DB::select("SELECT sp_obtener_perfil_usuario(?) AS result", [$id]);
         $data   = json_decode($result[0]->result, true);
 
+        $verificacion = DB::table('usuario')
+            ->where('id_usuario', $id)
+            ->select('ci_estado', 'motivo_rechazo_ci')
+            ->first();
+
+        if ($data['ok'] && $verificacion) {
+            $data['perfil']['ci_estado'] = $verificacion->ci_estado;
+            $data['perfil']['estado_verificacion'] = $verificacion->ci_estado;
+            $data['perfil']['motivo_rechazo_ci'] = $verificacion->motivo_rechazo_ci;
+        }
+
         // La foto_url del SP es la ruta relativa; construimos la URL completa
         if ($data['ok'] && !empty($data['perfil']['foto_url'])) {
             $data['perfil']['foto_url'] = '/api/media/' . $data['perfil']['foto_url'];
@@ -186,48 +197,94 @@ class UsuarioController extends Controller
     public function actualizarCI(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'ci' => 'required|file|mimes:jpg,jpeg,png|max:2048',
+            'ci' => 'required|image|mimes:jpg,jpeg,png|max:2048',
+        ], [
+            'ci.image' => 'El archivo debe ser una imagen válida.',
+            'ci.mimes' => 'Formato no válido. Solo se permiten imágenes JPG o PNG.',
+            'ci.max' => 'El archivo es demasiado grande. El tamaño máximo permitido es 2 MB.',
         ]);
 
         if ($validator->fails()) {
             return response()->json(['ok' => false, 'errores' => $validator->errors()], 422);
         }
 
-        $id   = $request->user()->id_usuario;
+        $id = $request->user()->id_usuario;
+        $usuario = DB::table('usuario')
+            ->where('id_usuario', $id)
+            ->select('ci_estado')
+            ->first();
+
+        if (!$usuario) {
+            return response()->json(['ok' => false, 'mensaje' => 'Usuario no encontrado'], 404);
+        }
+
+        $estadoActual = mb_strtolower(trim((string) $usuario->ci_estado), 'UTF-8');
+
+        if ($estadoActual !== '' && $estadoActual !== 'rechazado') {
+            return response()->json([
+                'ok' => false,
+                'mensaje' => 'Solo puedes enviar un nuevo documento cuando no existe una verificación previa o cuando fue rechazada.',
+            ], 409);
+        }
+
         $file = $request->file('ci');
+        $ruta = null;
 
-        $ruta       = $file->store('documentos_ci', 'public');
-        $nombre     = $file->getClientOriginalName();
-        $tipo       = $file->getMimeType();
-        $tamanioKb  = (int) round($file->getSize() / 1024);
+        try {
+            $ruta = $file->store('documentos_ci', 'public');
 
-        $data = DB::transaction(function () use ($id, $ruta, $nombre, $tipo, $tamanioKb) {
-            DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
+            if (!$ruta) {
+                throw new \RuntimeException('No fue posible almacenar el documento.');
+            }
 
-            // We can just reuse sp_actualizar_foto_perfil or create a new one. 
-            // Wait, we need to update id_imagen_ci and ci_estado!
-            // Let's do it with raw queries or eloquent since it's simple.
-            
-            // First, insert image.
-            $imagenId = DB::table('imagen')->insertGetId([
-                'ruta' => $ruta,
-                'nombre' => $nombre,
-                'tipo' => $tipo,
-                'tamanio_kb' => $tamanioKb,
-                'contexto' => 'perfil'
-            ], 'id_imagen');
+            $nombre    = $file->getClientOriginalName();
+            $tipo      = $file->getMimeType();
+            $tamanioKb = (int) round($file->getSize() / 1024);
 
-            DB::table('usuario')
-                ->where('id_usuario', $id)
-                ->update([
-                    'id_imagen_ci' => $imagenId,
-                    'ci_estado' => 'Pendiente de revisión'
-                ]);
+            DB::transaction(function () use ($id, $ruta, $nombre, $tipo, $tamanioKb) {
+                DB::statement("SET LOCAL app.usuario_actual = '{$id}'");
 
-            return ['ok' => true, 'mensaje' => 'Documento recibido. Tu identidad está pendiente de verificación'];
-        });
+                $imagenId = DB::table('imagen')->insertGetId([
+                    'ruta' => $ruta,
+                    'nombre' => $nombre,
+                    'tipo' => $tipo,
+                    'tamanio_kb' => $tamanioKb,
+                    'contexto' => 'perfil',
+                ], 'id_imagen');
 
-        return response()->json($data, 200);
+                DB::table('usuario')
+                    ->where('id_usuario', $id)
+                    ->update([
+                        'id_imagen_ci' => $imagenId,
+                        'ci_estado' => 'Pendiente de revisión',
+                        'motivo_rechazo_ci' => null,
+                    ]);
+            });
+
+            return response()->json([
+                'ok' => true,
+                'mensaje' => 'Documento recibido. Tu identidad está pendiente de verificación.',
+                'ci_estado' => 'Pendiente de revisión',
+                'estado_verificacion' => 'Pendiente de revisión',
+                'motivo_rechazo_ci' => null,
+                'ci_url' => '/api/media/'.$ruta,
+            ], 200);
+        } catch (\Throwable $exception) {
+            if ($ruta) {
+                try {
+                    Storage::disk('public')->delete($ruta);
+                } catch (\Throwable $cleanupException) {
+                    report($cleanupException);
+                }
+            }
+
+            report($exception);
+
+            return response()->json([
+                'ok' => false,
+                'mensaje' => 'No se pudo procesar el documento de identidad. Intenta nuevamente con una imagen JPG o PNG de hasta 2 MB.',
+            ], 500);
+        }
     }
 
     /**

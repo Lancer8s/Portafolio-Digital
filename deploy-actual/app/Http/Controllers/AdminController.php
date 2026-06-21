@@ -44,17 +44,33 @@ class AdminController extends Controller
         }
 
         $request->validate([
-            'action' => 'required|in:approve,reject'
+            'action' => 'required|in:approve,reject',
+            'motivo_rechazo' => 'required_if:action,reject|nullable|string|max:1000',
+        ], [
+            'motivo_rechazo.required_if' => 'Debes indicar el motivo del rechazo.',
         ]);
 
         $action = $request->input('action');
         $estado = $action === 'approve' ? 'Verificado' : 'Rechazado';
-        
-        DB::table('usuario')
-            ->where('id_usuario', $id)
-            ->update(['ci_estado' => $estado]);
+        $motivo = $action === 'reject' ? trim($request->input('motivo_rechazo')) : null;
 
-        return response()->json(['ok' => true, 'mensaje' => "El estado de verificación ha sido actualizado a $estado."]);
+        $updated = DB::table('usuario')
+            ->where('id_usuario', $id)
+            ->update([
+                'ci_estado' => $estado,
+                'motivo_rechazo_ci' => $motivo,
+            ]);
+
+        if (!$updated && !DB::table('usuario')->where('id_usuario', $id)->exists()) {
+            return response()->json(['ok' => false, 'mensaje' => 'Usuario no encontrado'], 404);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'mensaje' => "El estado de verificación ha sido actualizado a $estado.",
+            'estado_verificacion' => $estado,
+            'motivo_rechazo_ci' => $motivo,
+        ]);
     }
 
     // ── Estadísticas del sistema ──────────────────────────────────────
