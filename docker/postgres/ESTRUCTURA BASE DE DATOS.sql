@@ -2442,6 +2442,45 @@ ALTER SEQUENCE public.bitacora_usuario_id_bitacora_seq OWNED BY public.bitacora_
 
 
 --
+-- Name: certificaciones; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.certificaciones (
+    id bigint NOT NULL,
+    user_id integer NOT NULL,
+    titulo character varying(150) NOT NULL,
+    institucion character varying(150) NOT NULL,
+    fecha_emision date NOT NULL,
+    descripcion character varying(500),
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+ALTER TABLE public.certificaciones OWNER TO aidsoft;
+
+--
+-- Name: certificaciones_id_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.certificaciones_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.certificaciones_id_seq OWNER TO aidsoft;
+
+--
+-- Name: certificaciones_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.certificaciones_id_seq OWNED BY public.certificaciones.id;
+
+
+--
 -- Name: experiencia; Type: TABLE; Schema: public; Owner: aidsoft
 --
 
@@ -2451,10 +2490,13 @@ CREATE TABLE public.experiencia (
     tipo character varying(20) NOT NULL,
     institucion_empresa character varying(150) NOT NULL,
     cargo_titulo character varying(150) NOT NULL,
-    fecha_inicio date NOT NULL,
+    fecha_inicio date,
     fecha_fin date,
     descripcion text,
     fecha_registro timestamp without time zone DEFAULT now() NOT NULL,
+    nivel_academico character varying(50) DEFAULT NULL::character varying,
+    referencias text,
+    url_certificado character varying(255) DEFAULT NULL::character varying,
     CONSTRAINT experiencia_tipo_check CHECK (((tipo)::text = ANY ((ARRAY['laboral'::character varying, 'academica'::character varying])::text[])))
 );
 
@@ -2559,6 +2601,41 @@ ALTER TABLE public.imagen_id_imagen_seq OWNER TO aidsoft;
 --
 
 ALTER SEQUENCE public.imagen_id_imagen_seq OWNED BY public.imagen.id_imagen;
+
+
+--
+-- Name: migrations; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.migrations (
+    id integer NOT NULL,
+    migration character varying(255) NOT NULL,
+    batch integer NOT NULL
+);
+
+
+ALTER TABLE public.migrations OWNER TO aidsoft;
+
+--
+-- Name: migrations_id_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.migrations_id_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.migrations_id_seq OWNER TO aidsoft;
+
+--
+-- Name: migrations_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.migrations_id_seq OWNED BY public.migrations.id;
 
 
 --
@@ -2779,6 +2856,7 @@ CREATE TABLE public.usuario (
     visibilidad character varying(20) DEFAULT 'publico'::character varying NOT NULL,
     activo boolean DEFAULT true NOT NULL,
     fecha_registro timestamp without time zone DEFAULT now() NOT NULL,
+    motivo_rechazo_ci text,
     CONSTRAINT usuario_visibilidad_check CHECK (((visibilidad)::text = ANY ((ARRAY['publico'::character varying, 'privado'::character varying])::text[])))
 );
 
@@ -2799,6 +2877,18 @@ CREATE TABLE public.usuario_habilidad (
 
 
 ALTER TABLE public.usuario_habilidad OWNER TO aidsoft;
+
+--
+-- Name: usuario_habilidad_personalizada; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.usuario_habilidad_personalizada (
+    id_usuario integer NOT NULL,
+    id_habilidad integer NOT NULL
+);
+
+
+ALTER TABLE public.usuario_habilidad_personalizada OWNER TO aidsoft;
 
 --
 -- Name: usuario_id_usuario_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
@@ -2938,6 +3028,13 @@ ALTER TABLE ONLY public.bitacora_usuario_habilidad ALTER COLUMN id_bitacora SET 
 
 
 --
+-- Name: certificaciones id; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.certificaciones ALTER COLUMN id SET DEFAULT nextval('public.certificaciones_id_seq'::regclass);
+
+
+--
 -- Name: experiencia id_experiencia; Type: DEFAULT; Schema: public; Owner: aidsoft
 --
 
@@ -2956,6 +3053,13 @@ ALTER TABLE ONLY public.habilidad ALTER COLUMN id_habilidad SET DEFAULT nextval(
 --
 
 ALTER TABLE ONLY public.imagen ALTER COLUMN id_imagen SET DEFAULT nextval('public.imagen_id_imagen_seq'::regclass);
+
+
+--
+-- Name: migrations id; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.migrations_id_seq'::regclass);
 
 
 --
@@ -3026,6 +3130,14 @@ ALTER TABLE ONLY public.bitacora_usuario
 
 
 --
+-- Name: certificaciones certificaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.certificaciones
+    ADD CONSTRAINT certificaciones_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: experiencia experiencia_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
@@ -3055,6 +3167,14 @@ ALTER TABLE ONLY public.habilidad
 
 ALTER TABLE ONLY public.imagen
     ADD CONSTRAINT imagen_pkey PRIMARY KEY (id_imagen);
+
+
+--
+-- Name: migrations migrations_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.migrations
+    ADD CONSTRAINT migrations_pkey PRIMARY KEY (id);
 
 
 --
@@ -3146,6 +3266,14 @@ ALTER TABLE ONLY public.usuario
 
 
 --
+-- Name: usuario_habilidad_personalizada usuario_habilidad_personalizada_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.usuario_habilidad_personalizada
+    ADD CONSTRAINT usuario_habilidad_personalizada_pkey PRIMARY KEY (id_usuario, id_habilidad);
+
+
+--
 -- Name: usuario_habilidad usuario_habilidad_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
@@ -3159,6 +3287,13 @@ ALTER TABLE ONLY public.usuario_habilidad
 
 ALTER TABLE ONLY public.usuario
     ADD CONSTRAINT usuario_pkey PRIMARY KEY (id_usuario);
+
+
+--
+-- Name: certificaciones_user_id_fecha_emision_index; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX certificaciones_user_id_fecha_emision_index ON public.certificaciones USING btree (user_id, fecha_emision);
 
 
 --
@@ -3323,6 +3458,14 @@ CREATE TRIGGER trg_audit_usuario_habilidad AFTER INSERT OR DELETE OR UPDATE ON p
 
 
 --
+-- Name: certificaciones certificaciones_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.certificaciones
+    ADD CONSTRAINT certificaciones_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
 -- Name: experiencia experiencia_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
@@ -3408,6 +3551,22 @@ ALTER TABLE ONLY public.usuario_habilidad
 
 ALTER TABLE ONLY public.usuario_habilidad
     ADD CONSTRAINT usuario_habilidad_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: usuario_habilidad_personalizada usuario_habilidad_personalizada_id_habilidad_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.usuario_habilidad_personalizada
+    ADD CONSTRAINT usuario_habilidad_personalizada_id_habilidad_fkey FOREIGN KEY (id_habilidad) REFERENCES public.habilidad(id_habilidad) ON DELETE CASCADE;
+
+
+--
+-- Name: usuario_habilidad_personalizada usuario_habilidad_personalizada_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.usuario_habilidad_personalizada
+    ADD CONSTRAINT usuario_habilidad_personalizada_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
 
 
 --
