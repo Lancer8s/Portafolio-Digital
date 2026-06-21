@@ -7,6 +7,8 @@
  *   "Verificado"            → Check verificado (azul)
  */
 
+// TODO: Agregar estado visual para "Rechazado" (ícono rojo con X)
+// para que el usuario sepa que debe reenviar su documento.
 export default function VerificationBadge({ ciEstado, size = 18, showUnverified = false }) {
   // Sin estado → no mostrar nada (a menos que showUnverified sea true)
   if (!ciEstado && !showUnverified) return null;
