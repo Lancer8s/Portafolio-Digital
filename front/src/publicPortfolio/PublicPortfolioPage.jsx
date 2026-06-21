@@ -564,7 +564,10 @@ export default function PublicPortfolioPage() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <strong style={{ color: "#3B82F6", fontSize: 18 }}>{portfolioUserId}</strong>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(String(portfolioUserId)); alert("ID copiado al portapapeles"); }}
+                  {/* FIX: Verificar soporte de navigator.clipboard antes de usar.
+                      En HTTP sin HTTPS, clipboard API no está disponible.
+                      Implementar fallback con textarea oculto + execCommand. */}
+                  onClick={() => { navigator.clipboard.writeText(String(portfolioUserId)); alert("ID copiado al portapapeles"); }}
                     style={{ background: isDark ? "#0F172A" : "#fff", color: "#3B82F6", border: `1px solid ${border}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", fontSize: 11, fontWeight: 800, whiteSpace: "nowrap" }}
                   >
                     Copiar ID
