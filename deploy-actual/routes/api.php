@@ -6,6 +6,7 @@ use App\Http\Controllers\UsuarioController;
 use App\Http\Controllers\HabilidadController;
 use App\Http\Controllers\ProyectoController;
 use App\Http\Controllers\ExperienciaController;
+use App\Http\Controllers\CertificacionController;
 use App\Http\Controllers\AdminController;
 
 /*
@@ -114,6 +115,14 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/', [ExperienciaController::class, 'crear']);
         Route::put('{id}', [ExperienciaController::class, 'actualizar']);
         Route::delete('{id}', [ExperienciaController::class, 'eliminar']);
+    });
+
+    // Certificaciones y logros
+    Route::prefix('certificaciones')->group(function () {
+        Route::get('/', [CertificacionController::class, 'listar']);
+        Route::post('/', [CertificacionController::class, 'crear']);
+        Route::put('{id}', [CertificacionController::class, 'actualizar']);
+        Route::delete('{id}', [CertificacionController::class, 'eliminar']);
     });
 
     // Proyectos
