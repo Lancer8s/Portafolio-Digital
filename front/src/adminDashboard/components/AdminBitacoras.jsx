@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion as Motion, AnimatePresence } from "framer-motion";
 import { adminAPI } from "../../api";
 
+// Pestañas disponibles para cambiar el tipo de bitácora.
 const TABS = [
   { id: "usuario", label: "Usuarios" },
   { id: "proyecto", label: "Proyectos" },
@@ -9,6 +10,7 @@ const TABS = [
   { id: "rol", label: "Roles" },
 ];
 
+// Filtros iniciales de la búsqueda y paginación.
 const INITIAL_FILTERS = {
   fecha_desde: "",
   fecha_hasta: "",
@@ -19,6 +21,7 @@ const INITIAL_FILTERS = {
   page: 1,
 };
 
+// Componente principal para mostrar y filtrar las bitácoras.
 export default function AdminBitacoras({ isDark }) {
   const [tab, setTab] = useState("usuario");
   const [registros, setRegistros] = useState([]);
@@ -30,12 +33,14 @@ export default function AdminBitacoras({ isDark }) {
   const [appliedFilters, setAppliedFilters] = useState(INITIAL_FILTERS);
   const [exporting, setExporting] = useState(false);
 
+  // Colores usados según el modo claro u oscuro.
   const text = isDark ? "#F8FAFC" : "#0F172A";
   const sub = isDark ? "#94A3B8" : "#64748B";
   const cardBg = isDark ? "#0F172A" : "#FFFFFF";
   const border = isDark ? "#1E293B" : "#E2E8F0";
   const inputBg = isDark ? "#1E293B" : "#F8FAFC";
 
+  // Carga las bitácoras cada vez que cambia la pestaña o los filtros aplicados.
   useEffect(() => {
     let active = true;
     const fetchData = async () => {
@@ -57,16 +62,20 @@ export default function AdminBitacoras({ isDark }) {
     return () => { active = false; };
   }, [tab, appliedFilters]);
 
+  // Aplica los filtros seleccionados. Antes no había buscador por filtrado.
   const applyFilters = () => {
     const nextFilters = { ...filtros, search_user: filtros.search_user.trim(), page: 1 };
     setFiltros(nextFilters);
     setAppliedFilters(nextFilters);
   };
+
+  // Limpia todos los filtros y vuelve al estado inicial.
   const clearFilters = () => {
     setFiltros(INITIAL_FILTERS);
     setAppliedFilters(INITIAL_FILTERS);
   };
 
+  // Cambia de pestaña y reinicia la página actual.
   const changeTab = (nextTab) => {
     setTab(nextTab);
     setExpandedId(null);
@@ -74,11 +83,13 @@ export default function AdminBitacoras({ isDark }) {
     setAppliedFilters(f => ({ ...f, page: 1 }));
   };
 
+  // Cambia la página manteniendo los filtros aplicados.
   const goToPage = (page) => {
     setFiltros(f => ({ ...f, page }));
     setAppliedFilters(f => ({ ...f, page }));
   };
 
+  // Exporta la bitácora actual usando los filtros aplicados.
   const handleExport = async () => {
     setExporting(true);
     try { await adminAPI.exportBitacora(tab, appliedFilters); }
@@ -86,9 +97,11 @@ export default function AdminBitacoras({ isDark }) {
     finally { setExporting(false); }
   };
 
+  // Colores y textos para identificar cada acción.
   const actionColors = { INSERT: "#10B981", UPDATE: "#3B82F6", DELETE: "#EF4444" };
   const actionLabels = { INSERT: "Inserción", UPDATE: "Actualización", DELETE: "Eliminación" };
 
+  // Estilo base para los campos de filtro.
   const inp = { background: inputBg, border: `1px solid ${border}`, color: text, borderRadius: 8, padding: "8px 12px", fontSize: 13, outline: "none" };
 
   return (
@@ -141,11 +154,13 @@ export default function AdminBitacoras({ isDark }) {
       {/* Filtros */}
       <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 12, padding: 16, marginBottom: 20, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
         <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: "1 1 240px" }}>
+          {/* Buscador por nombre o correo del usuario. */}
           <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Buscar usuario</label>
           <div style={{ position: "relative" }}>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={sub} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
               <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
             </svg>
+            {/* Permite aplicar el filtro presionando Enter. */}
             <input
               type="search"
               value={filtros.search_user}
@@ -157,14 +172,17 @@ export default function AdminBitacoras({ isDark }) {
           </div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* Filtro por fecha inicial. */}
           <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Desde</label>
           <input type="date" value={filtros.fecha_desde} onChange={e => setFiltros(f => ({ ...f, fecha_desde: e.target.value }))} style={inp} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* Filtro por fecha final. */}
           <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Hasta</label>
           <input type="date" value={filtros.fecha_hasta} onChange={e => setFiltros(f => ({ ...f, fecha_hasta: e.target.value }))} style={inp} />
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+          {/* Filtro por tipo de acción realizada. */}
           <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Acción</label>
           <select value={filtros.accion} onChange={e => setFiltros(f => ({ ...f, accion: e.target.value }))} style={{ ...inp, appearance: "auto" }}>
             <option value="">Todas</option>
@@ -174,6 +192,7 @@ export default function AdminBitacoras({ isDark }) {
           </select>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 178 }}>
+          {/* Filtro por estado del perfil del usuario. */}
           <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Estado del perfil</label>
           <select value={filtros.profile_status} onChange={e => setFiltros(f => ({ ...f, profile_status: e.target.value }))} style={{ ...inp, appearance: "auto" }}>
             <option value="">Todos los perfiles</option>
@@ -182,6 +201,7 @@ export default function AdminBitacoras({ isDark }) {
           </select>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 170 }}>
+          {/* Filtro por actividad del usuario. */}
           <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Actividad</label>
           <select value={filtros.activity_status} onChange={e => setFiltros(f => ({ ...f, activity_status: e.target.value }))} style={{ ...inp, appearance: "auto" }}>
             <option value="">Toda la actividad</option>
@@ -205,13 +225,13 @@ export default function AdminBitacoras({ isDark }) {
         </div>
       ) : (
         <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 14, overflow: "hidden" }}>
-          {/* Header */}
+          {/* Encabezado de la tabla de bitácoras. */}
           <div style={{ display: "grid", gridTemplateColumns: "70px 100px 1fr 150px 90px 40px", gap: 8, padding: "12px 18px", borderBottom: `1px solid ${border}`, background: isDark ? "#0B1120" : "#F8FAFC" }}>
             {["ID", "Acción", "Descripción", "Actor", "Fecha", ""].map((h, i) => (
               <span key={i} style={{ fontSize: 11, color: sub, fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5 }}>{h}</span>
             ))}
           </div>
-          {/* Rows */}
+          {/* Registros obtenidos desde la API. */}
           {registros.map(r => (
             <div key={r.id_bitacora}>
               <div onClick={() => setExpandedId(expandedId === r.id_bitacora ? null : r.id_bitacora)}
@@ -231,6 +251,7 @@ export default function AdminBitacoras({ isDark }) {
                 <span style={{ fontSize: 14, color: sub, textAlign: "center", transform: expandedId === r.id_bitacora ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}>▾</span>
               </div>
               <AnimatePresence>
+                {/* Detalle del registro seleccionado. */}
                 {expandedId === r.id_bitacora && (
                   <Motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
                     style={{ overflow: "hidden", borderBottom: `1px solid ${border}` }}>
