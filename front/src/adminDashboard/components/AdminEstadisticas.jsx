@@ -2,15 +2,21 @@ import { useState, useEffect } from "react";
 import { motion as Motion } from "framer-motion";
 import { adminAPI } from "../../api";
 
+// Componente principal del dashboard de estadísticas.
 export default function AdminEstadisticas({ isDark }) {
+  // Guarda las estadísticas recibidas desde la API.
   const [stats, setStats] = useState(null);
+
+  // Controla el estado de carga.
   const [loading, setLoading] = useState(true);
 
+  // Colores usados según el modo claro u oscuro.
   const text = isDark ? "#F8FAFC" : "#0F172A";
   const sub = isDark ? "#94A3B8" : "#64748B";
   const cardBg = isDark ? "#0F172A" : "#FFFFFF";
   const border = isDark ? "#1E293B" : "#E2E8F0";
 
+  // Carga las estadísticas al abrir el dashboard.
   useEffect(() => {
     adminAPI.getEstadisticas()
       .then(r => { if (r.ok) setStats(r); })
@@ -18,6 +24,7 @@ export default function AdminEstadisticas({ isDark }) {
       .finally(() => setLoading(false));
   }, []);
 
+  // Muestra una animación mientras se cargan los datos.
   if (loading) return (
     <div style={{ display: "flex", justifyContent: "center", padding: 60 }}>
       <Motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
@@ -25,9 +32,13 @@ export default function AdminEstadisticas({ isDark }) {
     </div>
   );
 
+  // Muestra error si no se pudieron cargar las estadísticas.
   if (!stats) return <p style={{ color: sub }}>Error al cargar estadísticas.</p>;
 
+  // Datos principales de las estadísticas.
   const e = stats.estadisticas || {};
+
+  // Tarjetas del dashboard. Antes no había resumen visual de estadísticas.
   const cards = [
     { label: "Total Usuarios", value: e.total_usuarios ?? 0, color: "#3B82F6", icon: "M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4-4v2m22-4a4 4 0 01-4 4h-2" },
     { label: "Usuarios conectados (15 min)", value: e.usuarios_activos ?? 0, color: "#10B981", icon: "M9 12l2 2 4-4" },
@@ -38,19 +49,26 @@ export default function AdminEstadisticas({ isDark }) {
     { label: "CI Pendientes", value: stats.ci_pendientes ?? 0, color: "#EF4444", icon: "M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" },
   ];
 
+  // Calcula el valor máximo para escalar el gráfico de registros por mes.
   const maxRegistros = Math.max(...(stats.usuarios_por_mes || []).map(u => u.total), 1);
+
+  // Nombres mostrados para los estados de proyectos.
   const projectStateLabels = {
     planificado: "Planificados",
     en_desarrollo: "En desarrollo",
     pausado: "Pausados",
     completado: "Completados",
   };
+
+  // Colores usados para cada estado de proyecto.
   const projectStateColors = {
     planificado: "#F59E0B",
     en_desarrollo: "#3B82F6",
     pausado: "#94A3B8",
     completado: "#10B981",
   };
+
+  // Calcula el total de proyectos por estado.
   const totalProyectosPorEstado = (stats.proyectos_por_estado || []).reduce((total, item) => total + Number(item.total), 0);
 
   return (
@@ -105,6 +123,7 @@ export default function AdminEstadisticas({ isDark }) {
           ) : (
             <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
               {(stats.proyectos_por_estado || []).map((p, i) => {
+                // Calcula el porcentaje de cada estado.
                 const pct = totalProyectosPorEstado > 0 ? Math.round((Number(p.total) / totalProyectosPorEstado) * 100) : 0;
                 return (
                   <div key={i}>
