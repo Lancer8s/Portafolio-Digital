@@ -149,7 +149,10 @@ export default function PublicPortfolioPage() {
 
         setData({ ...perfil, proyectos });
       } catch (err) {
-        if (err.response?.status === 403) {
+          // MEJORA: Mensajes de error más descriptivos y amigables cuando
+          // el portafolio no está disponible. Diferenciar entre perfil incompleto,
+          // portafolio privado y portafolio inexistente con iconos y acciones claras.
+          if (err.response?.status === 403) {
           const codigo = err.response?.data?.codigo;
           if (codigo === "PERFIL_INCOMPLETO") {
             setError("Este portafolio aún no está disponible. El usuario no ha completado los datos obligatorios de su perfil.");
@@ -561,7 +564,10 @@ export default function PublicPortfolioPage() {
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 8 }}>
                   <strong style={{ color: "#3B82F6", fontSize: 18 }}>{portfolioUserId}</strong>
                   <button
-                    onClick={() => { navigator.clipboard.writeText(String(portfolioUserId)); alert("ID copiado al portapapeles"); }}
+                  {/* FIX: Verificar soporte de navigator.clipboard antes de usar.
+                      En HTTP sin HTTPS, clipboard API no está disponible.
+                      Implementar fallback con textarea oculto + execCommand. */}
+                  onClick={() => { navigator.clipboard.writeText(String(portfolioUserId)); alert("ID copiado al portapapeles"); }}
                     style={{ background: isDark ? "#0F172A" : "#fff", color: "#3B82F6", border: `1px solid ${border}`, borderRadius: 7, padding: "5px 9px", cursor: "pointer", fontSize: 11, fontWeight: 800, whiteSpace: "nowrap" }}
                   >
                     Copiar ID
@@ -679,6 +685,9 @@ export default function PublicPortfolioPage() {
               </div>
               <h2 className="pub-section-title">Proyectos</h2>
             </div>
+            {/* FIX: Unificar mensaje cuando el portafolio está vacío.
+                El mensaje debe ser consistente: "Aún no hay proyectos registrados."
+                No alternar entre diferentes mensajes según el estado de carga. */}
             {proyectosDestacados.length === 0 && proyectosGenerales.length === 0 ? (
               <p style={{ color: sub, fontSize: 14 }}>Aún no hay proyectos.</p>
             ) : (
