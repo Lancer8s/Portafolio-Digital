@@ -3,6 +3,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import { experienciaAPI } from "../../api";
 import lapizClaro from "../../assets/lapizClaro.png";
 import lapizOscuro from "../../assets/lapizOscuro.png";
+// Límites de caracteres para campos del formulario de experiencia laboral.
+// Estos límites deben coincidir con las restricciones de la base de datos
+// para evitar errores de truncamiento al guardar.
 const MAX_LENGTHS = {
   cargo_titulo: 150,
   institucion_empresa: 150,

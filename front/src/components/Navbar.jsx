@@ -551,6 +551,9 @@ export default function Navbar() {
                   Cancelar
                 </button>
                 <button
+                  // FIX: navigator.clipboard.writeText puede fallar en contextos
+                  // inseguros (HTTP) o cuando el documento no tiene foco.
+                  // Usar fallback con document.execCommand('copy') si falla.
                   onClick={() => {
                     navigator.clipboard.writeText(String(userData?.id_usuario || ""));
                     alert("ID copiado al portapapeles");

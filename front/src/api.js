@@ -63,6 +63,11 @@ export const getApiErrorMessage = (err, fallback = "Error de conexión con el se
   return fallback;
 };
 
+// ── SEGURIDAD: Las respuestas del backend NUNCA deben incluir contraseñas,
+// tokens internos ni datos sensibles de base de datos. Toda información
+// confidencial debe ser filtrada en el backend antes de enviar la respuesta.
+// El sistema no debe ser violable por inspección de respuestas API. ──
+
 // ── Request interceptor: attach Bearer token ──
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem("auth_token");

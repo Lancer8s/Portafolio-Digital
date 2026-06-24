@@ -2,6 +2,8 @@ import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { adminAPI, resolveMediaUrl } from "../../api";
 
+// SEGURIDAD: La imagen del CI solo debe ser accesible por administradores.
+// Validar en backend que el endpoint /admin/ci-pending requiera rol administrador.
 export default function AdminCIVerification({ isDark, onCountChange }) {
   const [usuarios, setUsuarios] = useState([]);
   const [loading, setLoading] = useState(true);
