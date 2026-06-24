@@ -64,28 +64,74 @@ class AdminController extends Controller
             return response()->json(['ok' => false, 'mensaje' => 'No autorizado'], 403);
         }
 
-        $stats = DB::selectOne('SELECT * FROM v_estadisticas_admin');
+        $viewStats = (array) DB::selectOne('SELECT * FROM v_estadisticas_admin');
+
+        // Un usuario se considera conectado cuando alguno de sus tokens fue
+        // utilizado durante los últimos 15 minutos.
+        $usuariosActivos = DB::table('personal_access_tokens as pat')
+            ->join('usuario as u', 'pat.tokenable_id', '=', 'u.id_usuario')
+            ->where('pat.tokenable_type', \App\Models\Usuario::class)
+            ->whereNotNull('pat.last_used_at')
+            ->where('pat.last_used_at', '>=', now()->subMinutes(15))
+            ->distinct()
+            ->count('pat.tokenable_id');
+
+        $totalProyectos = DB::table('proyecto')->count();
+        $proyectosCompletados = DB::table('proyecto')
+            ->where('estado', 'completado')
+            ->count();
+
+        $stats = array_merge($viewStats, [
+            'total_usuarios' => DB::table('usuario')->count(),
+            'usuarios_activos' => $usuariosActivos,
+            'total_proyectos' => $totalProyectos,
+            'proyectos_completados' => $proyectosCompletados,
+            'proyectos_no_completados' => $totalProyectos - $proyectosCompletados,
+        ]);
 
         $ciPendientes = DB::table('usuario')
             ->where('ci_estado', 'Pendiente de revisión')
             ->count();
 
-        // Usuarios registrados por mes (últimos 6 meses)
+        // Usuarios registrados por mes (últimos 6 meses, incluyendo meses sin registros).
         $usuariosPorMes = DB::select("
-            SELECT TO_CHAR(fecha_registro, 'YYYY-MM') as mes,
-                   COUNT(*) as total
-            FROM usuario
-            WHERE fecha_registro >= NOW() - INTERVAL '6 months'
-            GROUP BY TO_CHAR(fecha_registro, 'YYYY-MM')
-            ORDER BY mes
+            SELECT TO_CHAR(m.mes, 'YYYY-MM') AS periodo,
+                   COUNT(u.id_usuario)::INTEGER AS total
+            FROM generate_series(
+                DATE_TRUNC('month', CURRENT_DATE) - INTERVAL '5 months',
+                DATE_TRUNC('month', CURRENT_DATE),
+                INTERVAL '1 month'
+            ) AS m(mes)
+            LEFT JOIN usuario u
+              ON DATE_TRUNC('month', u.fecha_registro) = m.mes
+            GROUP BY m.mes
+            ORDER BY m.mes
         ");
+
+        $nombresMes = [
+            1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+            5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+            9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre',
+        ];
+
+        foreach ($usuariosPorMes as $registro) {
+            $numeroMes = (int) substr($registro->periodo, 5, 2);
+            $registro->mes = $nombresMes[$numeroMes];
+            $registro->total = (int) $registro->total;
+        }
 
         // Distribución de proyectos por estado
         $proyectosPorEstado = DB::select("
-            SELECT estado, COUNT(*) as total
+            SELECT estado, COUNT(*)::INTEGER as total
             FROM proyecto
             GROUP BY estado
-            ORDER BY total DESC
+            ORDER BY CASE estado
+                WHEN 'planificado' THEN 1
+                WHEN 'en_desarrollo' THEN 2
+                WHEN 'pausado' THEN 3
+                WHEN 'completado' THEN 4
+                ELSE 5
+            END
         ");
 
         return response()->json([
@@ -109,6 +155,87 @@ class AdminController extends Controller
         return $mapping[$tabla] ?? null;
     }
 
+    /**
+     * Construye la consulta base de bitácoras y aplica todos los filtros.
+     * El alias actor_usuario representa al usuario que ejecutó la acción.
+     */
+    private function buildBitacoraQuery(Request $request, $tableName) {
+        $query = DB::table("{$tableName} as bitacora")
+            ->leftJoin('usuario as actor_usuario', 'bitacora.id_usuario_accion', '=', 'actor_usuario.id_usuario');
+
+        if ($request->filled('fecha_desde')) {
+            $query->where('bitacora.fecha', '>=', $request->input('fecha_desde'));
+        }
+        if ($request->filled('fecha_hasta')) {
+            $query->where('bitacora.fecha', '<=', $request->input('fecha_hasta'));
+        }
+        if ($request->filled('accion')) {
+            $query->where('bitacora.accion', $request->input('accion'));
+        }
+        if ($request->filled('id_usuario')) {
+            $query->where('bitacora.id_usuario_accion', $request->input('id_usuario'));
+        }
+
+        if ($request->filled('search_user')) {
+            $search = '%'.trim($request->input('search_user')).'%';
+            $query->whereRaw(
+                "CONCAT_WS(' ', COALESCE(actor_usuario.nombre, ''), COALESCE(actor_usuario.apellido, ''), COALESCE(actor_usuario.email, '')) ILIKE ?",
+                [$search]
+            );
+        }
+
+        $profileStatus = $request->input('profile_status');
+        if (in_array($profileStatus, ['completed', 'incomplete'], true)) {
+            $query->whereNotNull('actor_usuario.id_usuario');
+            $completedProfile = function ($profileQuery) {
+                $profileQuery
+                    ->whereNotNull('actor_usuario.profesion')
+                    ->where('actor_usuario.profesion', '<>', '')
+                    ->whereNotNull('actor_usuario.telefono')
+                    ->where('actor_usuario.telefono', '<>', '')
+                    ->whereNotNull('actor_usuario.biografia')
+                    ->where('actor_usuario.biografia', '<>', '')
+                    ->whereNotNull('actor_usuario.id_imagen');
+            };
+
+            if ($profileStatus === 'completed') {
+                $query->where($completedProfile);
+            } else {
+                $query->where(function ($profileQuery) {
+                    $profileQuery
+                        ->whereNull('actor_usuario.profesion')
+                        ->orWhere('actor_usuario.profesion', '')
+                        ->orWhereNull('actor_usuario.telefono')
+                        ->orWhere('actor_usuario.telefono', '')
+                        ->orWhereNull('actor_usuario.biografia')
+                        ->orWhere('actor_usuario.biografia', '')
+                        ->orWhereNull('actor_usuario.id_imagen');
+                });
+            }
+        }
+
+        $activityStatus = $request->input('activity_status');
+        if (in_array($activityStatus, ['active', 'inactive'], true)) {
+            $query->whereNotNull('actor_usuario.id_usuario');
+            $activeToken = function ($tokenQuery) {
+                $tokenQuery->select(DB::raw(1))
+                    ->from('personal_access_tokens as active_token')
+                    ->whereColumn('active_token.tokenable_id', 'actor_usuario.id_usuario')
+                    ->where('active_token.tokenable_type', \App\Models\Usuario::class)
+                    ->whereNotNull('active_token.last_used_at')
+                    ->where('active_token.last_used_at', '>=', now()->subMinutes(15));
+            };
+
+            if ($activityStatus === 'active') {
+                $query->whereExists($activeToken);
+            } else {
+                $query->whereNotExists($activeToken);
+            }
+        }
+
+        return $query;
+    }
+
     public function getBitacoras(Request $request, $tabla) {
         if (!$this->isAdmin($request->user()->id_usuario)) {
             return response()->json(['ok' => false, 'mensaje' => 'No autorizado'], 403);
@@ -119,51 +246,27 @@ class AdminController extends Controller
             return response()->json(['ok' => false, 'mensaje' => 'Tabla no válida'], 400);
         }
 
-        $query = DB::table($tableName)
-            ->leftJoin('usuario', "$tableName.id_usuario_accion", '=', 'usuario.id_usuario')
-            ->select(
-                "$tableName.*",
-                'usuario.nombre as actor_nombre',
-                'usuario.apellido as actor_apellido',
-                'usuario.email as actor_email'
-            );
+        $query = $this->buildBitacoraQuery($request, $tableName);
 
-        // Filtros
-        if ($request->filled('fecha_desde')) {
-            $query->where("$tableName.fecha", '>=', $request->input('fecha_desde'));
-        }
-        if ($request->filled('fecha_hasta')) {
-            $query->where("$tableName.fecha", '<=', $request->input('fecha_hasta'));
-        }
-        if ($request->filled('accion')) {
-            $query->where("$tableName.accion", $request->input('accion'));
-        }
-        if ($request->filled('id_usuario')) {
-            $query->where("$tableName.id_usuario_accion", $request->input('id_usuario'));
-        }
+        // El resumen usa exactamente los mismos filtros que la tabla.
+        $resumen = (clone $query)
+            ->selectRaw("COUNT(*) FILTER (WHERE bitacora.accion = 'INSERT') as inserts")
+            ->selectRaw("COUNT(*) FILTER (WHERE bitacora.accion = 'UPDATE') as updates")
+            ->selectRaw("COUNT(*) FILTER (WHERE bitacora.accion = 'DELETE') as deletes")
+            ->selectRaw('COUNT(*) as total')
+            ->first();
 
-        $query->orderBy("$tableName.fecha", 'desc')
-              ->orderBy("$tableName.hora", 'desc');
+        $query->select(
+                'bitacora.*',
+                'actor_usuario.nombre as actor_nombre',
+                'actor_usuario.apellido as actor_apellido',
+                'actor_usuario.email as actor_email'
+            )
+            ->orderBy('bitacora.fecha', 'desc')
+            ->orderBy('bitacora.hora', 'desc');
 
         $perPage = min((int) $request->input('per_page', 15), 100);
         $registros = $query->paginate($perPage);
-
-        // Resumen de acciones para la tabla actual con los mismos filtros
-        $resumenQuery = DB::table($tableName)->select(
-            DB::raw("COUNT(*) FILTER (WHERE accion = 'INSERT') as inserts"),
-            DB::raw("COUNT(*) FILTER (WHERE accion = 'UPDATE') as updates"),
-            DB::raw("COUNT(*) FILTER (WHERE accion = 'DELETE') as deletes"),
-            DB::raw("COUNT(*) as total")
-        );
-
-        if ($request->filled('fecha_desde')) {
-            $resumenQuery->where('fecha', '>=', $request->input('fecha_desde'));
-        }
-        if ($request->filled('fecha_hasta')) {
-            $resumenQuery->where('fecha', '<=', $request->input('fecha_hasta'));
-        }
-
-        $resumen = $resumenQuery->first();
 
         return response()->json([
             'ok' => true,
@@ -188,31 +291,20 @@ class AdminController extends Controller
             return response()->json(['ok' => false, 'mensaje' => 'Tabla no válida'], 400);
         }
 
-        $query = DB::table($tableName)
-            ->leftJoin('usuario', "$tableName.id_usuario_accion", '=', 'usuario.id_usuario')
+        $query = $this->buildBitacoraQuery($request, $tableName)
             ->select(
-                "$tableName.id_bitacora",
-                "$tableName.accion",
-                "$tableName.descripcion",
-                "$tableName.fecha",
-                "$tableName.hora",
-                'usuario.nombre as actor_nombre',
-                'usuario.apellido as actor_apellido',
-                'usuario.email as actor_email'
+                'bitacora.id_bitacora',
+                'bitacora.accion',
+                'bitacora.descripcion',
+                'bitacora.fecha',
+                'bitacora.hora',
+                'actor_usuario.nombre as actor_nombre',
+                'actor_usuario.apellido as actor_apellido',
+                'actor_usuario.email as actor_email'
             );
 
-        if ($request->filled('fecha_desde')) {
-            $query->where("$tableName.fecha", '>=', $request->input('fecha_desde'));
-        }
-        if ($request->filled('fecha_hasta')) {
-            $query->where("$tableName.fecha", '<=', $request->input('fecha_hasta'));
-        }
-        if ($request->filled('accion')) {
-            $query->where("$tableName.accion", $request->input('accion'));
-        }
-
-        $query->orderBy("$tableName.fecha", 'desc')
-              ->orderBy("$tableName.hora", 'desc');
+        $query->orderBy('bitacora.fecha', 'desc')
+              ->orderBy('bitacora.hora', 'desc');
 
         $registros = $query->get();
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion as Motion, AnimatePresence } from "framer-motion";
 import { adminAPI } from "../../api";
 
 const TABS = [
@@ -9,6 +9,16 @@ const TABS = [
   { id: "rol", label: "Roles" },
 ];
 
+const INITIAL_FILTERS = {
+  fecha_desde: "",
+  fecha_hasta: "",
+  accion: "",
+  search_user: "",
+  profile_status: "",
+  activity_status: "",
+  page: 1,
+};
+
 export default function AdminBitacoras({ isDark }) {
   const [tab, setTab] = useState("usuario");
   const [registros, setRegistros] = useState([]);
@@ -16,7 +26,8 @@ export default function AdminBitacoras({ isDark }) {
   const [resumen, setResumen] = useState(null);
   const [loading, setLoading] = useState(false);
   const [expandedId, setExpandedId] = useState(null);
-  const [filtros, setFiltros] = useState({ fecha_desde: "", fecha_hasta: "", accion: "", page: 1 });
+  const [filtros, setFiltros] = useState(INITIAL_FILTERS);
+  const [appliedFilters, setAppliedFilters] = useState(INITIAL_FILTERS);
   const [exporting, setExporting] = useState(false);
 
   const text = isDark ? "#F8FAFC" : "#0F172A";
@@ -25,23 +36,52 @@ export default function AdminBitacoras({ isDark }) {
   const border = isDark ? "#1E293B" : "#E2E8F0";
   const inputBg = isDark ? "#1E293B" : "#F8FAFC";
 
-  useEffect(() => { fetchData(); }, [tab, filtros.page]);
+  useEffect(() => {
+    let active = true;
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await adminAPI.getBitacoras(tab, appliedFilters);
+        if (active && res.ok) {
+          setRegistros(res.registros);
+          setPaginacion(res.paginacion);
+          setResumen(res.resumen);
+        }
+      } catch (e) {
+        if (active) console.error(e);
+      } finally {
+        if (active) setLoading(false);
+      }
+    };
+    fetchData();
+    return () => { active = false; };
+  }, [tab, appliedFilters]);
 
-  const fetchData = async () => {
-    setLoading(true);
-    try {
-      const res = await adminAPI.getBitacoras(tab, filtros);
-      if (res.ok) { setRegistros(res.registros); setPaginacion(res.paginacion); setResumen(res.resumen); }
-    } catch (e) { console.error(e); }
-    finally { setLoading(false); }
+  const applyFilters = () => {
+    const nextFilters = { ...filtros, search_user: filtros.search_user.trim(), page: 1 };
+    setFiltros(nextFilters);
+    setAppliedFilters(nextFilters);
+  };
+  const clearFilters = () => {
+    setFiltros(INITIAL_FILTERS);
+    setAppliedFilters(INITIAL_FILTERS);
   };
 
-  const applyFilters = () => { setFiltros(f => ({ ...f, page: 1 })); fetchData(); };
-  const clearFilters = () => { setFiltros({ fecha_desde: "", fecha_hasta: "", accion: "", page: 1 }); };
+  const changeTab = (nextTab) => {
+    setTab(nextTab);
+    setExpandedId(null);
+    setFiltros(f => ({ ...f, page: 1 }));
+    setAppliedFilters(f => ({ ...f, page: 1 }));
+  };
+
+  const goToPage = (page) => {
+    setFiltros(f => ({ ...f, page }));
+    setAppliedFilters(f => ({ ...f, page }));
+  };
 
   const handleExport = async () => {
     setExporting(true);
-    try { await adminAPI.exportBitacora(tab, filtros); }
+    try { await adminAPI.exportBitacora(tab, appliedFilters); }
     catch (e) { console.error(e); alert("Error al exportar"); }
     finally { setExporting(false); }
   };
@@ -60,7 +100,7 @@ export default function AdminBitacoras({ isDark }) {
         </div>
         <button onClick={handleExport} disabled={exporting}
           style={{ background: isDark ? "#1E293B" : "#F1F5F9", border: `1px solid ${border}`, borderRadius: 8, padding: "8px 16px", color: text, fontWeight: 600, fontSize: 13, cursor: "pointer", display: "flex", alignItems: "center", gap: 6 }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" /><polyline points="7 10 12 15 17 10" /><line x1="12" y1="15" x2="12" y2="3" /></svg>
           {exporting ? "Exportando..." : "Exportar CSV"}
         </button>
       </div>
@@ -68,11 +108,13 @@ export default function AdminBitacoras({ isDark }) {
       {/* Tabs */}
       <div style={{ display: "flex", gap: 4, background: isDark ? "#0F172A" : "#F1F5F9", borderRadius: 10, padding: 4, marginBottom: 20 }}>
         {TABS.map(t => (
-          <button key={t.id} onClick={() => { setTab(t.id); setFiltros(f => ({ ...f, page: 1 })); setExpandedId(null); }}
-            style={{ flex: 1, padding: "9px 0", borderRadius: 8, border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.15s",
+          <button key={t.id} onClick={() => changeTab(t.id)}
+            style={{
+              flex: 1, padding: "9px 0", borderRadius: 8, border: "none", fontWeight: 600, fontSize: 13, cursor: "pointer", transition: "all 0.15s",
               background: tab === t.id ? (isDark ? "#1E293B" : "#fff") : "transparent",
               color: tab === t.id ? "#3B82F6" : sub,
-              boxShadow: tab === t.id ? "0 1px 4px rgba(0,0,0,0.08)" : "none" }}>
+              boxShadow: tab === t.id ? "0 1px 4px rgba(0,0,0,0.08)" : "none"
+            }}>
             {t.label}
           </button>
         ))}
@@ -98,6 +140,22 @@ export default function AdminBitacoras({ isDark }) {
 
       {/* Filtros */}
       <div style={{ background: cardBg, border: `1px solid ${border}`, borderRadius: 12, padding: 16, marginBottom: 20, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "flex-end" }}>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, flex: "1 1 240px" }}>
+          <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Buscar usuario</label>
+          <div style={{ position: "relative" }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke={sub} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", pointerEvents: "none" }}>
+              <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="search"
+              value={filtros.search_user}
+              onChange={e => setFiltros(f => ({ ...f, search_user: e.target.value }))}
+              onKeyDown={e => { if (e.key === "Enter") applyFilters(); }}
+              placeholder="Nombre o correo electrónico"
+              style={{ ...inp, width: "100%", paddingLeft: 34 }}
+            />
+          </div>
+        </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
           <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Desde</label>
           <input type="date" value={filtros.fecha_desde} onChange={e => setFiltros(f => ({ ...f, fecha_desde: e.target.value }))} style={inp} />
@@ -115,14 +173,30 @@ export default function AdminBitacoras({ isDark }) {
             <option value="DELETE">Eliminación</option>
           </select>
         </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 178 }}>
+          <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Estado del perfil</label>
+          <select value={filtros.profile_status} onChange={e => setFiltros(f => ({ ...f, profile_status: e.target.value }))} style={{ ...inp, appearance: "auto" }}>
+            <option value="">Todos los perfiles</option>
+            <option value="completed">Perfil completado</option>
+            <option value="incomplete">Perfil no completado</option>
+          </select>
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 4, minWidth: 170 }}>
+          <label style={{ fontSize: 11, color: sub, fontWeight: 600 }}>Actividad</label>
+          <select value={filtros.activity_status} onChange={e => setFiltros(f => ({ ...f, activity_status: e.target.value }))} style={{ ...inp, appearance: "auto" }}>
+            <option value="">Toda la actividad</option>
+            <option value="active">Usuarios activos</option>
+            <option value="inactive">Usuarios inactivos</option>
+          </select>
+        </div>
         <button onClick={applyFilters} style={{ background: "#3B82F6", color: "#fff", border: "none", borderRadius: 8, padding: "9px 18px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Filtrar</button>
-        <button onClick={() => { clearFilters(); setTimeout(fetchData, 50); }} style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 14px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Limpiar</button>
+        <button onClick={clearFilters} style={{ background: "transparent", color: sub, border: `1px solid ${border}`, borderRadius: 8, padding: "9px 14px", fontWeight: 600, fontSize: 13, cursor: "pointer" }}>Limpiar</button>
       </div>
 
       {/* Tabla */}
       {loading ? (
         <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-          <motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+          <Motion.div animate={{ rotate: 360 }} transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
             style={{ width: 32, height: 32, border: `3px solid ${border}`, borderTopColor: "#3B82F6", borderRadius: "50%" }} />
         </div>
       ) : registros.length === 0 ? (
@@ -141,8 +215,10 @@ export default function AdminBitacoras({ isDark }) {
           {registros.map(r => (
             <div key={r.id_bitacora}>
               <div onClick={() => setExpandedId(expandedId === r.id_bitacora ? null : r.id_bitacora)}
-                style={{ display: "grid", gridTemplateColumns: "70px 100px 1fr 150px 90px 40px", gap: 8, padding: "12px 18px", borderBottom: `1px solid ${border}`, cursor: "pointer", transition: "background 0.1s",
-                  background: expandedId === r.id_bitacora ? (isDark ? "rgba(59,130,246,0.05)" : "#F0F7FF") : "transparent" }}
+                style={{
+                  display: "grid", gridTemplateColumns: "70px 100px 1fr 150px 90px 40px", gap: 8, padding: "12px 18px", borderBottom: `1px solid ${border}`, cursor: "pointer", transition: "background 0.1s",
+                  background: expandedId === r.id_bitacora ? (isDark ? "rgba(59,130,246,0.05)" : "#F0F7FF") : "transparent"
+                }}
                 onMouseOver={e => { if (expandedId !== r.id_bitacora) e.currentTarget.style.background = isDark ? "rgba(255,255,255,0.02)" : "#FAFAFA"; }}
                 onMouseOut={e => { if (expandedId !== r.id_bitacora) e.currentTarget.style.background = "transparent"; }}>
                 <span style={{ fontSize: 13, color: sub, fontWeight: 500 }}>#{r.id_bitacora}</span>
@@ -156,7 +232,7 @@ export default function AdminBitacoras({ isDark }) {
               </div>
               <AnimatePresence>
                 {expandedId === r.id_bitacora && (
-                  <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
+                  <Motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.2 }}
                     style={{ overflow: "hidden", borderBottom: `1px solid ${border}` }}>
                     <div style={{ padding: "16px 18px", background: isDark ? "rgba(15,23,42,0.7)" : "#F8FAFC", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
                       <div>
@@ -176,7 +252,7 @@ export default function AdminBitacoras({ isDark }) {
                       <span>📧 {r.actor_email || "N/A"}</span>
                       <span>🕐 {r.hora}</span>
                     </div>
-                  </motion.div>
+                  </Motion.div>
                 )}
               </AnimatePresence>
             </div>
@@ -187,12 +263,12 @@ export default function AdminBitacoras({ isDark }) {
       {/* Paginación */}
       {paginacion && paginacion.total_paginas > 1 && (
         <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 20 }}>
-          <button disabled={paginacion.pagina_actual <= 1} onClick={() => setFiltros(f => ({ ...f, page: f.page - 1 }))}
+          <button disabled={paginacion.pagina_actual <= 1} onClick={() => goToPage(appliedFilters.page - 1)}
             style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${border}`, background: cardBg, color: text, cursor: paginacion.pagina_actual <= 1 ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600, opacity: paginacion.pagina_actual <= 1 ? 0.4 : 1 }}>← Anterior</button>
           <span style={{ color: sub, fontSize: 13 }}>
             Página {paginacion.pagina_actual} de {paginacion.total_paginas} ({paginacion.total_registros} registros)
           </span>
-          <button disabled={paginacion.pagina_actual >= paginacion.total_paginas} onClick={() => setFiltros(f => ({ ...f, page: f.page + 1 }))}
+          <button disabled={paginacion.pagina_actual >= paginacion.total_paginas} onClick={() => goToPage(appliedFilters.page + 1)}
             style={{ padding: "7px 14px", borderRadius: 8, border: `1px solid ${border}`, background: cardBg, color: text, cursor: paginacion.pagina_actual >= paginacion.total_paginas ? "not-allowed" : "pointer", fontSize: 13, fontWeight: 600, opacity: paginacion.pagina_actual >= paginacion.total_paginas ? 0.4 : 1 }}>Siguiente →</button>
         </div>
       )}

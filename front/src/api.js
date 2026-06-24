@@ -209,7 +209,7 @@ export const portafolioAPI = {
 // Helper reutilizable para construir parámetros de bitácora
 /**
  * Construye los parámetros de URL para los endpoints de bitácora.
- * @param {Object} filtros - Filtros opcionales (fecha_desde, fecha_hasta, accion, id_usuario, page, per_page)
+ * @param {Object} filtros - Filtros opcionales de fecha, acción, usuario, perfil, actividad y paginación.
  * @returns {URLSearchParams}
  */
 const buildBitacoraParams = (filtros = {}) => {
@@ -218,6 +218,9 @@ const buildBitacoraParams = (filtros = {}) => {
   if (filtros.fecha_hasta) params.set("fecha_hasta", filtros.fecha_hasta);
   if (filtros.accion)      params.set("accion", filtros.accion);
   if (filtros.id_usuario)  params.set("id_usuario", filtros.id_usuario);
+  if (filtros.search_user) params.set("search_user", filtros.search_user);
+  if (filtros.profile_status) params.set("profile_status", filtros.profile_status);
+  if (filtros.activity_status) params.set("activity_status", filtros.activity_status);
   if (filtros.page)        params.set("page", filtros.page);
   if (filtros.per_page)    params.set("per_page", filtros.per_page);
   return params;
