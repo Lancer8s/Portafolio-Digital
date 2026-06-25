@@ -93,6 +93,7 @@ class AdminController extends Controller
         }
 
         $viewStats = (array) DB::selectOne('SELECT * FROM v_estadisticas_admin');
+        unset($viewStats['proyectos_completados'], $viewStats['proyectos_no_completados']);
 
         $usuariosActivos = DB::table('personal_access_tokens as pat')
             ->join('usuario as u', 'pat.tokenable_id', '=', 'u.id_usuario')
@@ -103,23 +104,26 @@ class AdminController extends Controller
             ->count('pat.tokenable_id');
 
         $totalProyectos = DB::table('proyecto')->count();
-        $proyectosCompletados = DB::table('proyecto')
-            ->where('estado', 'completado')
+        $totalExperiencias = DB::table('experiencia')
+            ->where('tipo', 'laboral')
+            ->count();
+        $totalFormaciones = DB::table('experiencia')
+            ->where('tipo', 'academica')
             ->count();
 
         $stats = array_merge($viewStats, [
             'total_usuarios' => DB::table('usuario')->count(),
             'usuarios_activos' => $usuariosActivos,
             'total_proyectos' => $totalProyectos,
-            'proyectos_completados' => $proyectosCompletados,
-            'proyectos_no_completados' => $totalProyectos - $proyectosCompletados,
+            'total_experiencias' => $totalExperiencias,
+            'total_formaciones' => $totalFormaciones,
         ]);
 
         $ciPendientes = DB::table('usuario')
             ->where('ci_estado', 'Pendiente de revisión')
             ->count();
 
-        // Usuarios registrados por mes (últimos 6 meses)
+        // Usuarios registrados por mes (ultimos 6 meses)
         $usuariosPorMes = DB::select("
             SELECT TO_CHAR(m.mes, 'YYYY-MM') AS periodo,
                    COUNT(u.id_usuario)::INTEGER AS total
@@ -146,18 +150,30 @@ class AdminController extends Controller
             $registro->total = (int) $registro->total;
         }
 
-        // Distribución de proyectos por estado
-        $proyectosPorEstado = DB::select("
-            SELECT estado, COUNT(*)::INTEGER as total
-            FROM proyecto
-            GROUP BY estado
-            ORDER BY CASE estado
-                WHEN 'planificado' THEN 1
-                WHEN 'en_desarrollo' THEN 2
-                WHEN 'pausado' THEN 3
-                WHEN 'completado' THEN 4
-                ELSE 5
-            END
+        // Estado de verificacion de usuarios
+        $verificacionesPorEstado = DB::select("
+            WITH estados_base(estado, orden) AS (
+                VALUES
+                    ('aprobado', 1),
+                    ('pendiente', 2),
+                    ('rechazado', 3),
+                    ('sin_solicitar', 4)
+            ),
+            conteos AS (
+                SELECT CASE
+                    WHEN ci_estado IS NULL OR BTRIM(ci_estado) = '' THEN 'sin_solicitar'
+                    WHEN LOWER(BTRIM(ci_estado)) IN ('verificado', 'aprobado') THEN 'aprobado'
+                    WHEN LOWER(BTRIM(ci_estado)) LIKE 'pendiente%' THEN 'pendiente'
+                    WHEN LOWER(BTRIM(ci_estado)) = 'rechazado' THEN 'rechazado'
+                    ELSE 'sin_solicitar'
+                END AS estado
+                FROM usuario
+            )
+            SELECT eb.estado, COALESCE(COUNT(c.estado), 0)::INTEGER AS total
+            FROM estados_base eb
+            LEFT JOIN conteos c ON c.estado = eb.estado
+            GROUP BY eb.estado, eb.orden
+            ORDER BY eb.orden
         ");
 
         return response()->json([
@@ -165,7 +181,7 @@ class AdminController extends Controller
             'estadisticas' => $stats,
             'ci_pendientes' => $ciPendientes,
             'usuarios_por_mes' => $usuariosPorMes,
-            'proyectos_por_estado' => $proyectosPorEstado,
+            'verificaciones_por_estado' => $verificacionesPorEstado,
         ]);
     }
 
