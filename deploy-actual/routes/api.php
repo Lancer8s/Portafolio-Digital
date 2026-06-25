@@ -144,6 +144,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('ci-pending', [AdminController::class, 'getPendingCI']);
         Route::put('ci-verify/{id}', [AdminController::class, 'verifyCI']);
         Route::get('estadisticas', [AdminController::class, 'getEstadisticas']);
+        Route::get('usuarios-search', [AdminController::class, 'searchUsuarios']);
         Route::get('bitacoras/{tabla}', [AdminController::class, 'getBitacoras']);
         Route::get('bitacoras/{tabla}/export', [AdminController::class, 'exportBitacoraCSV']);
     });

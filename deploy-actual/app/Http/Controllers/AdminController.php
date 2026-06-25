@@ -187,6 +187,41 @@ class AdminController extends Controller
 
     // ── Bitácoras de auditoría ────────────────────────────────────────
 
+    public function searchUsuarios(Request $request) {
+        if (!$this->isAdmin($request->user()->id_usuario)) {
+            return response()->json(['ok' => false, 'mensaje' => 'No autorizado'], 403);
+        }
+
+        $search = trim((string) $request->input('q', ''));
+        if ($search === '') {
+            return response()->json(['ok' => true, 'usuarios' => []]);
+        }
+
+        $usuarios = DB::table('usuario')
+            ->select('id_usuario', 'nombre', 'apellido', 'email')
+            ->where(function ($query) use ($search) {
+                if (ctype_digit($search)) {
+                    $query->orWhere('id_usuario', (int) $search);
+                }
+
+                $like = '%'.$search.'%';
+                $query
+                    ->orWhere('nombre', 'ILIKE', $like)
+                    ->orWhere('apellido', 'ILIKE', $like)
+                    ->orWhere('email', 'ILIKE', $like)
+                    ->orWhereRaw(
+                        "CONCAT_WS(' ', COALESCE(nombre, ''), COALESCE(apellido, '')) ILIKE ?",
+                        [$like]
+                    );
+            })
+            ->orderBy('nombre')
+            ->orderBy('apellido')
+            ->limit(8)
+            ->get();
+
+        return response()->json(['ok' => true, 'usuarios' => $usuarios]);
+    }
+
     private function getTableName($tabla) {
         $mapping = [
             'usuario'   => 'bitacora_usuario',
@@ -211,7 +246,21 @@ class AdminController extends Controller
             $query->where('bitacora.accion', $request->input('accion'));
         }
         if ($request->filled('id_usuario')) {
-            $query->where('bitacora.id_usuario_accion', $request->input('id_usuario'));
+            $userId = (int) $request->input('id_usuario');
+            $selectedUser = DB::table('usuario')
+                ->select('email')
+                ->where('id_usuario', $userId)
+                ->first();
+
+            $query->where(function ($userQuery) use ($userId, $selectedUser) {
+                $userQuery
+                    ->where('bitacora.id_usuario_accion', $userId)
+                    ->orWhere('bitacora.descripcion', 'ILIKE', '%id='.$userId.'%');
+
+                if ($selectedUser && $selectedUser->email) {
+                    $userQuery->orWhere('bitacora.descripcion', 'ILIKE', '%'.$selectedUser->email.'%');
+                }
+            });
         }
 
         if ($request->filled('search_user')) {
