@@ -23,15 +23,27 @@ class AdminController extends Controller
         }
 
         $usuarios = DB::table('usuario')
-            ->leftJoin('imagen', 'usuario.id_imagen_ci', '=', 'imagen.id_imagen')
+            ->leftJoin('imagen as ci_imagen', 'usuario.id_imagen_ci', '=', 'ci_imagen.id_imagen')
+            ->leftJoin('imagen as perfil_imagen', 'usuario.id_imagen', '=', 'perfil_imagen.id_imagen')
             ->where('usuario.ci_estado', 'Pendiente de revisión')
-            ->select('usuario.id_usuario', 'usuario.nombre', 'usuario.apellido', 'usuario.email', 'usuario.ci_estado', 'imagen.ruta as ci_url')
+            ->select(
+                'usuario.id_usuario',
+                'usuario.nombre',
+                'usuario.apellido',
+                'usuario.email',
+                'usuario.ci_estado',
+                'ci_imagen.ruta as ci_url',
+                'perfil_imagen.ruta as foto_perfil_url'
+            )
             ->orderBy('usuario.fecha_registro', 'desc')
             ->get();
 
         foreach ($usuarios as $u) {
             if ($u->ci_url) {
                 $u->ci_url = '/api/media/' . $u->ci_url;
+            }
+            if ($u->foto_perfil_url) {
+                $u->foto_perfil_url = '/api/media/' . $u->foto_perfil_url;
             }
         }
 
