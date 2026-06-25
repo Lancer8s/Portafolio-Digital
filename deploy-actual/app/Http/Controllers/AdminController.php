@@ -197,7 +197,7 @@ class AdminController extends Controller
         return $mapping[$tabla] ?? null;
     }
 
-    private function buildBitacoraQuery(Request $request, $tableName) {
+    private function buildBitacoraQuery(Request $request, $tableName, $includeActionFilter = true) {
         $query = DB::table("{$tableName} as bitacora")
             ->leftJoin('usuario as actor_usuario', 'bitacora.id_usuario_accion', '=', 'actor_usuario.id_usuario');
 
@@ -207,7 +207,7 @@ class AdminController extends Controller
         if ($request->filled('fecha_hasta')) {
             $query->where('bitacora.fecha', '<=', $request->input('fecha_hasta'));
         }
-        if ($request->filled('accion')) {
+        if ($includeActionFilter && $request->filled('accion')) {
             $query->where('bitacora.accion', $request->input('accion'));
         }
         if ($request->filled('id_usuario')) {
@@ -216,10 +216,14 @@ class AdminController extends Controller
 
         if ($request->filled('search_user')) {
             $search = '%'.trim($request->input('search_user')).'%';
-            $query->whereRaw(
-                "CONCAT_WS(' ', COALESCE(actor_usuario.nombre, ''), COALESCE(actor_usuario.apellido, ''), COALESCE(actor_usuario.email, '')) ILIKE ?",
-                [$search]
-            );
+            $query->where(function ($searchQuery) use ($search) {
+                $searchQuery
+                    ->whereRaw(
+                        "CONCAT_WS(' ', COALESCE(actor_usuario.nombre, ''), COALESCE(actor_usuario.apellido, ''), COALESCE(actor_usuario.email, '')) ILIKE ?",
+                        [$search]
+                    )
+                    ->orWhere('bitacora.descripcion', 'ILIKE', $search);
+            });
         }
 
         $profileStatus = $request->input('profile_status');
@@ -283,8 +287,9 @@ class AdminController extends Controller
         }
 
         $query = $this->buildBitacoraQuery($request, $tableName);
+        $resumenQuery = $this->buildBitacoraQuery($request, $tableName, false);
 
-        $resumen = (clone $query)
+        $resumen = $resumenQuery
             ->selectRaw("COUNT(*) FILTER (WHERE bitacora.accion = 'INSERT') as inserts")
             ->selectRaw("COUNT(*) FILTER (WHERE bitacora.accion = 'UPDATE') as updates")
             ->selectRaw("COUNT(*) FILTER (WHERE bitacora.accion = 'DELETE') as deletes")
