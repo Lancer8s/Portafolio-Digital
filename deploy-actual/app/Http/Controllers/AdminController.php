@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 class AdminController extends Controller
 {
@@ -13,6 +14,15 @@ class AdminController extends Controller
             ->where('rol_usuario.id_usuario', $userId)
             ->where('rol.nombre', 'administrador')
             ->exists();
+    }
+
+    private function tablaNormalizadaExiste(string $tabla): bool
+    {
+        try {
+            return Schema::hasTable($tabla);
+        } catch (\Throwable $exception) {
+            return false;
+        }
     }
 
     // ── Verificación de CI ────────────────────────────────────────────
@@ -104,12 +114,12 @@ class AdminController extends Controller
             ->count('pat.tokenable_id');
 
         $totalProyectos = DB::table('proyecto')->count();
-        $totalExperiencias = DB::table('experiencia')
-            ->where('tipo', 'laboral')
-            ->count();
-        $totalFormaciones = DB::table('experiencia')
-            ->where('tipo', 'academica')
-            ->count();
+        $totalExperiencias = $this->tablaNormalizadaExiste('experiencia_laboral')
+            ? DB::table('experiencia_laboral')->count()
+            : DB::table('experiencia')->where('tipo', 'laboral')->count();
+        $totalFormaciones = $this->tablaNormalizadaExiste('formacion_academica')
+            ? DB::table('formacion_academica')->count()
+            : DB::table('experiencia')->where('tipo', 'academica')->count();
 
         $stats = array_merge($viewStats, [
             'total_usuarios' => DB::table('usuario')->count(),
@@ -119,9 +129,14 @@ class AdminController extends Controller
             'total_formaciones' => $totalFormaciones,
         ]);
 
-        $ciPendientes = DB::table('usuario')
-            ->where('ci_estado', 'Pendiente de revisión')
-            ->count();
+        $ciPendientes = ($this->tablaNormalizadaExiste('verificacion_identidad') && $this->tablaNormalizadaExiste('estado_verificacion'))
+            ? DB::table('verificacion_identidad as vi')
+                ->join('estado_verificacion as ev', 'vi.estado_verificacion_id', '=', 'ev.id_estado_verificacion')
+                ->where('ev.codigo', 'pendiente')
+                ->count()
+            : DB::table('usuario')
+                ->where('ci_estado', 'Pendiente de revisión')
+                ->count();
 
         // Usuarios registrados por mes (ultimos 6 meses)
         $usuariosPorMes = DB::select("

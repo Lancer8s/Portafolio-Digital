@@ -49,4 +49,44 @@ class Usuario extends Authenticatable
     {
         return $this->password_hash;
     }
+
+    public function cuenta()
+    {
+        return $this->hasOne(CuentaUsuario::class, 'usuario_id', 'id_usuario');
+    }
+
+    public function perfil()
+    {
+        return $this->hasOne(PerfilUsuario::class, 'usuario_id', 'id_usuario');
+    }
+
+    public function redesSociales()
+    {
+        return $this->hasMany(RedSocialUsuario::class, 'usuario_id', 'id_usuario');
+    }
+
+    public function verificacionIdentidad()
+    {
+        return $this->hasOne(VerificacionIdentidad::class, 'usuario_id', 'id_usuario');
+    }
+
+    public function experienciasLaborales()
+    {
+        return $this->hasMany(ExperienciaLaboral::class, 'usuario_id', 'id_usuario');
+    }
+
+    public function formacionesAcademicas()
+    {
+        return $this->hasMany(FormacionAcademica::class, 'usuario_id', 'id_usuario');
+    }
+
+    public function certificacionesNormalizadas()
+    {
+        return $this->hasMany(CertificacionNormalizada::class, 'usuario_id', 'id_usuario');
+    }
+
+    public function bitacoras()
+    {
+        return $this->hasMany(Bitacora::class, 'usuario_accion_id', 'id_usuario');
+    }
 }
