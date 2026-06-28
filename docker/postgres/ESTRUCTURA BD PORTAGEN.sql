@@ -2278,6 +2278,85 @@ SET default_tablespace = '';
 SET default_table_access_method = heap;
 
 --
+-- Name: accion_bitacora; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.accion_bitacora (
+    id_accion_bitacora integer NOT NULL,
+    codigo character varying(20) NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.accion_bitacora OWNER TO aidsoft;
+
+--
+-- Name: accion_bitacora_id_accion_bitacora_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.accion_bitacora_id_accion_bitacora_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.accion_bitacora_id_accion_bitacora_seq OWNER TO aidsoft;
+
+--
+-- Name: accion_bitacora_id_accion_bitacora_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.accion_bitacora_id_accion_bitacora_seq OWNED BY public.accion_bitacora.id_accion_bitacora;
+
+
+--
+-- Name: bitacora; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.bitacora (
+    id_bitacora bigint NOT NULL,
+    origen_tabla character varying(80),
+    origen_id_bitacora integer,
+    usuario_accion_id integer,
+    modulo_bitacora_id integer NOT NULL,
+    accion_bitacora_id integer,
+    accion character varying(20),
+    descripcion character varying(255),
+    valor_anterior jsonb,
+    valor_nuevo jsonb,
+    fecha date DEFAULT CURRENT_DATE NOT NULL,
+    hora time without time zone DEFAULT CURRENT_TIME NOT NULL,
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.bitacora OWNER TO aidsoft;
+
+--
+-- Name: bitacora_id_bitacora_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.bitacora_id_bitacora_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.bitacora_id_bitacora_seq OWNER TO aidsoft;
+
+--
+-- Name: bitacora_id_bitacora_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.bitacora_id_bitacora_seq OWNED BY public.bitacora.id_bitacora;
+
+
+--
 -- Name: bitacora_proyecto; Type: TABLE; Schema: public; Owner: aidsoft
 --
 
@@ -2442,6 +2521,79 @@ ALTER SEQUENCE public.bitacora_usuario_id_bitacora_seq OWNED BY public.bitacora_
 
 
 --
+-- Name: categoria_habilidad; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.categoria_habilidad (
+    id_categoria_habilidad integer NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.categoria_habilidad OWNER TO aidsoft;
+
+--
+-- Name: categoria_habilidad_id_categoria_habilidad_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.categoria_habilidad_id_categoria_habilidad_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.categoria_habilidad_id_categoria_habilidad_seq OWNER TO aidsoft;
+
+--
+-- Name: categoria_habilidad_id_categoria_habilidad_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.categoria_habilidad_id_categoria_habilidad_seq OWNED BY public.categoria_habilidad.id_categoria_habilidad;
+
+
+--
+-- Name: certificacion; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.certificacion (
+    id_certificacion bigint NOT NULL,
+    usuario_id integer NOT NULL,
+    titulo character varying(150) NOT NULL,
+    institucion character varying(150) NOT NULL,
+    fecha_emision date NOT NULL,
+    descripcion character varying(500),
+    fecha_creacion timestamp without time zone,
+    fecha_actualizacion timestamp without time zone
+);
+
+
+ALTER TABLE public.certificacion OWNER TO aidsoft;
+
+--
+-- Name: certificacion_id_certificacion_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.certificacion_id_certificacion_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.certificacion_id_certificacion_seq OWNER TO aidsoft;
+
+--
+-- Name: certificacion_id_certificacion_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.certificacion_id_certificacion_seq OWNED BY public.certificacion.id_certificacion;
+
+
+--
 -- Name: certificaciones; Type: TABLE; Schema: public; Owner: aidsoft
 --
 
@@ -2478,6 +2630,109 @@ ALTER TABLE public.certificaciones_id_seq OWNER TO aidsoft;
 --
 
 ALTER SEQUENCE public.certificaciones_id_seq OWNED BY public.certificaciones.id;
+
+
+--
+-- Name: contexto_imagen; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.contexto_imagen (
+    id_contexto_imagen integer NOT NULL,
+    codigo character varying(30) NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.contexto_imagen OWNER TO aidsoft;
+
+--
+-- Name: contexto_imagen_id_contexto_imagen_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.contexto_imagen_id_contexto_imagen_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.contexto_imagen_id_contexto_imagen_seq OWNER TO aidsoft;
+
+--
+-- Name: contexto_imagen_id_contexto_imagen_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.contexto_imagen_id_contexto_imagen_seq OWNED BY public.contexto_imagen.id_contexto_imagen;
+
+
+--
+-- Name: cuenta_oauth; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.cuenta_oauth (
+    id_cuenta_oauth integer NOT NULL,
+    usuario_id integer NOT NULL,
+    proveedor character varying(30) NOT NULL,
+    proveedor_usuario_id character varying(100) NOT NULL,
+    token_acceso text,
+    token_refresco text,
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.cuenta_oauth OWNER TO aidsoft;
+
+--
+-- Name: cuenta_usuario; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.cuenta_usuario (
+    usuario_id integer NOT NULL,
+    correo character varying(150) NOT NULL,
+    contrasena_hash character varying(255) NOT NULL,
+    activo boolean DEFAULT true NOT NULL,
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL,
+    fecha_actualizacion timestamp without time zone
+);
+
+
+ALTER TABLE public.cuenta_usuario OWNER TO aidsoft;
+
+--
+-- Name: estado_verificacion; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.estado_verificacion (
+    id_estado_verificacion integer NOT NULL,
+    codigo character varying(30) NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.estado_verificacion OWNER TO aidsoft;
+
+--
+-- Name: estado_verificacion_id_estado_verificacion_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.estado_verificacion_id_estado_verificacion_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.estado_verificacion_id_estado_verificacion_seq OWNER TO aidsoft;
+
+--
+-- Name: estado_verificacion_id_estado_verificacion_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.estado_verificacion_id_estado_verificacion_seq OWNED BY public.estado_verificacion.id_estado_verificacion;
 
 
 --
@@ -2526,6 +2781,91 @@ ALTER SEQUENCE public.experiencia_id_experiencia_seq OWNED BY public.experiencia
 
 
 --
+-- Name: experiencia_laboral; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.experiencia_laboral (
+    id_experiencia_laboral integer NOT NULL,
+    usuario_id integer NOT NULL,
+    empresa character varying(150) NOT NULL,
+    cargo character varying(150) NOT NULL,
+    fecha_inicio date,
+    fecha_fin date,
+    descripcion text,
+    referencias text,
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL,
+    fecha_actualizacion timestamp without time zone
+);
+
+
+ALTER TABLE public.experiencia_laboral OWNER TO aidsoft;
+
+--
+-- Name: experiencia_laboral_id_experiencia_laboral_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.experiencia_laboral_id_experiencia_laboral_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.experiencia_laboral_id_experiencia_laboral_seq OWNER TO aidsoft;
+
+--
+-- Name: experiencia_laboral_id_experiencia_laboral_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.experiencia_laboral_id_experiencia_laboral_seq OWNED BY public.experiencia_laboral.id_experiencia_laboral;
+
+
+--
+-- Name: formacion_academica; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.formacion_academica (
+    id_formacion_academica integer NOT NULL,
+    usuario_id integer NOT NULL,
+    institucion character varying(150) NOT NULL,
+    titulo character varying(150) NOT NULL,
+    nivel_academico_id integer,
+    fecha_inicio date,
+    fecha_fin date,
+    descripcion text,
+    url_certificado character varying(255),
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL,
+    fecha_actualizacion timestamp without time zone
+);
+
+
+ALTER TABLE public.formacion_academica OWNER TO aidsoft;
+
+--
+-- Name: formacion_academica_id_formacion_academica_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.formacion_academica_id_formacion_academica_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.formacion_academica_id_formacion_academica_seq OWNER TO aidsoft;
+
+--
+-- Name: formacion_academica_id_formacion_academica_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.formacion_academica_id_formacion_academica_seq OWNED BY public.formacion_academica.id_formacion_academica;
+
+
+--
 -- Name: habilidad; Type: TABLE; Schema: public; Owner: aidsoft
 --
 
@@ -2535,6 +2875,12 @@ CREATE TABLE public.habilidad (
     tipo character varying(10) NOT NULL,
     categoria character varying(50),
     descripcion text,
+    tipo_habilidad_id integer,
+    categoria_habilidad_id integer,
+    usuario_creador_id integer,
+    es_global boolean DEFAULT true NOT NULL,
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL,
+    fecha_actualizacion timestamp without time zone,
     CONSTRAINT habilidad_tipo_check CHECK (((tipo)::text = ANY ((ARRAY['tecnica'::character varying, 'blanda'::character varying])::text[])))
 );
 
@@ -2575,6 +2921,7 @@ CREATE TABLE public.imagen (
     tamanio_kb integer,
     contexto character varying(20) DEFAULT 'perfil'::character varying NOT NULL,
     fecha_subida timestamp without time zone DEFAULT now() NOT NULL,
+    contexto_imagen_id integer,
     CONSTRAINT imagen_contexto_check CHECK (((contexto)::text = ANY ((ARRAY['perfil'::character varying, 'proyecto'::character varying])::text[])))
 );
 
@@ -2639,6 +2986,75 @@ ALTER SEQUENCE public.migrations_id_seq OWNED BY public.migrations.id;
 
 
 --
+-- Name: modulo_bitacora; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.modulo_bitacora (
+    id_modulo_bitacora integer NOT NULL,
+    codigo character varying(50) NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.modulo_bitacora OWNER TO aidsoft;
+
+--
+-- Name: modulo_bitacora_id_modulo_bitacora_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.modulo_bitacora_id_modulo_bitacora_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.modulo_bitacora_id_modulo_bitacora_seq OWNER TO aidsoft;
+
+--
+-- Name: modulo_bitacora_id_modulo_bitacora_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.modulo_bitacora_id_modulo_bitacora_seq OWNED BY public.modulo_bitacora.id_modulo_bitacora;
+
+
+--
+-- Name: nivel_academico; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.nivel_academico (
+    id_nivel_academico integer NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.nivel_academico OWNER TO aidsoft;
+
+--
+-- Name: nivel_academico_id_nivel_academico_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.nivel_academico_id_nivel_academico_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.nivel_academico_id_nivel_academico_seq OWNER TO aidsoft;
+
+--
+-- Name: nivel_academico_id_nivel_academico_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.nivel_academico_id_nivel_academico_seq OWNED BY public.nivel_academico.id_nivel_academico;
+
+
+--
 -- Name: oauth_account; Type: TABLE; Schema: public; Owner: aidsoft
 --
 
@@ -2675,6 +3091,49 @@ ALTER TABLE public.oauth_account_id_oauth_seq OWNER TO aidsoft;
 --
 
 ALTER SEQUENCE public.oauth_account_id_oauth_seq OWNED BY public.oauth_account.id_oauth;
+
+
+--
+-- Name: perfil_usuario; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.perfil_usuario (
+    id_perfil integer NOT NULL,
+    usuario_id integer NOT NULL,
+    profesion character varying(120),
+    titulo_profesional character varying(150),
+    biografia text,
+    telefono character varying(50),
+    visibilidad_id integer NOT NULL,
+    imagen_perfil_id integer,
+    nombre_modificado boolean DEFAULT false NOT NULL,
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL,
+    fecha_actualizacion timestamp without time zone
+);
+
+
+ALTER TABLE public.perfil_usuario OWNER TO aidsoft;
+
+--
+-- Name: perfil_usuario_id_perfil_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.perfil_usuario_id_perfil_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.perfil_usuario_id_perfil_seq OWNER TO aidsoft;
+
+--
+-- Name: perfil_usuario_id_perfil_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.perfil_usuario_id_perfil_seq OWNED BY public.perfil_usuario.id_perfil;
 
 
 --
@@ -2786,6 +3245,43 @@ CREATE TABLE public.proyecto_imagen (
 ALTER TABLE public.proyecto_imagen OWNER TO aidsoft;
 
 --
+-- Name: red_social_usuario; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.red_social_usuario (
+    id_red_social_usuario integer NOT NULL,
+    usuario_id integer NOT NULL,
+    tipo_red_social_id integer NOT NULL,
+    url character varying(300) NOT NULL,
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL
+);
+
+
+ALTER TABLE public.red_social_usuario OWNER TO aidsoft;
+
+--
+-- Name: red_social_usuario_id_red_social_usuario_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.red_social_usuario_id_red_social_usuario_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.red_social_usuario_id_red_social_usuario_seq OWNER TO aidsoft;
+
+--
+-- Name: red_social_usuario_id_red_social_usuario_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.red_social_usuario_id_red_social_usuario_seq OWNED BY public.red_social_usuario.id_red_social_usuario;
+
+
+--
 -- Name: rol; Type: TABLE; Schema: public; Owner: aidsoft
 --
 
@@ -2831,6 +3327,76 @@ CREATE TABLE public.rol_usuario (
 
 
 ALTER TABLE public.rol_usuario OWNER TO aidsoft;
+
+--
+-- Name: tipo_habilidad; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.tipo_habilidad (
+    id_tipo_habilidad integer NOT NULL,
+    codigo character varying(30) NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.tipo_habilidad OWNER TO aidsoft;
+
+--
+-- Name: tipo_habilidad_id_tipo_habilidad_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.tipo_habilidad_id_tipo_habilidad_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.tipo_habilidad_id_tipo_habilidad_seq OWNER TO aidsoft;
+
+--
+-- Name: tipo_habilidad_id_tipo_habilidad_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.tipo_habilidad_id_tipo_habilidad_seq OWNED BY public.tipo_habilidad.id_tipo_habilidad;
+
+
+--
+-- Name: tipo_red_social; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.tipo_red_social (
+    id_tipo_red_social integer NOT NULL,
+    codigo character varying(50) NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.tipo_red_social OWNER TO aidsoft;
+
+--
+-- Name: tipo_red_social_id_tipo_red_social_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.tipo_red_social_id_tipo_red_social_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.tipo_red_social_id_tipo_red_social_seq OWNER TO aidsoft;
+
+--
+-- Name: tipo_red_social_id_tipo_red_social_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.tipo_red_social_id_tipo_red_social_seq OWNED BY public.tipo_red_social.id_tipo_red_social;
+
 
 --
 -- Name: usuario; Type: TABLE; Schema: public; Owner: aidsoft
@@ -2911,6 +3477,18 @@ ALTER TABLE public.usuario_id_usuario_seq OWNER TO aidsoft;
 
 ALTER SEQUENCE public.usuario_id_usuario_seq OWNED BY public.usuario.id_usuario;
 
+
+--
+-- Name: usuario_rol; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.usuario_rol (
+    usuario_id integer NOT NULL,
+    rol_id integer NOT NULL
+);
+
+
+ALTER TABLE public.usuario_rol OWNER TO aidsoft;
 
 --
 -- Name: v_estadisticas_admin; Type: VIEW; Schema: public; Owner: aidsoft
@@ -3000,6 +3578,96 @@ SELECT
 ALTER TABLE public.v_proyectos_usuario OWNER TO aidsoft;
 
 --
+-- Name: verificacion_identidad; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.verificacion_identidad (
+    id_verificacion integer NOT NULL,
+    usuario_id integer NOT NULL,
+    imagen_ci_id integer,
+    estado_verificacion_id integer NOT NULL,
+    motivo_rechazo text,
+    fecha_envio timestamp without time zone,
+    fecha_revision timestamp without time zone,
+    fecha_creacion timestamp without time zone DEFAULT now() NOT NULL,
+    fecha_actualizacion timestamp without time zone
+);
+
+
+ALTER TABLE public.verificacion_identidad OWNER TO aidsoft;
+
+--
+-- Name: verificacion_identidad_id_verificacion_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.verificacion_identidad_id_verificacion_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.verificacion_identidad_id_verificacion_seq OWNER TO aidsoft;
+
+--
+-- Name: verificacion_identidad_id_verificacion_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.verificacion_identidad_id_verificacion_seq OWNED BY public.verificacion_identidad.id_verificacion;
+
+
+--
+-- Name: visibilidad_perfil; Type: TABLE; Schema: public; Owner: aidsoft
+--
+
+CREATE TABLE public.visibilidad_perfil (
+    id_visibilidad integer NOT NULL,
+    codigo character varying(30) NOT NULL,
+    nombre character varying(80) NOT NULL
+);
+
+
+ALTER TABLE public.visibilidad_perfil OWNER TO aidsoft;
+
+--
+-- Name: visibilidad_perfil_id_visibilidad_seq; Type: SEQUENCE; Schema: public; Owner: aidsoft
+--
+
+CREATE SEQUENCE public.visibilidad_perfil_id_visibilidad_seq
+    AS integer
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.visibilidad_perfil_id_visibilidad_seq OWNER TO aidsoft;
+
+--
+-- Name: visibilidad_perfil_id_visibilidad_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: aidsoft
+--
+
+ALTER SEQUENCE public.visibilidad_perfil_id_visibilidad_seq OWNED BY public.visibilidad_perfil.id_visibilidad;
+
+
+--
+-- Name: accion_bitacora id_accion_bitacora; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.accion_bitacora ALTER COLUMN id_accion_bitacora SET DEFAULT nextval('public.accion_bitacora_id_accion_bitacora_seq'::regclass);
+
+
+--
+-- Name: bitacora id_bitacora; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.bitacora ALTER COLUMN id_bitacora SET DEFAULT nextval('public.bitacora_id_bitacora_seq'::regclass);
+
+
+--
 -- Name: bitacora_proyecto id_bitacora; Type: DEFAULT; Schema: public; Owner: aidsoft
 --
 
@@ -3028,6 +3696,20 @@ ALTER TABLE ONLY public.bitacora_usuario_habilidad ALTER COLUMN id_bitacora SET 
 
 
 --
+-- Name: categoria_habilidad id_categoria_habilidad; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.categoria_habilidad ALTER COLUMN id_categoria_habilidad SET DEFAULT nextval('public.categoria_habilidad_id_categoria_habilidad_seq'::regclass);
+
+
+--
+-- Name: certificacion id_certificacion; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.certificacion ALTER COLUMN id_certificacion SET DEFAULT nextval('public.certificacion_id_certificacion_seq'::regclass);
+
+
+--
 -- Name: certificaciones id; Type: DEFAULT; Schema: public; Owner: aidsoft
 --
 
@@ -3035,10 +3717,38 @@ ALTER TABLE ONLY public.certificaciones ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- Name: contexto_imagen id_contexto_imagen; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.contexto_imagen ALTER COLUMN id_contexto_imagen SET DEFAULT nextval('public.contexto_imagen_id_contexto_imagen_seq'::regclass);
+
+
+--
+-- Name: estado_verificacion id_estado_verificacion; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.estado_verificacion ALTER COLUMN id_estado_verificacion SET DEFAULT nextval('public.estado_verificacion_id_estado_verificacion_seq'::regclass);
+
+
+--
 -- Name: experiencia id_experiencia; Type: DEFAULT; Schema: public; Owner: aidsoft
 --
 
 ALTER TABLE ONLY public.experiencia ALTER COLUMN id_experiencia SET DEFAULT nextval('public.experiencia_id_experiencia_seq'::regclass);
+
+
+--
+-- Name: experiencia_laboral id_experiencia_laboral; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.experiencia_laboral ALTER COLUMN id_experiencia_laboral SET DEFAULT nextval('public.experiencia_laboral_id_experiencia_laboral_seq'::regclass);
+
+
+--
+-- Name: formacion_academica id_formacion_academica; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.formacion_academica ALTER COLUMN id_formacion_academica SET DEFAULT nextval('public.formacion_academica_id_formacion_academica_seq'::regclass);
 
 
 --
@@ -3063,10 +3773,31 @@ ALTER TABLE ONLY public.migrations ALTER COLUMN id SET DEFAULT nextval('public.m
 
 
 --
+-- Name: modulo_bitacora id_modulo_bitacora; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.modulo_bitacora ALTER COLUMN id_modulo_bitacora SET DEFAULT nextval('public.modulo_bitacora_id_modulo_bitacora_seq'::regclass);
+
+
+--
+-- Name: nivel_academico id_nivel_academico; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.nivel_academico ALTER COLUMN id_nivel_academico SET DEFAULT nextval('public.nivel_academico_id_nivel_academico_seq'::regclass);
+
+
+--
 -- Name: oauth_account id_oauth; Type: DEFAULT; Schema: public; Owner: aidsoft
 --
 
 ALTER TABLE ONLY public.oauth_account ALTER COLUMN id_oauth SET DEFAULT nextval('public.oauth_account_id_oauth_seq'::regclass);
+
+
+--
+-- Name: perfil_usuario id_perfil; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.perfil_usuario ALTER COLUMN id_perfil SET DEFAULT nextval('public.perfil_usuario_id_perfil_seq'::regclass);
 
 
 --
@@ -3084,6 +3815,13 @@ ALTER TABLE ONLY public.proyecto ALTER COLUMN id_proyecto SET DEFAULT nextval('p
 
 
 --
+-- Name: red_social_usuario id_red_social_usuario; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.red_social_usuario ALTER COLUMN id_red_social_usuario SET DEFAULT nextval('public.red_social_usuario_id_red_social_usuario_seq'::regclass);
+
+
+--
 -- Name: rol id_rol; Type: DEFAULT; Schema: public; Owner: aidsoft
 --
 
@@ -3091,10 +3829,62 @@ ALTER TABLE ONLY public.rol ALTER COLUMN id_rol SET DEFAULT nextval('public.rol_
 
 
 --
+-- Name: tipo_habilidad id_tipo_habilidad; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.tipo_habilidad ALTER COLUMN id_tipo_habilidad SET DEFAULT nextval('public.tipo_habilidad_id_tipo_habilidad_seq'::regclass);
+
+
+--
+-- Name: tipo_red_social id_tipo_red_social; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.tipo_red_social ALTER COLUMN id_tipo_red_social SET DEFAULT nextval('public.tipo_red_social_id_tipo_red_social_seq'::regclass);
+
+
+--
 -- Name: usuario id_usuario; Type: DEFAULT; Schema: public; Owner: aidsoft
 --
 
 ALTER TABLE ONLY public.usuario ALTER COLUMN id_usuario SET DEFAULT nextval('public.usuario_id_usuario_seq'::regclass);
+
+
+--
+-- Name: verificacion_identidad id_verificacion; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.verificacion_identidad ALTER COLUMN id_verificacion SET DEFAULT nextval('public.verificacion_identidad_id_verificacion_seq'::regclass);
+
+
+--
+-- Name: visibilidad_perfil id_visibilidad; Type: DEFAULT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.visibilidad_perfil ALTER COLUMN id_visibilidad SET DEFAULT nextval('public.visibilidad_perfil_id_visibilidad_seq'::regclass);
+
+
+--
+-- Name: accion_bitacora accion_bitacora_codigo_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.accion_bitacora
+    ADD CONSTRAINT accion_bitacora_codigo_key UNIQUE (codigo);
+
+
+--
+-- Name: accion_bitacora accion_bitacora_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.accion_bitacora
+    ADD CONSTRAINT accion_bitacora_pkey PRIMARY KEY (id_accion_bitacora);
+
+
+--
+-- Name: bitacora bitacora_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.bitacora
+    ADD CONSTRAINT bitacora_pkey PRIMARY KEY (id_bitacora);
 
 
 --
@@ -3130,6 +3920,30 @@ ALTER TABLE ONLY public.bitacora_usuario
 
 
 --
+-- Name: categoria_habilidad categoria_habilidad_nombre_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.categoria_habilidad
+    ADD CONSTRAINT categoria_habilidad_nombre_key UNIQUE (nombre);
+
+
+--
+-- Name: categoria_habilidad categoria_habilidad_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.categoria_habilidad
+    ADD CONSTRAINT categoria_habilidad_pkey PRIMARY KEY (id_categoria_habilidad);
+
+
+--
+-- Name: certificacion certificacion_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.certificacion
+    ADD CONSTRAINT certificacion_pkey PRIMARY KEY (id_certificacion);
+
+
+--
 -- Name: certificaciones certificaciones_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
@@ -3138,11 +3952,91 @@ ALTER TABLE ONLY public.certificaciones
 
 
 --
+-- Name: contexto_imagen contexto_imagen_codigo_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.contexto_imagen
+    ADD CONSTRAINT contexto_imagen_codigo_key UNIQUE (codigo);
+
+
+--
+-- Name: contexto_imagen contexto_imagen_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.contexto_imagen
+    ADD CONSTRAINT contexto_imagen_pkey PRIMARY KEY (id_contexto_imagen);
+
+
+--
+-- Name: cuenta_oauth cuenta_oauth_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.cuenta_oauth
+    ADD CONSTRAINT cuenta_oauth_pkey PRIMARY KEY (id_cuenta_oauth);
+
+
+--
+-- Name: cuenta_oauth cuenta_oauth_proveedor_unico; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.cuenta_oauth
+    ADD CONSTRAINT cuenta_oauth_proveedor_unico UNIQUE (proveedor, proveedor_usuario_id);
+
+
+--
+-- Name: cuenta_usuario cuenta_usuario_correo_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.cuenta_usuario
+    ADD CONSTRAINT cuenta_usuario_correo_key UNIQUE (correo);
+
+
+--
+-- Name: cuenta_usuario cuenta_usuario_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.cuenta_usuario
+    ADD CONSTRAINT cuenta_usuario_pkey PRIMARY KEY (usuario_id);
+
+
+--
+-- Name: estado_verificacion estado_verificacion_codigo_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.estado_verificacion
+    ADD CONSTRAINT estado_verificacion_codigo_key UNIQUE (codigo);
+
+
+--
+-- Name: estado_verificacion estado_verificacion_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.estado_verificacion
+    ADD CONSTRAINT estado_verificacion_pkey PRIMARY KEY (id_estado_verificacion);
+
+
+--
+-- Name: experiencia_laboral experiencia_laboral_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.experiencia_laboral
+    ADD CONSTRAINT experiencia_laboral_pkey PRIMARY KEY (id_experiencia_laboral);
+
+
+--
 -- Name: experiencia experiencia_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
 ALTER TABLE ONLY public.experiencia
     ADD CONSTRAINT experiencia_pkey PRIMARY KEY (id_experiencia);
+
+
+--
+-- Name: formacion_academica formacion_academica_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.formacion_academica
+    ADD CONSTRAINT formacion_academica_pkey PRIMARY KEY (id_formacion_academica);
 
 
 --
@@ -3178,6 +4072,38 @@ ALTER TABLE ONLY public.migrations
 
 
 --
+-- Name: modulo_bitacora modulo_bitacora_codigo_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.modulo_bitacora
+    ADD CONSTRAINT modulo_bitacora_codigo_key UNIQUE (codigo);
+
+
+--
+-- Name: modulo_bitacora modulo_bitacora_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.modulo_bitacora
+    ADD CONSTRAINT modulo_bitacora_pkey PRIMARY KEY (id_modulo_bitacora);
+
+
+--
+-- Name: nivel_academico nivel_academico_nombre_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.nivel_academico
+    ADD CONSTRAINT nivel_academico_nombre_key UNIQUE (nombre);
+
+
+--
+-- Name: nivel_academico nivel_academico_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.nivel_academico
+    ADD CONSTRAINT nivel_academico_pkey PRIMARY KEY (id_nivel_academico);
+
+
+--
 -- Name: oauth_account oauth_account_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
@@ -3191,6 +4117,22 @@ ALTER TABLE ONLY public.oauth_account
 
 ALTER TABLE ONLY public.oauth_account
     ADD CONSTRAINT oauth_account_provider_provider_user_id_key UNIQUE (provider, provider_user_id);
+
+
+--
+-- Name: perfil_usuario perfil_usuario_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.perfil_usuario
+    ADD CONSTRAINT perfil_usuario_pkey PRIMARY KEY (id_perfil);
+
+
+--
+-- Name: perfil_usuario perfil_usuario_usuario_id_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.perfil_usuario
+    ADD CONSTRAINT perfil_usuario_usuario_id_key UNIQUE (usuario_id);
 
 
 --
@@ -3234,6 +4176,22 @@ ALTER TABLE ONLY public.proyecto
 
 
 --
+-- Name: red_social_usuario red_social_usuario_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.red_social_usuario
+    ADD CONSTRAINT red_social_usuario_pkey PRIMARY KEY (id_red_social_usuario);
+
+
+--
+-- Name: red_social_usuario red_social_usuario_unica; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.red_social_usuario
+    ADD CONSTRAINT red_social_usuario_unica UNIQUE (usuario_id, tipo_red_social_id, url);
+
+
+--
 -- Name: rol rol_nombre_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
@@ -3255,6 +4213,38 @@ ALTER TABLE ONLY public.rol
 
 ALTER TABLE ONLY public.rol_usuario
     ADD CONSTRAINT rol_usuario_pkey PRIMARY KEY (id_rol, id_usuario);
+
+
+--
+-- Name: tipo_habilidad tipo_habilidad_codigo_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.tipo_habilidad
+    ADD CONSTRAINT tipo_habilidad_codigo_key UNIQUE (codigo);
+
+
+--
+-- Name: tipo_habilidad tipo_habilidad_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.tipo_habilidad
+    ADD CONSTRAINT tipo_habilidad_pkey PRIMARY KEY (id_tipo_habilidad);
+
+
+--
+-- Name: tipo_red_social tipo_red_social_codigo_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.tipo_red_social
+    ADD CONSTRAINT tipo_red_social_codigo_key UNIQUE (codigo);
+
+
+--
+-- Name: tipo_red_social tipo_red_social_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.tipo_red_social
+    ADD CONSTRAINT tipo_red_social_pkey PRIMARY KEY (id_tipo_red_social);
 
 
 --
@@ -3287,6 +4277,53 @@ ALTER TABLE ONLY public.usuario_habilidad
 
 ALTER TABLE ONLY public.usuario
     ADD CONSTRAINT usuario_pkey PRIMARY KEY (id_usuario);
+
+
+--
+-- Name: usuario_rol usuario_rol_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.usuario_rol
+    ADD CONSTRAINT usuario_rol_pkey PRIMARY KEY (usuario_id, rol_id);
+
+
+--
+-- Name: verificacion_identidad verificacion_identidad_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.verificacion_identidad
+    ADD CONSTRAINT verificacion_identidad_pkey PRIMARY KEY (id_verificacion);
+
+
+--
+-- Name: verificacion_identidad verificacion_identidad_usuario_id_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.verificacion_identidad
+    ADD CONSTRAINT verificacion_identidad_usuario_id_key UNIQUE (usuario_id);
+
+
+--
+-- Name: visibilidad_perfil visibilidad_perfil_codigo_key; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.visibilidad_perfil
+    ADD CONSTRAINT visibilidad_perfil_codigo_key UNIQUE (codigo);
+
+
+--
+-- Name: visibilidad_perfil visibilidad_perfil_pkey; Type: CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.visibilidad_perfil
+    ADD CONSTRAINT visibilidad_perfil_pkey PRIMARY KEY (id_visibilidad);
+
+
+--
+-- Name: bitacora_migracion_unica; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE UNIQUE INDEX bitacora_migracion_unica ON public.bitacora USING btree (origen_tabla, origen_id_bitacora) WHERE ((origen_tabla IS NOT NULL) AND (origen_id_bitacora IS NOT NULL));
 
 
 --
@@ -3339,10 +4376,52 @@ CREATE INDEX idx_bit_usu_fecha ON public.bitacora_usuario USING btree (fecha);
 
 
 --
+-- Name: idx_bitacora_modulo_fecha; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX idx_bitacora_modulo_fecha ON public.bitacora USING btree (modulo_bitacora_id, fecha DESC, hora DESC);
+
+
+--
+-- Name: idx_certificacion_usuario_id; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX idx_certificacion_usuario_id ON public.certificacion USING btree (usuario_id);
+
+
+--
+-- Name: idx_experiencia_laboral_usuario_id; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX idx_experiencia_laboral_usuario_id ON public.experiencia_laboral USING btree (usuario_id);
+
+
+--
+-- Name: idx_formacion_academica_usuario_id; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX idx_formacion_academica_usuario_id ON public.formacion_academica USING btree (usuario_id);
+
+
+--
 -- Name: idx_habilidad_tipo; Type: INDEX; Schema: public; Owner: aidsoft
 --
 
 CREATE INDEX idx_habilidad_tipo ON public.habilidad USING btree (tipo);
+
+
+--
+-- Name: idx_habilidad_tipo_categoria; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX idx_habilidad_tipo_categoria ON public.habilidad USING btree (tipo_habilidad_id, categoria_habilidad_id);
+
+
+--
+-- Name: idx_perfil_usuario_usuario_id; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX idx_perfil_usuario_usuario_id ON public.perfil_usuario USING btree (usuario_id);
 
 
 --
@@ -3371,6 +4450,13 @@ CREATE INDEX idx_proyecto_usuario ON public.proyecto USING btree (id_usuario);
 --
 
 CREATE INDEX idx_proyecto_visible ON public.proyecto USING btree (visible_portafolio);
+
+
+--
+-- Name: idx_red_social_usuario_usuario_id; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX idx_red_social_usuario_usuario_id ON public.red_social_usuario USING btree (usuario_id);
 
 
 --
@@ -3406,6 +4492,13 @@ CREATE INDEX idx_usuario_activo ON public.usuario USING btree (activo);
 --
 
 CREATE INDEX idx_usuario_email ON public.usuario USING btree (email);
+
+
+--
+-- Name: idx_verificacion_identidad_usuario_id; Type: INDEX; Schema: public; Owner: aidsoft
+--
+
+CREATE INDEX idx_verificacion_identidad_usuario_id ON public.verificacion_identidad USING btree (usuario_id);
 
 
 --
@@ -3458,11 +4551,59 @@ CREATE TRIGGER trg_audit_usuario_habilidad AFTER INSERT OR DELETE OR UPDATE ON p
 
 
 --
+-- Name: bitacora bitacora_accion_bitacora_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.bitacora
+    ADD CONSTRAINT bitacora_accion_bitacora_id_fkey FOREIGN KEY (accion_bitacora_id) REFERENCES public.accion_bitacora(id_accion_bitacora);
+
+
+--
+-- Name: bitacora bitacora_modulo_bitacora_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.bitacora
+    ADD CONSTRAINT bitacora_modulo_bitacora_id_fkey FOREIGN KEY (modulo_bitacora_id) REFERENCES public.modulo_bitacora(id_modulo_bitacora);
+
+
+--
+-- Name: bitacora bitacora_usuario_accion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.bitacora
+    ADD CONSTRAINT bitacora_usuario_accion_id_fkey FOREIGN KEY (usuario_accion_id) REFERENCES public.usuario(id_usuario) ON DELETE SET NULL;
+
+
+--
+-- Name: certificacion certificacion_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.certificacion
+    ADD CONSTRAINT certificacion_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
 -- Name: certificaciones certificaciones_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
 ALTER TABLE ONLY public.certificaciones
     ADD CONSTRAINT certificaciones_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: cuenta_oauth cuenta_oauth_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.cuenta_oauth
+    ADD CONSTRAINT cuenta_oauth_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: cuenta_usuario cuenta_usuario_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.cuenta_usuario
+    ADD CONSTRAINT cuenta_usuario_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
 
 
 --
@@ -3474,11 +4615,91 @@ ALTER TABLE ONLY public.experiencia
 
 
 --
+-- Name: experiencia_laboral experiencia_laboral_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.experiencia_laboral
+    ADD CONSTRAINT experiencia_laboral_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: formacion_academica formacion_academica_nivel_academico_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.formacion_academica
+    ADD CONSTRAINT formacion_academica_nivel_academico_id_fkey FOREIGN KEY (nivel_academico_id) REFERENCES public.nivel_academico(id_nivel_academico);
+
+
+--
+-- Name: formacion_academica formacion_academica_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.formacion_academica
+    ADD CONSTRAINT formacion_academica_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: habilidad habilidad_categoria_habilidad_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.habilidad
+    ADD CONSTRAINT habilidad_categoria_habilidad_id_fkey FOREIGN KEY (categoria_habilidad_id) REFERENCES public.categoria_habilidad(id_categoria_habilidad);
+
+
+--
+-- Name: habilidad habilidad_tipo_habilidad_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.habilidad
+    ADD CONSTRAINT habilidad_tipo_habilidad_id_fkey FOREIGN KEY (tipo_habilidad_id) REFERENCES public.tipo_habilidad(id_tipo_habilidad);
+
+
+--
+-- Name: habilidad habilidad_usuario_creador_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.habilidad
+    ADD CONSTRAINT habilidad_usuario_creador_id_fkey FOREIGN KEY (usuario_creador_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: imagen imagen_contexto_imagen_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.imagen
+    ADD CONSTRAINT imagen_contexto_imagen_id_fkey FOREIGN KEY (contexto_imagen_id) REFERENCES public.contexto_imagen(id_contexto_imagen);
+
+
+--
 -- Name: oauth_account oauth_account_id_usuario_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
 --
 
 ALTER TABLE ONLY public.oauth_account
     ADD CONSTRAINT oauth_account_id_usuario_fkey FOREIGN KEY (id_usuario) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: perfil_usuario perfil_usuario_imagen_perfil_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.perfil_usuario
+    ADD CONSTRAINT perfil_usuario_imagen_perfil_id_fkey FOREIGN KEY (imagen_perfil_id) REFERENCES public.imagen(id_imagen) ON DELETE SET NULL;
+
+
+--
+-- Name: perfil_usuario perfil_usuario_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.perfil_usuario
+    ADD CONSTRAINT perfil_usuario_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: perfil_usuario perfil_usuario_visibilidad_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.perfil_usuario
+    ADD CONSTRAINT perfil_usuario_visibilidad_id_fkey FOREIGN KEY (visibilidad_id) REFERENCES public.visibilidad_perfil(id_visibilidad);
 
 
 --
@@ -3519,6 +4740,22 @@ ALTER TABLE ONLY public.proyecto_imagen
 
 ALTER TABLE ONLY public.proyecto_imagen
     ADD CONSTRAINT proyecto_imagen_id_proyecto_fkey FOREIGN KEY (id_proyecto) REFERENCES public.proyecto(id_proyecto) ON DELETE CASCADE;
+
+
+--
+-- Name: red_social_usuario red_social_usuario_tipo_red_social_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.red_social_usuario
+    ADD CONSTRAINT red_social_usuario_tipo_red_social_id_fkey FOREIGN KEY (tipo_red_social_id) REFERENCES public.tipo_red_social(id_tipo_red_social);
+
+
+--
+-- Name: red_social_usuario red_social_usuario_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.red_social_usuario
+    ADD CONSTRAINT red_social_usuario_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
 
 
 --
@@ -3583,6 +4820,46 @@ ALTER TABLE ONLY public.usuario
 
 ALTER TABLE ONLY public.usuario
     ADD CONSTRAINT usuario_id_imagen_fkey FOREIGN KEY (id_imagen) REFERENCES public.imagen(id_imagen) ON DELETE SET NULL;
+
+
+--
+-- Name: usuario_rol usuario_rol_rol_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.usuario_rol
+    ADD CONSTRAINT usuario_rol_rol_id_fkey FOREIGN KEY (rol_id) REFERENCES public.rol(id_rol) ON DELETE CASCADE;
+
+
+--
+-- Name: usuario_rol usuario_rol_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.usuario_rol
+    ADD CONSTRAINT usuario_rol_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
+
+
+--
+-- Name: verificacion_identidad verificacion_identidad_estado_verificacion_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.verificacion_identidad
+    ADD CONSTRAINT verificacion_identidad_estado_verificacion_id_fkey FOREIGN KEY (estado_verificacion_id) REFERENCES public.estado_verificacion(id_estado_verificacion);
+
+
+--
+-- Name: verificacion_identidad verificacion_identidad_imagen_ci_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.verificacion_identidad
+    ADD CONSTRAINT verificacion_identidad_imagen_ci_id_fkey FOREIGN KEY (imagen_ci_id) REFERENCES public.imagen(id_imagen) ON DELETE SET NULL;
+
+
+--
+-- Name: verificacion_identidad verificacion_identidad_usuario_id_fkey; Type: FK CONSTRAINT; Schema: public; Owner: aidsoft
+--
+
+ALTER TABLE ONLY public.verificacion_identidad
+    ADD CONSTRAINT verificacion_identidad_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES public.usuario(id_usuario) ON DELETE CASCADE;
 
 
 --
